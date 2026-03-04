@@ -87,6 +87,8 @@ int main() {
     Texture* texture = new Texture("../Assets/Textures/face.png");
     Shader* shader = new Shader("../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag");
 
+    Shader* shader2 = new Shader("../Assets/Shaders/new_test.vert", "../Assets/Shaders/new_test.frag");
+
     const auto gltfObjects = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
 
     Object* object = new Object(mesh, shader);
@@ -98,7 +100,7 @@ int main() {
     Object* object2 = new Object(mesh, shader);
     object2->transform.Position = {-1, 2, 2};
 
-    Object* object3 = new Object(mesh, shader);
+    Object* object3 = new Object(mesh, shader2);
     object3->transform.Position = {3, 1, 1};
 
     object->AddTexture(texture);
@@ -120,7 +122,7 @@ int main() {
     };
 
     constexpr int NUM_OBJECTS = 1000;
-    constexpr int NUM_LIGHTS  = 30;
+    constexpr int NUM_LIGHTS  = 25;
 
     std::vector<Object*> stressObjects;
     std::vector<PointLight*> stressLights;
@@ -165,8 +167,8 @@ int main() {
         ImGui::Text("MS/frame: %.3f", 1000.0f / ImGui::GetIO().Framerate);
 
         static int debugMode = 0;
-        const char* debugModes[] = { "Normal", "Heatmap", "Z-Slices", "XY-Tiles" };
-        if (ImGui::Combo("Debug Mode", &debugMode, debugModes, 4)) {
+        const char* debugModes[] = { "None", "Normal", "Heatmap", "Z-Slices", "XY-Tiles" };
+        if (ImGui::Combo("Debug Mode", &debugMode, debugModes, 5)) {
             shader->SetInt("u_DebugMode", debugMode);
         }
 

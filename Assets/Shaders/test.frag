@@ -99,8 +99,14 @@ void main() {
     uint clusterIndex = x + y * GRID_SIZE_X + z * GRID_SIZE_X * GRID_SIZE_Y;
     LightGrid grid = lightGrid[clusterIndex];
 
-    // heatmap
+    // normals
     if (u_DebugMode == 1) {
+        FragColor = vec4(norm * 0.5 + 0.5, 1.0);
+        return;
+    }
+
+    // heatmap
+    if (u_DebugMode == 2) {
         uint totalLights = grid.pointCount + grid.spotCount;
         if (totalLights == 0) {
             FragColor = vec4(0.0, 0.0, 0.1, 1.0);
@@ -111,14 +117,14 @@ void main() {
     }
 
     // z-slices
-    if (u_DebugMode == 2) {
+    if (u_DebugMode == 3) {
         float t = float(z) / float(GRID_SIZE_Z);
         FragColor = vec4(Heatmap(t), 1.0);
         return;
     }
 
     // xy tiles / tile boundaries
-    if (u_DebugMode == 3) {
+    if (u_DebugMode == 4) {
         float cx = float(x) / float(GRID_SIZE_X);
         float cy = float(y) / float(GRID_SIZE_Y);
         FragColor = vec4(cx, cy, 0.5, 1.0);

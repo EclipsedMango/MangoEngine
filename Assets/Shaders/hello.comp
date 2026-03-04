@@ -1,0 +1,13 @@
+
+#ifndef HELLO_COMP
+#define HELLO_COMP
+
+vec3 hello() {
+    #ifdef USE_RED
+    return vec3(1, 0, 0);
+    #else
+    return vec3(1, 1, 1);
+    #endif
+}
+
+#endif // HELLO_COMP

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "glm/vec3.hpp"
 #include "glm/mat3x3.hpp"
@@ -39,6 +40,9 @@ private:
     int GetUniformLocation(const std::string& name) const;
 
     static std::string ReadFile(const char* path);
+    static std::string PreprocessSource(const std::stringstream& source, const char* path);
+    static std::string PreprocessSource(const std::stringstream &source, const char *path, std::unordered_set<std::string> &defines);
+
     static unsigned int CompileShader(unsigned int type, const std::string& source);
     static void CheckCompileErrors(unsigned int shader, const std::string& type);
 };

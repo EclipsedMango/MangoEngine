@@ -1,9 +1,12 @@
 
 #include "Shader.h"
 
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include "glad/gl.h"
 
@@ -54,7 +57,6 @@ void Shader::Dispatch(const unsigned int x, const unsigned int y, const unsigned
     Bind();
     glDispatchCompute(x, y, z);
     // Note: You usually need a glMemoryBarrier(...) after this in the main loop
-    // but that depends on what you do next, so we leave it out of here.
 }
 
 void Shader::SetBool(const std::string &name, const bool value) const {
@@ -111,13 +113,114 @@ std::string Shader::ReadFile(const char* path) {
         std::stringstream stream;
         stream << file.rdbuf();
 
+        std::string output = PreprocessSource(stream, path);
+
         file.close();
-        code = stream.str();
+        code = output;
     } catch (std::ifstream::failure&) {
         throw std::runtime_error("Failed to read shader file: " + std::string(path));
     }
 
     return code;
+}
+
+std::string Shader::PreprocessSource(const std::stringstream& source, const char* path) {
+    std::unordered_set<std::string> defines;
+    return PreprocessSource(source, path, defines);
+}
+
+std::string Shader::PreprocessSource(const std::stringstream &source, const char *path, std::unordered_set<std::string> &defines) {
+    std::string output;
+    std::string line;
+    std::istringstream iss(source.str());
+    std::vector<bool> skipStack;
+
+    auto isSkipping = [&] {
+        return std::ranges::any_of(skipStack, [](const bool b) { return b; });
+    };
+
+    int lineNumber = 1;
+    while (std::getline(iss, line)) {
+        std::string trimmed = line;
+        trimmed.erase(0, trimmed.find_first_not_of(" \t"));
+
+        if (trimmed.starts_with("//")) {
+            if (!isSkipping()) {
+                output += line + "\n";
+                lineNumber++;
+            }
+
+            continue;
+        }
+
+        if (trimmed.find("#ifndef") != std::string::npos) {
+            std::string symbol = trimmed.substr(trimmed.find("#ifndef") + 8);
+            symbol.erase(symbol.find_last_not_of(" \t\r\n") + 1);
+            symbol.erase(0, symbol.find_first_not_of(" \t\r\n"));
+            skipStack.push_back(defines.contains(symbol));
+            continue;
+        }
+
+        if (trimmed.find("#ifdef") != std::string::npos) {
+            std::string symbol = trimmed.substr(trimmed.find("#ifdef") + 7);
+            symbol.erase(symbol.find_last_not_of(" \t\r\n") + 1);
+            symbol.erase(0, symbol.find_first_not_of(" \t\r\n"));
+            skipStack.push_back(!defines.contains(symbol));
+            continue;
+        }
+
+        if (trimmed.find("#else") != std::string::npos) {
+            bool outerSkipping = skipStack.size() > 1 && std::any_of(skipStack.begin(), skipStack.end() - 1, [](const bool b) { return b; });
+            if (!outerSkipping) {
+                skipStack.back() = !skipStack.back();
+            }
+
+            continue;
+        }
+
+        if (trimmed.find("#endif") != std::string::npos) {
+            if (!skipStack.empty()) skipStack.pop_back();
+            continue;
+        }
+
+        if (isSkipping()) {
+            continue;
+        }
+
+        if (trimmed.find("#define") != std::string::npos) {
+            std::string symbol = trimmed.substr(trimmed.find("#define") + 8);
+            symbol.erase(symbol.find_last_not_of(" \t\r\n") + 1);
+            symbol.erase(0, symbol.find_first_not_of(" \t\r\n"));
+
+            size_t space = symbol.find_first_of(" \t");
+            if (space != std::string::npos) {
+                symbol = symbol.substr(0, space);
+            }
+
+            defines.insert(symbol);
+            output += line + "\n";
+            lineNumber++;
+            continue;
+        }
+
+        if (trimmed.find("#include") != std::string::npos) {
+            std::string includePath = trimmed.substr(trimmed.find('"') + 1, trimmed.rfind('"') - trimmed.find('"') - 1);
+            std::filesystem::path resolvedPath = std::filesystem::path(path).parent_path() / includePath;
+
+            std::ifstream includeFile(resolvedPath);
+            std::stringstream includeStream;
+            includeStream << includeFile.rdbuf();
+
+            output += PreprocessSource(includeStream, resolvedPath.string().c_str(), defines);
+            output += "#line " + std::to_string(lineNumber + 1) + "\n";
+            continue;
+        }
+
+        output += line + "\n";
+        lineNumber++;
+    }
+
+    return output;
 }
 
 unsigned int Shader::CompileShader(const unsigned int type, const std::string& source) {
