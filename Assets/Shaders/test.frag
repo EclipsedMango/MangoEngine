@@ -77,6 +77,10 @@ vec3 Heatmap(float t) {
     return mix(mid, hot, (t - 0.5) * 2.0);
 }
 
+vec3 ACESFilmic(vec3 x) {
+    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+}
+
 void main() {
     vec3 norm = normalize(v_Normal);
     float viewDepth = -(u_View * vec4(v_FragPos, 1.0)).z;
@@ -188,8 +192,8 @@ void main() {
 
     vec3 ambient = vec3(0.05);
     totalLighting += ambient;
-
-    totalLighting = totalLighting / (totalLighting + vec3(1.0));
+    float exposure = 2.0;
+    totalLighting = ACESFilmic(totalLighting * exposure);
 
     vec4 texColor = texture(u_Textures[0], v_TexCoord);
     FragColor = vec4(totalLighting * texColor.rgb, texColor.a);

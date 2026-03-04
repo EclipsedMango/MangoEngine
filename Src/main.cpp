@@ -104,10 +104,11 @@ int main() {
     object2->AddTexture(texture);
     object3->AddTexture(texture);
 
-    DirectionalLight* directionalLight = new DirectionalLight({0.5f, -1.0f, 0.5f}, {1.0f, 1.0f, 1.0f}, 0.25f);
+    DirectionalLight* directionalLight = new DirectionalLight({0.5f, -1.0f, 0.5f}, {1.0f, 1.0f, 1.0f}, 0.0f);
     RenderApi::AddDirectionalLight(directionalLight);
 
     PointLight* pointLight = new PointLight({0, 1, 0}, {1.0, 0.2, 0.1}, 1.5f);
+    pointLight->SetAttenuation(1.0, 0.22, 0.20);
     RenderApi::AddPointLight(pointLight);
 
     // stress test
@@ -117,7 +118,7 @@ int main() {
     };
 
     constexpr int NUM_OBJECTS = 1000;
-    constexpr int NUM_LIGHTS  = 50;
+    constexpr int NUM_LIGHTS  = 30;
 
     std::vector<Object*> stressObjects;
     std::vector<PointLight*> stressLights;
@@ -133,9 +134,10 @@ int main() {
     for (int i = 0; i < NUM_LIGHTS; i++) {
         PointLight* light = new PointLight(
             { randFloat(-30, 30), randFloat(0, 8), randFloat(-30, 30) },
-            { randFloat(0.5f, 1.0f), randFloat(0.5f, 1.0f), randFloat(0.5, 1.0f) },
+            { randFloat(0.1f, 1.0f), randFloat(0.1f, 1.0f), randFloat(0.1, 1.0f) },
             randFloat(0.1f, 1.0f)
         );
+        light->SetAttenuation(1.0, 0.22, 0.20);
 
         RenderApi::AddPointLight(light);
         stressLights.push_back(light);

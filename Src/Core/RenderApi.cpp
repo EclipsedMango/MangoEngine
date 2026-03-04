@@ -376,7 +376,7 @@ void RenderApi::RunLightCulling() {
 }
 
 float RenderApi::CalculateLightRadius(const glm::vec3 &color, const float intensity, const float constant, float linear, float quadratic) {
-    constexpr float threshold = 0.005f;
+    constexpr float threshold = 0.001f;
 
     const float maxChannel = std::max(std::max(color.r, color.g), color.b);
     const float maxBrightness = maxChannel * intensity;
