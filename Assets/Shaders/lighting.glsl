@@ -79,7 +79,17 @@ float ShadowCalculation(vec4 fragPosLightSpace, sampler2D shadowMap, vec3 norm, 
     // bias to avoid shadow acne
     float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.0005);
 
-    return currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for(int x = -1; x <= 1; ++x) {
+        for(int y = -1; y <= 1; ++y) {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 12.0;
+
+    return shadow;
 }
 
 vec3 CalculateLighting(vec3 norm, vec3 fragPos, LightGrid grid) {
