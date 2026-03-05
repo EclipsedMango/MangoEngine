@@ -20,7 +20,7 @@ public:
     void SetTitle(const std::string& title);
     void SetSize(glm::ivec2 size);
 
-    [[nodiscard]] glm::ivec2 GetSize() const { return m_Size; }
+    [[nodiscard]] glm::ivec2 GetSize() const;
     [[nodiscard]] std::string GetTitle() const { return m_Title; }
 
     [[nodiscard]] SDL_Window* GetSDLWindow() const { return m_Window; }

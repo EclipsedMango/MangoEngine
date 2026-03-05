@@ -16,6 +16,7 @@
 #include "../Lights/DirectionalLight.h"
 #include "../Lights/PointLight.h"
 #include "../Lights/SpotLight.h"
+#include "../Renderer/ShadowMap.h"
 
 class RenderApi {
 public:
@@ -52,6 +53,7 @@ public:
     static void RebuildClusters();
     static void RunLightCulling();
     static float CalculateLightRadius(const glm::vec3& color, float intensity, float constant, float linear, float quadratic);
+    static void FitShadowMapToScene(ShadowMap* shadowMap);
 
     static VertexArray* CreateBuffer(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 
@@ -66,6 +68,8 @@ private:
     static std::vector<Window*> m_windows;
 
     static std::vector<DirectionalLight*> m_directionalLights;
+    static std::vector<ShadowMap*> m_shadowMaps;
+
     static std::vector<PointLight*> m_pointLights;
     static std::vector<SpotLight*> m_spotLights;
 
@@ -86,6 +90,7 @@ private:
     static Shader* m_clusterShader;
     static Shader* m_cullShader;
     static Shader* m_depthShader;
+    static Shader* m_shadowDepthShader;
 
     static std::vector<const Object*> m_renderQueue;
 

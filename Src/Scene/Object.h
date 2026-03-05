@@ -12,6 +12,7 @@ public:
     Transform transform;
 
     Object(Mesh* mesh, Shader* shader);
+    ~Object() = default;
 
     [[nodiscard]] Mesh* GetMesh() const { return m_mesh; }
     [[nodiscard]] Shader* GetShader() const { return m_shader; }

@@ -84,35 +84,44 @@ int main() {
         }
     );
 
+    std::vector<Object*> stressObjects;
+    std::vector<PointLight*> stressLights;
+
     auto texture = std::make_shared<Texture>("../Assets/Textures/face.png");
     Shader* shader = new Shader("../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag");
 
-    Shader* shader2 = new Shader("../Assets/Shaders/new_test.vert", "../Assets/Shaders/new_test.frag");
+    // const Shader* shader2 = new Shader("../Assets/Shaders/new_test.vert", "../Assets/Shaders/new_test.frag");
 
     const auto gltfObjects = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
 
     Object* object = new Object(mesh, shader);
-    object->transform.Scale = {0.1, 0.5, 0.1};
+    object->transform.Position = {0, -5, 0};
+    object->transform.Scale = {100, 0.5, 100};
     object->GetMaterial().SetDiffuse(texture);
+    stressObjects.push_back(object);
 
     Object* object1 = new Object(mesh, shader);
     object1->transform.Position = {0, 3, -3};
     object1->GetMaterial().SetDiffuse(texture);
+    stressObjects.push_back(object1);
 
     Object* object2 = new Object(mesh, shader);
     object2->transform.Position = {-1, 2, 2};
     object2->GetMaterial().SetDiffuse(texture);
+    stressObjects.push_back(object2);
 
     Object* object3 = new Object(mesh, shader);
     object3->transform.Position = {3, 1, 1};
     object3->GetMaterial().SetDiffuse(texture);
+    stressObjects.push_back(object3);
 
-    DirectionalLight* directionalLight = new DirectionalLight({0.5f, -1.0f, 0.5f}, {1.0f, 1.0f, 1.0f}, 0.0f);
+    DirectionalLight* directionalLight = new DirectionalLight({0.5f, -1.0f, 0.5f}, {1.0f, 1.0f, 1.0f}, 0.05f);
     RenderApi::AddDirectionalLight(directionalLight);
 
     PointLight* pointLight = new PointLight({0, 1, 0}, {1.0, 0.2, 0.1}, 1.5f);
     pointLight->SetAttenuation(1.0, 0.22, 0.20);
     RenderApi::AddPointLight(pointLight);
+    stressLights.push_back(pointLight);
 
     // stress test
     std::mt19937 rng(42);
@@ -121,10 +130,7 @@ int main() {
     };
 
     constexpr int NUM_OBJECTS = 1000;
-    constexpr int NUM_LIGHTS  = 25;
-
-    std::vector<Object*> stressObjects;
-    std::vector<PointLight*> stressLights;
+    constexpr int NUM_LIGHTS  = 30;
 
     for (int i = 0; i < NUM_OBJECTS; i++) {
         Object* obj = new Object(mesh, shader);
@@ -233,14 +239,11 @@ int main() {
     }
 
     // SDL_GL_DeleteContext(glContext);
+
     delete mesh;
-    delete shader;
-    delete object;
-    delete object1;
-    delete object2;
-    delete object3;
     delete directionalLight;
-    delete pointLight;
+    delete camera;
+    delete shader;
 
     for (auto* obj : stressObjects) delete obj;
     for (auto* light : stressLights) {
@@ -249,6 +252,8 @@ int main() {
     }
 
     for (auto* coolobj : gltfObjects) delete coolobj;
+
+    texture.reset();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();

@@ -17,6 +17,7 @@ UniformBuffer* RenderApi::m_cameraUbo {};
 std::vector<Window*> RenderApi::m_windows {};
 
 std::vector<DirectionalLight*> RenderApi::m_directionalLights;
+std::vector<ShadowMap*> RenderApi::m_shadowMaps;
 std::vector<PointLight*> RenderApi::m_pointLights;
 std::vector<SpotLight*> RenderApi::m_spotLights;
 
@@ -32,6 +33,7 @@ ShaderStorageBuffer* RenderApi::m_globalCountSsbo = nullptr;
 Shader* RenderApi::m_clusterShader = nullptr;
 Shader* RenderApi::m_cullShader = nullptr;
 Shader* RenderApi::m_depthShader = nullptr;
+Shader* RenderApi::m_shadowDepthShader = nullptr;
 
 std::vector<const Object*> RenderApi::m_renderQueue {};
 
@@ -57,7 +59,7 @@ Window* RenderApi::CreateWindow(const char* title, const glm::vec2 size, const U
     window->MakeCurrent();
 
     if (!m_gladInitialized) {
-        if (!gladLoadGL(reinterpret_cast<GLADloadfunc>(SDL_GL_GetProcAddress))) {
+        if (!gladLoadGL(SDL_GL_GetProcAddress)) {
             throw std::runtime_error("Failed to initialize Glad");
         }
 
@@ -113,11 +115,11 @@ void RenderApi::ClearColour(const glm::vec4 &colour) {
 
 void RenderApi::HandleResizeEvent(const SDL_Event &event) {
     if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-        const int width = event.window.data1;
-        const int height = event.window.data2;
-        glViewport(0, 0, width, height);
+        int w, h;
+        SDL_GetWindowSizeInPixels(m_windows[0]->GetSDLWindow(), &w, &h);
+        glViewport(0, 0, w, h);
         if (m_activeCamera) {
-            m_activeCamera->SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
+            m_activeCamera->SetAspectRatio(static_cast<float>(w) / static_cast<float>(h));
             RebuildClusters();
         }
     }
@@ -155,10 +157,20 @@ void RenderApi::AddDirectionalLight(DirectionalLight *light) {
     }
 
     m_directionalLights.push_back(light);
+
+    ShadowMap* shadowMap = new ShadowMap(2048, 2048);
+    shadowMap->SetLightDirection(light->GetDirection());
+    m_shadowMaps.push_back(shadowMap);
 }
 
 void RenderApi::RemoveDirectionalLight(DirectionalLight *light) {
-    std::erase(m_directionalLights, light);
+    const auto it = std::ranges::find(m_directionalLights, light);
+    if (it == m_directionalLights.end()) return;
+
+    const size_t index = std::distance(m_directionalLights.begin(), it);
+    delete m_shadowMaps[index];
+    m_shadowMaps.erase(m_shadowMaps.begin() + index);
+    m_directionalLights.erase(it);
 }
 
 void RenderApi::AddPointLight(PointLight *light) {
@@ -189,6 +201,33 @@ void RenderApi::Flush() {
     UploadCameraData();
     UploadLightData();
 
+    // shadow pass
+    glDisable(GL_CULL_FACE); // avoid peter panning on thin geometry
+    for (size_t i = 0; i < m_directionalLights.size(); i++) {
+        m_shadowMaps[i]->SetLightDirection(m_directionalLights[i]->GetDirection());
+        FitShadowMapToScene(m_shadowMaps[i]);
+        m_shadowMaps[i]->BeginRender();
+
+        m_shadowDepthShader->Bind();
+        m_shadowDepthShader->SetMatrix4("u_LightSpaceMatrix", m_shadowMaps[i]->GetLightSpaceMatrix());
+
+        for (const Object* object : m_renderQueue) {
+            if (!object->GetMaterial().GetCastShadows()) continue;
+            m_shadowDepthShader->SetMatrix4("u_Model", object->transform.GetModelMatrix());
+            object->GetMesh()->GetBuffer()->Bind();
+            glDrawElements(GL_TRIANGLES, object->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
+        }
+
+        ShadowMap::EndRender();
+    }
+    glEnable(GL_CULL_FACE);
+
+    // restore viewport to window size
+    if (!m_windows.empty()) {
+        const glm::vec2 size = m_windows[0]->GetSize();
+        glViewport(0, 0, static_cast<int>(size.x), static_cast<int>(size.y));
+    }
+
     // z-prepass
     BeginZPrepass();
     for (const Object* object : m_renderQueue) {
@@ -198,6 +237,11 @@ void RenderApi::Flush() {
 
     // light culling
     RunLightCulling();
+
+    for (size_t i = 0; i < m_shadowMaps.size(); i++) {
+        glActiveTexture(GL_TEXTURE7 + i);
+        glBindTexture(GL_TEXTURE_2D, m_shadowMaps[i]->GetDepthTexture());
+    }
 
     // main pass
     for (const Object* object : m_renderQueue) {
@@ -209,6 +253,7 @@ void RenderApi::Flush() {
 
 void RenderApi::InitDepthPass() {
     m_depthShader = new Shader("../Assets/Shaders/depth_only.vert", "../Assets/Shaders/depth_only.frag");
+    m_shadowDepthShader = new Shader("../Assets/Shaders/shadow_depth.vert", "../Assets/Shaders/shadow_depth.frag");
 }
 
 void RenderApi::DrawObjectDepth(const Object *object) {
@@ -427,6 +472,22 @@ float RenderApi::CalculateLightRadius(const glm::vec3 &color, const float intens
     return val > 0.0f ? std::sqrt(val) : 0.0f;
 }
 
+void RenderApi::FitShadowMapToScene(ShadowMap *shadowMap) {
+    glm::vec3 minBounds(FLT_MAX);
+    glm::vec3 maxBounds(-FLT_MAX);
+
+    for (const Object* obj : m_renderQueue) {
+        if (!obj->GetMaterial().GetCastShadows()) continue;
+        const glm::vec3 pos = obj->transform.Position;
+        minBounds = glm::min(minBounds, pos);
+        maxBounds = glm::max(maxBounds, pos);
+    }
+
+    const glm::vec3 center = (minBounds + maxBounds) * 0.5f;
+    const float size = glm::length(maxBounds - minBounds) * 0.5f;
+    shadowMap->SetProjectionBounds(size, 0.1f, size * 4.0f, center);
+}
+
 void RenderApi::DrawMesh(const Mesh &mesh, const Shader& shader) {
     if (!mesh.IsUploaded()) {
         throw std::runtime_error("Mesh has not been uploaded to the GPU");
@@ -448,6 +509,11 @@ void RenderApi::DrawObject(const Object* object) {
 
     const Shader* shader = object->GetShader();
     shader->Bind();
+    for (size_t i = 0; i < m_shadowMaps.size(); i++) {
+        shader->SetMatrix4("u_LightSpaceMatrix[" + std::to_string(i) + "]", m_shadowMaps[i]->GetLightSpaceMatrix());
+        shader->SetInt("u_ShadowMap[" + std::to_string(i) + "]", 7 + i);
+    }
+
     shader->SetMatrix4("u_Model", object->transform.GetModelMatrix());
     shader->SetMatrix4("u_NormalMatrix", glm::transpose(glm::inverse(object->transform.GetModelMatrix())));
 

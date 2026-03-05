@@ -1,6 +1,9 @@
 #ifndef LIGHTING_GLSL
 #define LIGHTING_GLSL
 
+uniform sampler2D u_ShadowMap[4];
+uniform mat4 u_LightSpaceMatrix[4];
+
 struct DirectionalLight {
     vec4 direction;
     vec4 color;
@@ -60,13 +63,36 @@ vec3 ACESFilmic(vec3 x) {
     return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
 }
 
+float ShadowCalculation(vec4 fragPosLightSpace, sampler2D shadowMap, vec3 norm, vec3 lightDir) {
+    // perspective divide (not needed for ortho but good practice)
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+    // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+
+    // outside light frustum = no shadow
+    if (projCoords.z > 1.0) return 0.0;
+
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    float currentDepth = projCoords.z;
+
+    // bias to avoid shadow acne
+    float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.0005);
+
+    return currentDepth - bias > closestDepth ? 1.0 : 0.0;
+}
+
 vec3 CalculateLighting(vec3 norm, vec3 fragPos, LightGrid grid) {
     vec3 totalLighting = vec3(0.0);
 
     for (int i = 0; i < u_LightCounts.x; i++) {
         vec3 lightDir = normalize(-u_DirLights[i].direction.xyz);
         float diff = max(dot(norm, lightDir), 0.0);
-        totalLighting += diff * u_DirLights[i].color.rgb * u_DirLights[i].color.w;
+
+        vec4 fragPosLightSpace = u_LightSpaceMatrix[i] * vec4(fragPos, 1.0);
+        float shadow = ShadowCalculation(fragPosLightSpace, u_ShadowMap[i], norm, lightDir);
+
+        totalLighting += (1.0 - shadow) * diff * u_DirLights[i].color.rgb * u_DirLights[i].color.w;
     }
 
     for (uint i = 0; i < grid.pointCount; i++) {

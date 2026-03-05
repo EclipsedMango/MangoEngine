@@ -45,3 +45,9 @@ void Window::SetSize(const glm::ivec2 size) {
     m_Size = size;
     SDL_SetWindowSize(m_Window, size.x, size.y);
 }
+
+glm::ivec2 Window::GetSize() const {
+    int w, h;
+    SDL_GetWindowSizeInPixels(m_Window, &w, &h);
+    return { w, h };
+}
