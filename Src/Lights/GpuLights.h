@@ -17,6 +17,19 @@ struct GPUPointLight {
     glm::vec4 attenuation;  // x=constant, y=linear, z=quadratic
 };
 
+struct GPUPointShadowMeta {
+    uint32_t slot;    // 0..MAX_SHADOWED_POINT_LIGHTS-1, or 0xFFFFFFFF = no shadow
+    float    farPlane; // usually light radius
+    float    bias;     // tweakable
+    float    pad;
+};
+
+// for point lights
+struct ShadowCandidate {
+    uint32_t index;
+    float score;
+};
+
 // align with std430 layout in shaders
 struct GPUSpotLight {
     glm::vec4 position;     // w = unused

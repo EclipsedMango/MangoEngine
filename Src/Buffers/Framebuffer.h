@@ -3,9 +3,10 @@
 #include <cstdint>
 
 enum class FramebufferType {
-    ColorDepth,  // color + depth, for post-processing etc
-    DepthOnly,   // shadow maps
-    DepthArray   // depth texture for csm
+    ColorDepth,      // color + depth, for post-processing etc
+    DepthOnly,       // shadow maps
+    DepthArray,      // depth texture for csm
+    DepthCubeArray   // array for point light shadows
 };
 
 class Framebuffer {

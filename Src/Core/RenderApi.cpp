@@ -19,7 +19,10 @@ std::vector<Window*> RenderApi::m_windows {};
 
 std::vector<DirectionalLight*> RenderApi::m_directionalLights;
 std::vector<CascadedShadowMap*> RenderApi::m_cascadedShadowMaps;
+
 std::vector<PointLight*> RenderApi::m_pointLights;
+PointLightShadowMap* RenderApi::m_pointShadowMap;
+
 std::vector<SpotLight*> RenderApi::m_spotLights;
 
 UniformBuffer* RenderApi::m_globalLightUbo = nullptr;
@@ -31,10 +34,13 @@ ShaderStorageBuffer* RenderApi::m_lightIndexSsbo = nullptr;
 ShaderStorageBuffer* RenderApi::m_lightGridSsbo = nullptr;
 ShaderStorageBuffer* RenderApi::m_globalCountSsbo = nullptr;
 
+ShaderStorageBuffer* RenderApi::m_pointShadowMetaSsbo = nullptr;
+
 Shader* RenderApi::m_clusterShader = nullptr;
 Shader* RenderApi::m_cullShader = nullptr;
 Shader* RenderApi::m_depthShader = nullptr;
 Shader* RenderApi::m_shadowDepthShader = nullptr;
+Shader* RenderApi::m_pointShadowDepthShader = nullptr;
 
 std::vector<const Object*> RenderApi::m_renderQueue {};
 
@@ -47,6 +53,7 @@ uint32_t RenderApi::m_triangleCount = 0;
 uint32_t RenderApi::m_submittedCount = 0;
 int RenderApi::m_debugMode = 0;
 int RenderApi::m_debugCascade = 0;
+std::vector<ShadowedPointLightDebug> RenderApi::m_shadowedPointLightsDebug;
 
 constexpr uint32_t MAX_TEXTURE_SLOTS = 16;
 constexpr uint32_t MAX_DIR_LIGHTS = 4;
@@ -167,7 +174,7 @@ void RenderApi::AddDirectionalLight(DirectionalLight *light) {
     m_directionalLights.push_back(light);
 
     // one csm per dir light, 4 cascades each 2048 by 2048
-    auto* csm = new CascadedShadowMap(2048, 2048, light->GetDirection());
+    auto* csm = new CascadedShadowMap(CSM_RESOLUTION, CSM_RESOLUTION, light->GetDirection());
     m_cascadedShadowMaps.push_back(csm);
 }
 
@@ -216,41 +223,8 @@ void RenderApi::Flush() {
     UploadLightData();
 
     // shadow pass
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
-    for (size_t i = 0; i < m_directionalLights.size(); i++) {
-        CascadedShadowMap* csm = m_cascadedShadowMaps[i];
-        csm->Update(*m_activeCamera);
-
-        for (int c = 0; c < CascadedShadowMap::NUM_CASCADES; c++) {
-            csm->BeginRender(c);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glDisable(GL_CULL_FACE);
-
-            m_shadowDepthShader->Bind();
-            m_shadowDepthShader->SetMatrix4("u_LightSpaceMatrix", csm->GetLightSpaceMatrix(c));
-
-            for (const Object* object : m_renderQueue) {
-                if (!object->GetMaterial().GetCastShadows()) continue;
-                m_shadowDepthShader->SetMatrix4("u_Model", object->transform.GetModelMatrix());
-                object->GetMesh()->GetBuffer()->Bind();
-                glDrawElements(GL_TRIANGLES, object->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
-                m_shadowDrawCallCount++;
-            }
-
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
-            csm->EndRender();
-        }
-    }
-
-    // restore viewport to window size
-    if (!m_windows.empty()) {
-        const glm::vec2 size = m_windows[0]->GetSize();
-        glViewport(0, 0, static_cast<int>(size.x), static_cast<int>(size.y));
-    }
+    RenderDirectionalShadows();
+    RenderPointLightShadows();
 
     // z-prepass
     BeginZPrepass();
@@ -285,6 +259,8 @@ void RenderApi::Flush() {
             continue;
         }
 
+        glActiveTexture(GL_TEXTURE15);
+        glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, m_pointShadowMap->GetTexture());
         DrawObject(object);
     }
 
@@ -294,6 +270,8 @@ void RenderApi::Flush() {
 void RenderApi::InitDepthPass() {
     m_depthShader = new Shader("../Assets/Shaders/depth_only.vert", "../Assets/Shaders/depth_only.frag");
     m_shadowDepthShader = new Shader("../Assets/Shaders/shadow_depth.vert", "../Assets/Shaders/shadow_depth.frag");
+    m_pointShadowMap = new PointLightShadowMap(POINT_SHADOW_RES, MAX_SHADOWED_POINT_LIGHTS);
+    m_pointShadowDepthShader = new Shader("../Assets/Shaders/point_shadow_depth.vert", "../Assets/Shaders/point_shadow_depth.frag");
 }
 
 void RenderApi::DrawObjectDepth(const Object *object) {
@@ -379,14 +357,7 @@ void RenderApi::UploadLightData() {
         for (auto* l : m_pointLights) {
             GPUPointLight gl {};
 
-            float radius = CalculateLightRadius(
-                l->GetColor(),
-                l->GetIntensity(),
-                l->GetConstant(),
-                l->GetLinear(),
-                l->GetQuadratic()
-            );
-
+            float radius = l->GetRadius();
             gl.position = glm::vec4(l->GetPosition(), radius);
             gl.color = glm::vec4(l->GetColor(), l->GetIntensity());
             gl.attenuation = glm::vec4(l->GetConstant(), l->GetLinear(), l->GetQuadratic(), 0.0f);
@@ -489,27 +460,197 @@ void RenderApi::RunLightCulling() {
 }
 
 float RenderApi::CalculateLightRadius(const glm::vec3 &color, const float intensity, const float constant, float linear, float quadratic) {
-    constexpr float threshold = 0.001f;
+    constexpr float threshold = 0.01f;
 
-    const float maxChannel = std::max(std::max(color.r, color.g), color.b);
+    const float maxChannel = std::max({color.r, color.g, color.b});
     const float maxBrightness = maxChannel * intensity;
-
     if (maxBrightness <= 0.0f) {
         return 0.0f;
     }
 
-    // if quadratic is pretty much zero, solve linear: I / (C + L*d) = T
-    if (quadratic < 0.0001f) {
-        if (linear < 0.0001f) {
-            return 1000.0f;
-        }
+    const float target = maxBrightness / threshold; // desired denominator size
 
-        return (maxBrightness / threshold - constant) / linear;
+    // Solve: constant + linear*d + quadratic*d^2 = target
+    // => quadratic*d^2 + linear*d + (constant - target) = 0
+    const float a = quadratic;
+    const float b = linear;
+    const float c = constant - target;
+
+    if (std::abs(a) < 1e-6f) {
+        if (std::abs(b) < 1e-6f) return 1000.0f;
+        return std::max(0.0f, -c / b);
     }
 
-    // solve quadratic: I / (C + L*d + Q*d^2) = T
-    const float val = (maxBrightness / threshold - constant) / quadratic;
-    return val > 0.0f ? std::sqrt(val) : 0.0f;
+    const float disc = b*b - 4.0f*a*c;
+    if (disc < 0.0f) return 0.0f;
+
+    return std::max(0.0f, (-b + std::sqrt(disc)) / (2.0f * a));
+}
+
+void RenderApi::RenderDirectionalShadows() {
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    m_shadowDepthShader->Bind();
+    for (size_t i = 0; i < m_directionalLights.size(); i++) {
+        CascadedShadowMap* csm = m_cascadedShadowMaps[i];
+        csm->Update(*m_activeCamera);
+
+        for (int c = 0; c < CascadedShadowMap::NUM_CASCADES; c++) {
+            csm->BeginRender(c);
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            m_shadowDepthShader->SetMatrix4("u_LightSpaceMatrix", csm->GetLightSpaceMatrix(c));
+
+            for (const Object* object : m_renderQueue) {
+                if (!object->GetMaterial().GetCastShadows()) {
+                    continue;
+                }
+
+                // TODO: for two sided materials like cloth/foliage disable cull just for them.
+
+                m_shadowDepthShader->SetMatrix4("u_Model", object->transform.GetModelMatrix());
+                object->GetMesh()->GetBuffer()->Bind();
+                glDrawElements(GL_TRIANGLES, object->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
+                m_shadowDrawCallCount++;
+            }
+
+            CascadedShadowMap::EndRender();
+        }
+    }
+
+    glCullFace(GL_BACK);
+
+    if (!m_windows.empty()) {
+        const glm::vec2 size = m_windows[0]->GetSize();
+        glViewport(0, 0, static_cast<int>(size.x), static_cast<int>(size.y));
+    }
+}
+
+void RenderApi::EnsurePointShadowMetaBuffer(size_t pointLightCount) {
+    const size_t bytes = pointLightCount * sizeof(GPUPointShadowMeta);
+    if (!m_pointShadowMetaSsbo || m_pointShadowMetaSsbo->GetSize() < bytes) {
+        delete m_pointShadowMetaSsbo;
+        m_pointShadowMetaSsbo = new ShaderStorageBuffer(bytes, 8);
+    }
+}
+
+float RenderApi::ScorePointLight(const PointLight *l, const Camera *cam) {
+    const float d2 = glm::length(l->GetPosition() - cam->GetPosition());
+    // prefer closer + brighter
+    return d2 / glm::max(l->GetIntensity(), 0.001f);
+}
+
+void RenderApi::BuildPointShadowFaceMatrices(const glm::vec3 &lightPos, float nearPlane, float farPlane, glm::mat4 outVP[6]) {
+    const glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
+
+    const glm::vec3 dirs[6] = {
+        { 1, 0, 0}, {-1, 0, 0}, { 0, 1, 0}, { 0,-1, 0}, { 0, 0, 1}, { 0, 0,-1}
+    };
+
+    const glm::vec3 ups[6] = {
+        { 0,-1, 0}, { 0,-1, 0}, { 0, 0, 1}, { 0, 0,-1}, { 0,-1, 0}, { 0,-1, 0}
+    };
+
+    for (int i = 0; i < 6; i++) {
+        glm::mat4 view = glm::lookAt(lightPos, lightPos + dirs[i], ups[i]);
+        outVP[i] = proj * view;
+    }
+}
+
+void RenderApi::RenderPointLightShadows() {
+    if (!m_pointShadowMap || !m_pointShadowDepthShader) return;
+    if (!m_activeCamera) return;
+    if (m_pointLights.empty()) return;
+
+    EnsurePointShadowMetaBuffer(m_pointLights.size());
+
+    // default: no shadows
+    std::vector<GPUPointShadowMeta> meta(m_pointLights.size());
+    for (auto&[slot, farPlane, bias, pad] : meta) {
+        slot = 0xFFFFFFFFu;
+        farPlane = 1.0f;
+        bias = 0.02f;
+        pad = 0.0f;
+    }
+
+    std::vector<ShadowCandidate> candidates;
+    candidates.reserve(m_pointLights.size());
+    for (uint32_t i = 0; i < static_cast<uint32_t>(m_pointLights.size()); i++) {
+        candidates.push_back({ i, ScorePointLight(m_pointLights[i], m_activeCamera) });
+    }
+    std::ranges::sort(candidates, [](auto& a, auto& b){ return a.score < b.score; });
+
+    const uint32_t shadowCount = static_cast<uint32_t>(std::min<size_t>(candidates.size(), MAX_SHADOWED_POINT_LIGHTS));
+
+    m_shadowedPointLightsDebug.clear();
+    m_shadowedPointLightsDebug.reserve(shadowCount);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    m_pointShadowDepthShader->Bind();
+
+    for (uint32_t slot = 0; slot < shadowCount; slot++) {
+        const uint32_t lightIndex = candidates[slot].index;
+        const PointLight* L = m_pointLights[lightIndex];
+
+        const float farPlane = glm::max(L->GetRadius(), 0.5f);
+
+        // debug stuff
+        const float radius = L->GetRadius();
+        ShadowedPointLightDebug dbg{};
+        dbg.lightIndex = lightIndex;
+        dbg.slot = slot;
+        dbg.score = candidates[slot].score;
+        dbg.radius = radius;
+        dbg.farPlane = farPlane;
+        dbg.position = L->GetPosition();
+        dbg.distanceToCamera = glm::length(L->GetPosition() - m_activeCamera->GetPosition());
+        m_shadowedPointLightsDebug.push_back(dbg);
+
+        meta[lightIndex].slot = slot;
+        meta[lightIndex].farPlane = farPlane;
+
+        glm::mat4 vp[6];
+        BuildPointShadowFaceMatrices(L->GetPosition(), 0.1f, farPlane, vp);
+
+        m_pointShadowDepthShader->SetVector3("u_LightPos", L->GetPosition());
+        m_pointShadowDepthShader->SetFloat("u_FarPlane", farPlane);
+
+        for (uint32_t face = 0; face < 6; face++) {
+            m_pointShadowMap->BeginFace(slot, face);
+
+            m_pointShadowDepthShader->SetMatrix4("u_LightVP", vp[face]);
+
+            for (const Object* object : m_renderQueue) {
+                if (!object->GetMaterial().GetCastShadows()) continue;
+
+                m_pointShadowDepthShader->SetMatrix4("u_Model", object->transform.GetModelMatrix());
+                object->GetMesh()->GetBuffer()->Bind();
+                glDrawElements(GL_TRIANGLES, object->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
+                m_shadowDrawCallCount++;
+            }
+        }
+    }
+
+    PointLightShadowMap::End();
+
+    m_pointShadowMetaSsbo->SetData(meta.data(), meta.size() * sizeof(GPUPointShadowMeta), 0);
+    glCullFace(GL_BACK);
+
+    if (!m_windows.empty()) {
+        const glm::vec2 size = m_windows[0]->GetSize();
+        glViewport(0, 0, static_cast<int>(size.x), static_cast<int>(size.y));
+    }
 }
 
 void RenderApi::DrawMesh(const Mesh &mesh, const Shader& shader) {
@@ -552,6 +693,8 @@ void RenderApi::DrawObject(const Object* object) {
         shader->SetInt("u_ShadowMap", 7 + static_cast<int>(i));
         shader->SetInt("u_CascadeCount", CascadedShadowMap::NUM_CASCADES);
     }
+
+    shader->SetInt("u_PointShadowMap", 15);
 
     shader->SetMatrix4("u_Model", object->transform.GetModelMatrix());
     shader->SetMatrix4("u_NormalMatrix", glm::transpose(glm::inverse(object->transform.GetModelMatrix())));

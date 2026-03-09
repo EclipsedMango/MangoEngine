@@ -13,6 +13,8 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "Renderer/GltfLoader.h"
 
+static void ShowPointShadowDebugUI();
+
 int main() {
     RenderApi::Init();
     Window* window = RenderApi::CreateWindow("Mango", {500, 500}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
@@ -114,10 +116,10 @@ int main() {
     object3->GetMaterial().SetDiffuse(texture);
     stressObjects.push_back(object3);
 
-    DirectionalLight* directionalLight = new DirectionalLight({0.5f, -1.0f, 0.5f}, {1.0f, 1.0f, 1.0f}, 0.1f);
+    DirectionalLight* directionalLight = new DirectionalLight({0.5f, -1.0f, 0.5f}, {1.0f, 1.0f, 1.0f}, 0.0f);
     RenderApi::AddDirectionalLight(directionalLight);
 
-    PointLight* pointLight = new PointLight({0, 1, 0}, {1.0, 0.2, 0.1}, 1.5f);
+    PointLight* pointLight = new PointLight({-5, 2, 0}, {1.0, 0.2, 0.1}, 1.5f, 15.0f);
     pointLight->SetAttenuation(1.0, 0.22, 0.20);
     RenderApi::AddPointLight(pointLight);
     stressLights.push_back(pointLight);
@@ -128,8 +130,8 @@ int main() {
         return std::uniform_real_distribution(min, max)(rng);
     };
 
-    constexpr int NUM_OBJECTS = 250;
-    constexpr int NUM_LIGHTS  = 30;
+    constexpr int NUM_OBJECTS = 50;
+    constexpr int NUM_LIGHTS  = 10;
 
     for (int i = 0; i < NUM_OBJECTS; i++) {
         Object* obj = new Object(mesh, shader);
@@ -144,7 +146,8 @@ int main() {
             { randFloat(-30, 30), randFloat(0, 8), randFloat(-30, 30) },
             // { 0, 1, 0 },
             { randFloat(0.1f, 1.0f), randFloat(0.1f, 1.0f), randFloat(0.1, 1.0f) },
-            randFloat(0.1f, 1.0f)
+            randFloat(0.1f, 1.0f),
+            randFloat(8.0f, 20.0f)
         );
         light->SetAttenuation(1.0, 0.22, 0.20);
 
@@ -170,6 +173,8 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
+
+        ShowPointShadowDebugUI();
 
         ImGui::Begin("Renderer");
 
@@ -326,4 +331,50 @@ int main() {
     ImGui::DestroyContext();
     SDL_Quit();
     return 0;
+}
+
+static void ShowPointShadowDebugUI() {
+    if (!ImGui::Begin("Point Light Shadows")) {
+        ImGui::End();
+        return;
+    }
+
+    const uint32_t totalPoint = RenderApi::GetPointLightCount();
+    const uint32_t maxShadow  = RenderApi::GetMaxShadowedPointLights();
+    const uint32_t shadowed   = RenderApi::GetShadowedPointLightCount();
+
+    ImGui::Text("Total point lights:        %u", totalPoint);
+    ImGui::Text("Max shadowed point lights: %u", maxShadow);
+    ImGui::Text("Shadowed this frame:       %u", shadowed);
+    ImGui::Text("Shadow faces rendered:     %u", shadowed * 6u);
+
+    ImGui::Separator();
+
+    const auto& dbg = RenderApi::GetShadowedPointLightsDebug();
+    if (ImGui::BeginTable("shadowed_point_lights", 7, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 240))) {
+        ImGui::TableSetupColumn("Slot");
+        ImGui::TableSetupColumn("LightIdx");
+        ImGui::TableSetupColumn("Score");
+        ImGui::TableSetupColumn("Radius");
+        ImGui::TableSetupColumn("FarPlane");
+        ImGui::TableSetupColumn("DistToCam");
+        ImGui::TableSetupColumn("Pos");
+        ImGui::TableHeadersRow();
+
+        for (const auto& l : dbg) {
+            ImGui::TableNextRow();
+
+            ImGui::TableSetColumnIndex(0); ImGui::Text("%u", l.slot);
+            ImGui::TableSetColumnIndex(1); ImGui::Text("%u", l.lightIndex);
+            ImGui::TableSetColumnIndex(2); ImGui::Text("%.3f", l.score);
+            ImGui::TableSetColumnIndex(3); ImGui::Text("%.2f", l.radius);
+            ImGui::TableSetColumnIndex(4); ImGui::Text("%.2f", l.farPlane);
+            ImGui::TableSetColumnIndex(5); ImGui::Text("%.2f", l.distanceToCamera);
+            ImGui::TableSetColumnIndex(6); ImGui::Text("(%.1f, %.1f, %.1f)", l.position.x, l.position.y, l.position.z);
+        }
+
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
 }

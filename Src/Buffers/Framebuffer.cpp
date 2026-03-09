@@ -29,6 +29,25 @@ void Framebuffer::Create() {
         // Don’t attach a specific layer here; we attach the layer per-cascade in BindLayer().
         glNamedFramebufferDrawBuffer(m_fbo, GL_NONE);
         glNamedFramebufferReadBuffer(m_fbo, GL_NONE);
+    } else if (m_type == FramebufferType::DepthCubeArray) {
+        glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &m_depthAttachment);
+
+        glTextureStorage3D(m_depthAttachment, 1, GL_DEPTH_COMPONENT32F, m_width, m_height, m_layers);
+
+        glTextureParameteri(m_depthAttachment, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(m_depthAttachment, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        glTextureParameteri(m_depthAttachment, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+
+        glNamedFramebufferDrawBuffer(m_fbo, GL_NONE);
+        glNamedFramebufferReadBuffer(m_fbo, GL_NONE);
+
+        // Don’t attach a specific layer here; we attach the layer per-cascade in BindLayer().
+
     } else if (m_type == FramebufferType::ColorDepth) {
         // color attachment
         glCreateTextures(GL_TEXTURE_2D, 1, &m_colorAttachment);
@@ -62,7 +81,7 @@ void Framebuffer::Create() {
     }
 
     // skip framebuffer completeness for deptharray
-    if (m_type != FramebufferType::DepthArray) {
+    if (m_type != FramebufferType::DepthArray && m_type != FramebufferType::DepthCubeArray) {
         if (glCheckNamedFramebufferStatus(m_fbo, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             throw std::runtime_error("Framebuffer is not complete");
         }

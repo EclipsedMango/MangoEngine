@@ -7,13 +7,16 @@
 class PointLight {
 public:
     PointLight(glm::vec3 position, glm::vec3 color, float intensity);
+    PointLight(glm::vec3 position, glm::vec3 color, float intensity, float radius);
 
     void SetPosition(const glm::vec3 position) { m_position = position; }
+    void SetRadius(const float radius) { m_radius = radius; }
     void SetColor(const glm::vec3 color) { m_color = color; }
     void SetIntensity(const float intensity) { m_intensity = intensity; }
     void SetAttenuation(float constant, float linear, float quadratic);
 
     [[nodiscard]] glm::vec3 GetPosition() const { return m_position; }
+    [[nodiscard]] float GetRadius() const { return m_radius; }
     [[nodiscard]] glm::vec3 GetColor() const { return m_color; }
     [[nodiscard]] float GetIntensity() const { return m_intensity; }
 
@@ -24,7 +27,9 @@ public:
 private:
     glm::vec3 m_position{};
     glm::vec3 m_color{};
-    float m_intensity;
+    float m_intensity = 1.0f;
+
+    float m_radius = 8.0f;
 
     float m_constant = 1.0f;
     float m_linear = 0.09f;

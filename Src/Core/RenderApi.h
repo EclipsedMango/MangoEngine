@@ -17,6 +17,17 @@
 #include "Lights/PointLight.h"
 #include "Lights/SpotLight.h"
 #include "Renderer/CascadedShadowMap.h"
+#include "Renderer/PointLightShadowMap.h"
+
+struct ShadowedPointLightDebug {
+    uint32_t lightIndex = 0;
+    uint32_t slot = 0;
+    float score = 0.0f;
+    float radius = 0.0f;
+    float farPlane = 0.0f;
+    glm::vec3 position{0.0f};
+    float distanceToCamera = 0.0f;
+};
 
 class RenderApi {
 public:
@@ -55,6 +66,13 @@ public:
     static void RunLightCulling();
     static float CalculateLightRadius(const glm::vec3& color, float intensity, float constant, float linear, float quadratic);
 
+    static void RenderDirectionalShadows();
+
+    static void EnsurePointShadowMetaBuffer(size_t pointLightCount);
+    static float ScorePointLight(const PointLight* l, const Camera* cam);
+    static void BuildPointShadowFaceMatrices(const glm::vec3& lightPos, float nearPlane, float farPlane, glm::mat4 outVP[6]);
+    static void RenderPointLightShadows();
+
     static VertexArray* CreateBuffer(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 
     static void DrawMesh(const Mesh& mesh, const Shader& shader);
@@ -63,6 +81,10 @@ public:
 
     static void SetDebugMode(int mode);
     static void SetDebugCascade(int cascade);
+    static uint32_t GetPointLightCount() { return static_cast<uint32_t>(m_pointLights.size()); }
+    static uint32_t GetShadowedPointLightCount() { return static_cast<uint32_t>(m_shadowedPointLightsDebug.size()); }
+    static uint32_t GetMaxShadowedPointLights() { return MAX_SHADOWED_POINT_LIGHTS; }
+    static const std::vector<ShadowedPointLightDebug>& GetShadowedPointLightsDebug() { return m_shadowedPointLightsDebug; }
 
     [[nodiscard]] static uint32_t GetDrawCallCount() { return m_drawCallCount; }
     [[nodiscard]] static uint32_t GetShadowDrawCallCount() { return m_shadowDrawCallCount; }
@@ -82,6 +104,8 @@ private:
     static std::vector<CascadedShadowMap*> m_cascadedShadowMaps;
 
     static std::vector<PointLight*> m_pointLights;
+    static PointLightShadowMap* m_pointShadowMap;
+
     static std::vector<SpotLight*> m_spotLights;
 
     static constexpr uint32_t CLUSTER_DIM_X = 16;
@@ -89,19 +113,24 @@ private:
     static constexpr uint32_t CLUSTER_DIM_Z = 24;
     static constexpr uint32_t NUM_CLUSTERS = CLUSTER_DIM_X * CLUSTER_DIM_Y * CLUSTER_DIM_Z;
     static constexpr uint32_t MAX_LIGHTS_PER_CLUSTER = 100;
+    static constexpr uint32_t CSM_RESOLUTION = 2048;
+    static constexpr uint32_t MAX_SHADOWED_POINT_LIGHTS = 8;
+    static constexpr uint32_t POINT_SHADOW_RES = 1024;
 
-    static UniformBuffer* m_globalLightUbo;        // directional and light info in UBO: binding 1
-    static ShaderStorageBuffer* m_pointLightSsbo;  // point lights in SSBO: binding 2
-    static ShaderStorageBuffer* m_spotLightSsbo;   // spot lights in SSBO: binding 3
-    static ShaderStorageBuffer* m_clusterAabbSsbo; // cluster AABBs dimensions in SSBO: binding 4
-    static ShaderStorageBuffer* m_lightIndexSsbo;  // light index list in SSBO: binding 5
-    static ShaderStorageBuffer* m_lightGridSsbo;   // light grid in SSBO: binding 6
-    static ShaderStorageBuffer* m_globalCountSsbo; // global index counter in SSBO: binding 7
+    static UniformBuffer* m_globalLightUbo;            // directional and light info in UBO: binding 1
+    static ShaderStorageBuffer* m_pointLightSsbo;      // point lights in SSBO: binding 2
+    static ShaderStorageBuffer* m_spotLightSsbo;       // spot lights in SSBO: binding 3
+    static ShaderStorageBuffer* m_clusterAabbSsbo;     // cluster AABBs dimensions in SSBO: binding 4
+    static ShaderStorageBuffer* m_lightIndexSsbo;      // light index list in SSBO: binding 5
+    static ShaderStorageBuffer* m_lightGridSsbo;       // light grid in SSBO: binding 6
+    static ShaderStorageBuffer* m_globalCountSsbo;     // global index counter in SSBO: binding 7
+    static ShaderStorageBuffer* m_pointShadowMetaSsbo; // point light shadows in SSBO: binding 8
 
     static Shader* m_clusterShader;
     static Shader* m_cullShader;
     static Shader* m_depthShader;
     static Shader* m_shadowDepthShader;
+    static Shader* m_pointShadowDepthShader;
 
     static std::vector<const Object*> m_renderQueue;
 
@@ -115,6 +144,7 @@ private:
     static uint32_t m_submittedCount;
     static int m_debugMode;
     static int m_debugCascade;
+    static std::vector<ShadowedPointLightDebug> m_shadowedPointLightsDebug;
 };
 
 

@@ -5,6 +5,7 @@ uniform sampler2DArray u_ShadowMap;
 uniform mat4 u_LightSpaceMatrix[4];
 uniform float u_CascadeSplits[4];
 uniform int u_CascadeCount;
+uniform samplerCubeArray u_PointShadowMap;
 
 struct DirectionalLight {
     vec4 direction;
@@ -24,6 +25,17 @@ struct PointLight {
 
 layout (std430, binding = 2) readonly buffer PointLightBuffer {
     PointLight pointLights[];
+};
+
+struct PointShadowMeta {
+    uint  slot;
+    float farPlane;
+    float bias;
+    float pad;
+};
+
+layout(std430, binding = 8) readonly buffer PointShadowBuffer {
+    PointShadowMeta pointShadowMeta[];
 };
 
 struct SpotLight {
@@ -105,6 +117,30 @@ mat2 Rotate2D(float a) {
     return mat2(c, -s, s, c);
 }
 
+float PointShadow(vec3 fragPos, vec3 normal, uint lightIndex, PointLight light) {
+    uint slot = pointShadowMeta[lightIndex].slot;
+    if (slot == 0xFFFFFFFFu) return 0.0;
+
+    float farPlane = pointShadowMeta[lightIndex].farPlane;
+    float biasBase = pointShadowMeta[lightIndex].bias;
+
+    vec3 toFrag = fragPos - light.position.xyz;
+    float currentDist = length(toFrag);
+
+    vec3 L = normalize(light.position.xyz - fragPos);
+    float bias = max(biasBase * (1.0 - dot(normal, L)), biasBase * 0.25);
+
+    float closest = texture(u_PointShadowMap, vec4(toFrag, float(slot))).r * farPlane;
+
+    return (currentDist - bias) > closest ? 1.0 : 0.0;
+}
+
+float EdgeFade(float dist, float radius) {
+    // fade out over last 20% of the radius
+    float fadeStart = radius * 0.8;
+    return 1.0 - smoothstep(fadeStart, radius, dist);
+}
+
 float ShadowCalculation(vec4 fragPosLightSpace, vec3 fragPos, int cascade, vec3 normal, vec3 lightDirVS) {
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
@@ -175,14 +211,20 @@ vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid gri
         uint lightIndex = globalLightIndexList[grid.offset + i];
         PointLight light = pointLights[lightIndex];
 
-        vec3 lightDir = normalize(light.position.xyz - fragPos);
-        float distance = length(light.position.xyz - fragPos);
+        vec3  toLight  = light.position.xyz - fragPos;
+        float distance = length(toLight);
+        float radius   = light.position.w;
 
-        if (distance > light.position.w) continue;
+        if (distance > radius) continue;
 
+        vec3 lightDir = toLight / max(distance, 1e-5);
         float diff = max(dot(norm, lightDir), 0.0);
+
         float attenuation = 1.0 / (light.attenuation.x + light.attenuation.y * distance + light.attenuation.z * (distance * distance));
-        totalLighting += diff * light.color.rgb * light.color.w * attenuation;
+        float edge = EdgeFade(distance, radius);
+        float shadow = PointShadow(fragPos, norm, lightIndex, light);
+
+        totalLighting += (1.0 - shadow) * diff * light.color.rgb * light.color.w * attenuation * edge;
     }
 
     for (uint i = 0; i < grid.spotCount; i++) {
