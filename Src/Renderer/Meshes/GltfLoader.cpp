@@ -2,13 +2,13 @@
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "tiny_gltf.h"
 
+#include "tiny_gltf.h"
 #include "GltfLoader.h"
 #include "Mesh.h"
 #include <iostream>
 
-std::vector<Object*> GltfLoader::Load(const std::string& path, Shader* shader) {
+std::vector<MeshNode3d*> GltfLoader::Load(const std::string& path, Shader* shader) {
     tinygltf::TinyGLTF loader;
     tinygltf::Model model;
     std::string err, warn;
@@ -19,7 +19,7 @@ std::vector<Object*> GltfLoader::Load(const std::string& path, Shader* shader) {
     if (!err.empty())  std::cerr << "GLTF Error: "   << err  << std::endl;
     if (!success) return {};
 
-    std::vector<Object*> objects;
+    std::vector<MeshNode3d*> nodes;
 
     for (auto& gltfMesh : model.meshes) {
         for (auto& primitive : gltfMesh.primitives) {
@@ -84,10 +84,10 @@ std::vector<Object*> GltfLoader::Load(const std::string& path, Shader* shader) {
             }
 
             Mesh* mesh = new Mesh(vertices, indices);
-            Object* object = new Object(mesh, shader);
-            objects.push_back(object);
+            MeshNode3d* node = new MeshNode3d(mesh, shader);
+            nodes.push_back(node);
         }
     }
 
-    return objects;
+    return nodes;
 }

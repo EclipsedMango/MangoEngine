@@ -3,7 +3,7 @@
 #define MANGORENDERING_POINTLIGHTSHADOWMAP_H
 
 #include <memory>
-#include "Buffers/Framebuffer.h"
+#include "Renderer/Buffers/Framebuffer.h"
 
 class PointLightShadowMap {
 public:

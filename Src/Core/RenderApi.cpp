@@ -6,7 +6,7 @@
 #include <SDL3/SDL_video.h>
 #include <stdexcept>
 
-#include "Nodes/Lights/GpuLights.h"
+#include "../Renderer/Lights/GpuLights.h"
 #include "Renderer/Buffers/UniformBuffer.h"
 #include "glad/gl.h"
 #include "glm/gtc/type_ptr.hpp"

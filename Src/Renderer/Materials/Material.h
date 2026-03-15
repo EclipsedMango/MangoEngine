@@ -6,7 +6,7 @@
 #include "Texture.h"
 #include <glm/glm.hpp>
 
-#include "Shader.h"
+#include "Renderer/Shader.h"
 
 enum class BlendMode { Opaque, AlphaBlend, AlphaScissor, Additive };
 

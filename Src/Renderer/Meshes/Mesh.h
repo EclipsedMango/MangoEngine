@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <vector>
-#include "VertexArray.h"
+#include "Renderer/VertexArray.h"
 
 class Mesh {
 public:

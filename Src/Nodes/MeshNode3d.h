@@ -3,8 +3,8 @@
 #define MANGORENDERING_MESHNODE3D_H
 
 #include "RenderableNode3d.h"
-#include "Renderer/Material.h"
-#include "Renderer/Mesh.h"
+#include "../Renderer/Materials/Material.h"
+#include "../Renderer/Meshes/Mesh.h"
 #include "Renderer/Shader.h"
 
 class MeshNode3d : public RenderableNode3d {

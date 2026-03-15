@@ -5,12 +5,11 @@
 #include "glm/glm.hpp"
 #include "Nodes/MeshNode3d.h"
 #include "Renderer/Shader.h"
-#include "Renderer/CascadedShadowMap.h"
-#include "Renderer/PointLightShadowMap.h"
+#include "Renderer/Shadows/CascadedShadowMap.h"
+#include "Renderer/Shadows/PointLightShadowMap.h"
 #include "Scene/Camera.h"
-#include "Scene/Object.h"
-#include "Nodes/Lights/DirectionalLight.h"
-#include "Nodes/Lights/PointLight.h"
+#include "Renderer/Lights/DirectionalLight.h"
+#include "Renderer/Lights/PointLight.h"
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
 
 struct ShadowedPointLightDebug {

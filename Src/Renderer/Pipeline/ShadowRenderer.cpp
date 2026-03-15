@@ -6,7 +6,7 @@
 
 #include "glad/gl.h"
 #include "glm/gtc/matrix_transform.hpp"
-#include "Nodes/Lights/GpuLights.h"
+#include "../Lights/GpuLights.h"
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
 
 ShadowRenderer::ShadowRenderer() {

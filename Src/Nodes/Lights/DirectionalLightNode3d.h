@@ -3,7 +3,7 @@
 #define MANGORENDERING_DIRECTIONALLIGHTNODE3D_H
 
 #include "LightNode3d.h"
-#include "DirectionalLight.h"
+#include "../../Renderer/Lights/DirectionalLight.h"
 
 class DirectionalLightNode3d : public LightNode3d {
 public:

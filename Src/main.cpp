@@ -388,7 +388,7 @@
 
 #include "Core/Core.h"
 #include "Nodes/MeshNode3d.h"
-#include "Renderer/Mesh.h"
+#include "Renderer/Meshes/Mesh.h"
 #include "Renderer/Shader.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
 #include "Nodes/Lights/PointLightNode3d.h"

@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "glm/glm.hpp"
-#include "Nodes/Lights/DirectionalLight.h"
-#include "Nodes/Lights/PointLight.h"
-#include "Nodes/Lights/SpotLight.h"
+#include "Renderer/Lights/DirectionalLight.h"
+#include "Renderer/Lights/PointLight.h"
+#include "Renderer/Lights/SpotLight.h"
 #include "Renderer/Buffers/UniformBuffer.h"
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
 

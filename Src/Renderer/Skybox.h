@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "Shader.h"
-#include "Texture.h"
+#include "Materials/Texture.h"
 #include "VertexArray.h"
 
 class Skybox {

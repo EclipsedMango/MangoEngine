@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "Nodes/Lights/GpuLights.h"
+#include "../Lights/GpuLights.h"
 
 void LightManager::AddDirectionalLight(DirectionalLight* light) {
     if (!light) throw std::runtime_error("LightManager: null directional light");

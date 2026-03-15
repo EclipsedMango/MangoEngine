@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include "Buffers/Framebuffer.h"
+#include "../Buffers/Framebuffer.h"
 #include "Scene/Camera.h"
 
 class CascadedShadowMap {

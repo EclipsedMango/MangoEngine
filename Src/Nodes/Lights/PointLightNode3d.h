@@ -2,7 +2,7 @@
 #ifndef MANGORENDERING_POINTLIGHTNODE3D_H
 #define MANGORENDERING_POINTLIGHTNODE3D_H
 #include "LightNode3d.h"
-#include "PointLight.h"
+#include "../../Renderer/Lights/PointLight.h"
 
 
 class PointLightNode3d : public LightNode3d {

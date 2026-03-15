@@ -3,7 +3,7 @@
 #define MANGORENDERING_SPOTLIGHTNODE3D_H
 
 #include "LightNode3d.h"
-#include "SpotLight.h"
+#include "../../Renderer/Lights/SpotLight.h"
 
 class SpotLightNode3d : public LightNode3d {
 public:

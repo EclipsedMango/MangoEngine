@@ -46,43 +46,41 @@ add_executable(MangoRendering Src/main.cpp
         Src/Core/Window.cpp
         Src/Renderer/VertexArray.h
         Src/Renderer/VertexArray.cpp
-        Src/Renderer/Mesh.h
-        Src/Renderer/Mesh.cpp
+        Src/Renderer/Meshes/Mesh.h
+        Src/Renderer/Meshes/Mesh.cpp
         Src/Renderer/Shader.h
         Src/Renderer/Shader.cpp
         Src/Scene/Camera.cpp
         Src/Scene/Camera.h
-        Src/Renderer/Texture.cpp
-        Src/Renderer/Texture.h
+        Src/Renderer/Materials/Texture.cpp
+        Src/Renderer/Materials/Texture.h
         Src/Renderer/Buffers/UniformBuffer.cpp
         Src/Renderer/Buffers/UniformBuffer.h
-        Src/Scene/Object.cpp
-        Src/Scene/Object.h
         Src/Nodes/Transform.cpp
         Src/Nodes/Transform.h
-        Src/Nodes/Lights/DirectionalLight.cpp
-        Src/Nodes/Lights/DirectionalLight.h
-        Src/Nodes/Lights/PointLight.cpp
-        Src/Nodes/Lights/PointLight.h
-        Src/Nodes/Lights/SpotLight.cpp
-        Src/Nodes/Lights/SpotLight.h
+        Src/Renderer/Lights/DirectionalLight.cpp
+        Src/Renderer/Lights/DirectionalLight.h
+        Src/Renderer/Lights/PointLight.cpp
+        Src/Renderer/Lights/PointLight.h
+        Src/Renderer/Lights/SpotLight.cpp
+        Src/Renderer/Lights/SpotLight.h
         Src/Renderer/Buffers/ShaderStorageBuffer.cpp
         Src/Renderer/Buffers/ShaderStorageBuffer.h
-        Src/Nodes/Lights/GpuLights.h
+        Src/Renderer/Lights/GpuLights.h
         Src/Renderer/Buffers/GpuBuffer.cpp
         Src/Renderer/Buffers/GpuBuffer.h
-        Src/Renderer/GltfLoader.cpp
-        Src/Renderer/GltfLoader.h
-        Src/Renderer/Material.cpp
-        Src/Renderer/Material.h
+        Src/Renderer/Meshes/GltfLoader.cpp
+        Src/Renderer/Meshes/GltfLoader.h
+        Src/Renderer/Materials/Material.cpp
+        Src/Renderer/Materials/Material.h
         Src/Renderer/Buffers/Framebuffer.cpp
         Src/Renderer/Buffers/Framebuffer.h
         Src/Scene/Frustum.h
         Src/Scene/Frustum.cpp
-        Src/Renderer/CascadedShadowMap.cpp
-        Src/Renderer/CascadedShadowMap.h
-        Src/Renderer/PointLightShadowMap.cpp
-        Src/Renderer/PointLightShadowMap.h
+        Src/Renderer/Shadows/CascadedShadowMap.cpp
+        Src/Renderer/Shadows/CascadedShadowMap.h
+        Src/Renderer/Shadows/PointLightShadowMap.cpp
+        Src/Renderer/Shadows/PointLightShadowMap.h
         Src/Renderer/Skybox.cpp
         Src/Renderer/Skybox.h
         Src/Nodes/Node3d.cpp
