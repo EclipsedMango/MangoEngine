@@ -12,3 +12,10 @@ void SpotLightNode3d::Process(float deltaTime) {
     m_light.SetColor(GetColor());
     m_light.SetIntensity(GetIntensity());
 }
+
+void SpotLightNode3d::SyncLight() {
+    const glm::vec3 worldPos = glm::vec3(GetWorldMatrix()[3]);
+    m_light.SetPosition(worldPos);
+    m_light.SetColor(GetColor());
+    m_light.SetIntensity(GetIntensity());
+}

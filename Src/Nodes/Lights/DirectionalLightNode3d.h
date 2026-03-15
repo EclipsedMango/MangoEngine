@@ -15,6 +15,7 @@ public:
     [[nodiscard]] DirectionalLight* GetLight() { return &m_light; }
 
     void Process(float deltaTime) override;
+    void SyncLight() override;
 
 private:
     DirectionalLight m_light;

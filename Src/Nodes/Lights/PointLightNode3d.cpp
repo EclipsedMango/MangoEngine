@@ -10,3 +10,10 @@ void PointLightNode3d::Process(float deltaTime) {
     m_light.SetColor(GetColor());
     m_light.SetIntensity(GetIntensity());
 }
+
+void PointLightNode3d::SyncLight() {
+    const glm::vec3 worldPos = glm::vec3(GetWorldMatrix()[3]);
+    m_light.SetPosition(worldPos);
+    m_light.SetColor(GetColor());
+    m_light.SetIntensity(GetIntensity());
+}

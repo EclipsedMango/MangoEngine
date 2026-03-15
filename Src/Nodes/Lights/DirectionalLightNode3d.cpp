@@ -10,3 +10,8 @@ void DirectionalLightNode3d::Process(float deltaTime) {
     m_light.SetColor(GetColor());
     m_light.SetIntensity(GetIntensity());
 }
+
+void DirectionalLightNode3d::SyncLight() {
+    m_light.SetColor(GetColor());
+    m_light.SetIntensity(GetIntensity());
+}

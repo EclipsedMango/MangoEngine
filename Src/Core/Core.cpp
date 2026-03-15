@@ -42,6 +42,7 @@ void Core::Notification(Node3d *node, const NodeNotification notification) {
             }
 
             if (auto* l = dynamic_cast<LightNode3d*>(node)) {
+                m_lightNodeCache.push_back(l);
                 RegisterLight(l);
             }
 
@@ -60,6 +61,7 @@ void Core::Notification(Node3d *node, const NodeNotification notification) {
             }
 
             if (auto* l = dynamic_cast<LightNode3d*>(node)) {
+                std::erase(m_lightNodeCache, l);
                 UnregisterLight(l);
             }
 
@@ -144,6 +146,12 @@ bool Core::PollEvents() {
 }
 
 void Core::RenderScene() const {
+    m_currentScene->UpdateWorldTransform();
+
+    for (auto* l : m_lightNodeCache) {
+        l->SyncLight();
+    }
+
     m_renderer->ClearColour({0.16f, 0.16f, 0.16f, 1.0f});
     for (auto* renderable : m_renderableCache) {
         renderable->SubmitToRenderer(*m_renderer);

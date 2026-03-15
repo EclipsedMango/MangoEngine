@@ -73,6 +73,7 @@ private:
 
     std::vector<Node3d*> m_nodeCache;
     std::vector<RenderableNode3d*> m_renderableCache;
+    std::vector<LightNode3d*> m_lightNodeCache;
     SkyboxNode3d* m_activeSkybox = nullptr;
 
     CameraMode m_cameraMode = CameraMode::Editor;

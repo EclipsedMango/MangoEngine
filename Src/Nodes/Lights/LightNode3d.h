@@ -14,6 +14,8 @@ public:
     [[nodiscard]] glm::vec3 GetColor() const { return m_color; }
     [[nodiscard]] float GetIntensity() const { return m_intensity; }
 
+    virtual void SyncLight() {}
+
 private:
     glm::vec3 m_color{};
     float m_intensity = 1.0f;
