@@ -112,6 +112,100 @@ void Core::EndImGuiFrame() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+void Core::SwapBuffers() const {
+    m_activeWindow->SwapBuffers();
+}
+
+bool Core::PollEvents() {
+    Input::BeginFrame();
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        ImGui_ImplSDL3_ProcessEvent(&event);
+        Input::ProcessEvent(event);
+        m_renderer->HandleResizeEvent(event);
+
+        if (event.type == SDL_EVENT_QUIT) {
+            m_activeWindow->Close();
+        }
+
+        if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+            if (event.window.windowID == SDL_GetWindowID(m_activeWindow->GetSDLWindow())) {
+                m_activeWindow->Close();
+            }
+        }
+    }
+
+    Input::EndFrame();
+
+    if (Input::IsKeyJustPressed(SDL_SCANCODE_TAB)) {
+        m_mouseCaptured = !m_mouseCaptured;
+        SDL_SetWindowRelativeMouseMode(m_activeWindow->GetSDLWindow(), m_mouseCaptured);
+        Input::SetMouseDeltaEnabled(m_mouseCaptured);
+    }
+
+    if (Input::IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
+        m_activeWindow->Close();
+    }
+
+    return m_activeWindow->IsOpen();
+}
+
+void Core::RenderScene() const {
+    m_renderer->ClearColour({0.16f, 0.16f, 0.16f, 1.0f});
+    for (auto* renderable : m_renderableCache) {
+        renderable->SubmitToRenderer(*m_renderer);
+    }
+    m_renderer->Flush();
+}
+
+void Core::StepFrame(const float deltaTime) {
+    m_accumulator += deltaTime;
+    while (m_accumulator >= FIXED_TIMESTEP) {
+        for (auto* node : m_nodeCache) {
+            node->PhysicsProcess(FIXED_TIMESTEP);
+        }
+        m_accumulator -= FIXED_TIMESTEP;
+    }
+
+    for (auto* node : m_nodeCache) {
+        node->Process(deltaTime);
+    }
+
+    m_currentScene->UpdateWorldTransform();
+}
+
+void Core::Process() {
+    uint64_t lastTime = SDL_GetTicksNS();
+    float smoothCpuMs = 0.0f;
+
+    while (m_activeWindow->IsOpen()) {
+        const uint64_t cpuFrameStart = SDL_GetTicksNS();
+        const uint64_t now           = SDL_GetTicksNS();
+        const float deltaTime        = (now - lastTime) / 1e9f;
+        lastTime = now;
+
+        PollEvents();
+        StepFrame(deltaTime);
+
+        BeginImGuiFrame();
+
+        const float cpuMs = static_cast<float>(SDL_GetTicksNS() - cpuFrameStart) / 1'000'000.0f;
+        smoothCpuMs = smoothCpuMs * 0.95f + cpuMs * 0.05f;
+
+        ImGui::Begin("Stats");
+        ImGui::Text("FPS:      %.1f", ImGui::GetIO().Framerate);
+        ImGui::Text("GPU Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+        ImGui::Text("CPU Time: %.3f ms", smoothCpuMs);
+        ImGui::End();
+
+        RenderScene();
+        EndImGuiFrame();
+        SwapBuffers();
+    }
+}
+
+
 void Core::BuildNodeCache(Node3d *node) {
     m_nodeCache.push_back(node);
     if (auto* renderable = dynamic_cast<RenderableNode3d*>(node)) {
@@ -157,90 +251,6 @@ void Core::RebuildNodeCache() {
 void Core::SetActiveCamera(CameraNode3d *camera) {
     m_activeCamera = camera;
     m_renderer->SetActiveCamera(camera);
-}
-
-void Core::Process() {
-    constexpr float FIXED_TIMESTEP = 1.0f / 60.0f;
-    float accumulator = 0.0f;
-    uint64_t lastTime = SDL_GetTicksNS();
-
-    float cpuMs = 0.0f;
-    float smoothCpuMs = 0.0f;
-
-    while (m_activeWindow->IsOpen()) {
-        const uint64_t cpuFrameStart = SDL_GetTicksNS();
-        const uint64_t now = SDL_GetTicksNS();
-        const float deltaTime = (now - lastTime) / 1e9f;
-        lastTime = now;
-
-        Input::BeginFrame();
-
-        // TODO: add an event handler class / manager
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            Input::ProcessEvent(event);
-            m_renderer->HandleResizeEvent(event);
-
-            if (event.type == SDL_EVENT_QUIT) {
-                m_activeWindow->Close();
-            }
-
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
-                if (event.window.windowID == SDL_GetWindowID(m_activeWindow->GetSDLWindow())) {
-                    m_activeWindow->Close();
-                }
-            }
-        }
-
-        Input::EndFrame();
-
-        if (Input::IsKeyJustPressed(SDL_SCANCODE_TAB)) {
-            m_mouseCaptured = !m_mouseCaptured;
-            SDL_SetWindowRelativeMouseMode(m_activeWindow->GetSDLWindow(), m_mouseCaptured);
-            Input::SetMouseDeltaEnabled(m_mouseCaptured);
-        }
-
-        if (Input::IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
-            m_activeWindow->Close();
-        }
-
-        accumulator += deltaTime;
-        while (accumulator >= FIXED_TIMESTEP) {
-            for (auto* node : m_nodeCache) {
-                node->PhysicsProcess(FIXED_TIMESTEP);
-            }
-
-            accumulator -= FIXED_TIMESTEP;
-        }
-
-        for (auto* node : m_nodeCache) {
-            node->Process(deltaTime);
-        }
-        m_currentScene->UpdateWorldTransform();
-
-        BeginImGuiFrame();
-
-        const uint64_t cpuFrameEnd = SDL_GetTicksNS();
-        cpuMs = static_cast<float>(cpuFrameEnd - cpuFrameStart) / 1'000'000.0f;
-        smoothCpuMs = smoothCpuMs * 0.95f + cpuMs * 0.05f;
-
-        ImGui::Begin("Stats");
-        ImGui::Text("FPS:      %.1f", ImGui::GetIO().Framerate);
-        ImGui::Text("GPU Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
-        ImGui::Text("CPU Time: %.3f ms", smoothCpuMs);
-        ImGui::End();
-
-        m_renderer->ClearColour({0.16f, 0.16f, 0.16f, 1.0f});
-        for (auto* renderable : m_renderableCache) {
-            renderable->SubmitToRenderer(*m_renderer);
-        }
-        m_renderer->Flush();
-
-        EndImGuiFrame();
-
-        m_activeWindow->SwapBuffers();
-    }
 }
 
 void Core::ChangeScene(Node3d* scene) {

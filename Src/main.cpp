@@ -387,6 +387,7 @@
 #include <random>
 
 #include "Core/Core.h"
+#include "Core/Editor.h"
 #include "Nodes/MeshNode3d.h"
 #include "Renderer/Meshes/Mesh.h"
 #include "Renderer/Shader.h"
@@ -398,8 +399,7 @@ int main() {
     // build scene
     Node3d* scene = new Node3d();
 
-    Core core(scene);
-    core.Init();
+    Editor editor(scene);
 
     Mesh* mesh = new Mesh(
         {
@@ -516,10 +516,10 @@ int main() {
     }
 
     CameraNode3d* camera = new CameraNode3d({0, 0, 3}, 75.0f, 500.0f / 500.0f);
-    core.SetActiveCamera(camera);
+    editor.GetCore().SetActiveCamera(camera);
     scene->AddChild(camera);
 
-    core.Process();
+    editor.Run();
 
     delete mesh;
     delete shader;

@@ -23,26 +23,36 @@ public:
 
     void Notification(Node3d* node, NodeNotification notification) override;
 
+    bool PollEvents(); // returns false when window should close
+    void RenderScene() const;
+    void SwapBuffers() const;
+    void StepFrame(float deltaTime);
     void Process();
+
     void ChangeScene(Node3d* scene);
     void RebuildNodeCache();
 
     void SetActiveCamera(CameraNode3d* camera);
 
+    static void BeginImGuiFrame();
+    static void EndImGuiFrame();
+
+    [[nodiscard]] Node3d* GetScene() const { return m_currentScene; }
     [[nodiscard]] RenderApi& GetRenderer() const { return *m_renderer; }
+    [[nodiscard]] Window* GetActiveWindow() const { return m_activeWindow; }
 
 private:
     void InitRenderer();
     void InitImGui() const;
-
-    static void BeginImGuiFrame();
-    static void EndImGuiFrame();
 
     void BuildNodeCache(Node3d* node);
     [[nodiscard]] bool IsNodeCached(const Node3d* node) const;
 
     void RegisterLight(LightNode3d* light) const;
     void UnregisterLight(LightNode3d* light) const;
+
+    float m_accumulator = 0.0f;
+    static constexpr float FIXED_TIMESTEP = 1.0f / 60.0f;
 
     std::unique_ptr<RenderApi> m_renderer;
     Node3d* m_currentScene = nullptr;
