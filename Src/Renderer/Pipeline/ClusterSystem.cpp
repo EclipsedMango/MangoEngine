@@ -20,7 +20,7 @@ ClusterSystem::ClusterSystem() {
     m_globalCountSsbo = std::make_unique<ShaderStorageBuffer>(sizeof(uint32_t), 7);
 }
 
-void ClusterSystem::Rebuild(const Camera& camera, const glm::vec2& viewportSize) {
+void ClusterSystem::Rebuild(const CameraNode3d& camera, const glm::vec2& viewportSize) const {
     if (!m_clusterShader) {
         std::cerr << "ClusterSystem::Rebuild: no cluster shader\n";
         return;

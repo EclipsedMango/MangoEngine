@@ -6,6 +6,7 @@
 #include "TreeListener.h"
 #include "Nodes/Node3d.h"
 #include "Window.h"
+#include "Nodes/CameraNode3d.h"
 #include "Nodes/RenderableNode3d.h"
 #include "Nodes/Lights/LightNode3d.h"
 
@@ -25,7 +26,7 @@ public:
     void ChangeScene(Node3d* scene);
     void RebuildNodeCache();
 
-    void SetActiveCamera(Camera* camera);
+    void SetActiveCamera(CameraNode3d* camera);
 
     [[nodiscard]] RenderApi& GetRenderer() const { return *m_renderer; }
 
@@ -37,6 +38,7 @@ private:
     static void EndImGuiFrame();
 
     void BuildNodeCache(Node3d* node);
+    [[nodiscard]] bool IsNodeCached(const Node3d* node) const;
 
     void RegisterLight(LightNode3d* light) const;
     void UnregisterLight(LightNode3d* light) const;
@@ -48,7 +50,7 @@ private:
     std::vector<Node3d*> m_nodeCache;
     std::vector<RenderableNode3d*> m_renderableCache;
 
-    Camera* m_activeCamera = nullptr;
+    CameraNode3d* m_activeCamera = nullptr;
     bool m_mouseCaptured = true;
 };
 

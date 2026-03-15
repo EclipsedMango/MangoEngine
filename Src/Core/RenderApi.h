@@ -9,10 +9,10 @@
 #include "Renderer/Pipeline/LightManager.h"
 #include "Renderer/Pipeline/ShadowRenderer.h"
 #include "Window.h"
+#include "Nodes/CameraNode3d.h"
 #include "Nodes/MeshNode3d.h"
-#include "Scene/Camera.h"
 #include "Renderer/Lights/DirectionalLight.h"
-#include "../Renderer/Meshes/Mesh.h"
+#include "Renderer/Meshes/Mesh.h"
 #include "Renderer/Shader.h"
 #include "Renderer/Buffers/UniformBuffer.h"
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
@@ -46,7 +46,7 @@ public:
     void ClearColour(const glm::vec4& colour);
     void HandleResizeEvent(const SDL_Event& event);
 
-    void SetActiveCamera(Camera* camera);
+    void SetActiveCamera(CameraNode3d* camera);
     void UploadCameraData();
 
     void AddDirectionalLight(DirectionalLight* light);
@@ -107,7 +107,7 @@ private:
 
     std::vector<std::unique_ptr<Window>> m_windows;
 
-    Camera* m_activeCamera = nullptr;
+    CameraNode3d* m_activeCamera = nullptr;
     Skybox* m_skybox       = nullptr;
 
     std::unique_ptr<ClusterSystem> m_clusterSystem;

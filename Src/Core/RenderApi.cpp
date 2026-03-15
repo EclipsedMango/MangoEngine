@@ -6,7 +6,7 @@
 #include <SDL3/SDL_video.h>
 #include <stdexcept>
 
-#include "../Renderer/Lights/GpuLights.h"
+#include "Renderer/Lights/GpuLights.h"
 #include "Renderer/Buffers/UniformBuffer.h"
 #include "glad/gl.h"
 #include "glm/gtc/type_ptr.hpp"
@@ -120,7 +120,7 @@ void RenderApi::HandleResizeEvent(const SDL_Event &event) {
     }
 }
 
-void RenderApi::SetActiveCamera(Camera* camera) {
+void RenderApi::SetActiveCamera(CameraNode3d* camera) {
     m_activeCamera = camera;
     if (!m_windows.empty()) {
         RebuildClusters();

@@ -5,7 +5,7 @@ DirectionalLightNode3d::DirectionalLightNode3d(const glm::vec3 direction, const 
     SetRotation(direction);
 }
 
-void DirectionalLightNode3d::Process() {
+void DirectionalLightNode3d::Process(float deltaTime) {
     m_light.SetDirection(GetRotation());
     m_light.SetColor(GetColor());
     m_light.SetIntensity(GetIntensity());

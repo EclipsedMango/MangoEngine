@@ -6,10 +6,12 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl3.h"
+#include "Input.h"
 #include "RenderApi.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
 #include "Nodes/Lights/PointLightNode3d.h"
 #include "Nodes/Lights/SpotLightNode3d.h"
+#include <algorithm>
 
 Core::Core(Node3d* scene) : m_currentScene(scene) {}
 
@@ -27,6 +29,9 @@ Core::~Core() {
 void Core::Init() {
     InitRenderer();
     InitImGui();
+
+    Input::SetMouseDeltaEnabled(m_mouseCaptured);
+
     m_currentScene->PropagateEnterTree(this);
 }
 
@@ -107,6 +112,10 @@ void Core::BuildNodeCache(Node3d *node) {
     }
 }
 
+bool Core::IsNodeCached(const Node3d* node) const {
+    return std::ranges::find(m_nodeCache, node) != m_nodeCache.end();
+}
+
 void Core::RegisterLight(LightNode3d *light) const {
     if (auto* d = dynamic_cast<DirectionalLightNode3d*>(light)) {
         m_renderer->AddDirectionalLight(d->GetLight());
@@ -134,7 +143,7 @@ void Core::RebuildNodeCache() {
     BuildNodeCache(m_currentScene);
 }
 
-void Core::SetActiveCamera(Camera *camera) {
+void Core::SetActiveCamera(CameraNode3d *camera) {
     m_activeCamera = camera;
     m_renderer->SetActiveCamera(camera);
 }
@@ -153,38 +162,36 @@ void Core::Process() {
         const float deltaTime = (now - lastTime) / 1e9f;
         lastTime = now;
 
+        Input::BeginFrame();
+
         // TODO: add an event handler class / manager
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL3_ProcessEvent(&event);
+            Input::ProcessEvent(event);
             m_renderer->HandleResizeEvent(event);
 
             if (event.type == SDL_EVENT_QUIT) {
                 m_activeWindow->Close();
             }
 
-            if (event.type == SDL_EVENT_MOUSE_MOTION && m_mouseCaptured) {
-                m_activeCamera->Rotate(event.motion.xrel * 0.05f, -event.motion.yrel * 0.05f);
-            }
-
-            if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_TAB) {
-                m_mouseCaptured = !m_mouseCaptured;
-                SDL_SetWindowRelativeMouseMode(m_activeWindow->GetSDLWindow(), m_mouseCaptured);
-            }
-
-            if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE) {
-                m_activeWindow->Close();
+            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+                if (event.window.windowID == SDL_GetWindowID(m_activeWindow->GetSDLWindow())) {
+                    m_activeWindow->Close();
+                }
             }
         }
 
-        if (m_activeCamera) {
-            const bool* keys = SDL_GetKeyboardState(nullptr);
-            float speed = 5.0f;
-            if (keys[SDL_SCANCODE_LSHIFT]) speed += 50.0f;
-            if (keys[SDL_SCANCODE_W]) m_activeCamera->Move(m_activeCamera->GetFront() * speed * deltaTime);
-            if (keys[SDL_SCANCODE_S]) m_activeCamera->Move(-m_activeCamera->GetFront() * speed * deltaTime);
-            if (keys[SDL_SCANCODE_A]) m_activeCamera->Move(-m_activeCamera->GetRight() * speed * deltaTime);
-            if (keys[SDL_SCANCODE_D]) m_activeCamera->Move(m_activeCamera->GetRight() * speed * deltaTime);
+        Input::EndFrame();
+
+        if (Input::IsKeyJustPressed(SDL_SCANCODE_TAB)) {
+            m_mouseCaptured = !m_mouseCaptured;
+            SDL_SetWindowRelativeMouseMode(m_activeWindow->GetSDLWindow(), m_mouseCaptured);
+            Input::SetMouseDeltaEnabled(m_mouseCaptured);
+        }
+
+        if (Input::IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
+            m_activeWindow->Close();
         }
 
         accumulator += deltaTime;
@@ -196,10 +203,10 @@ void Core::Process() {
             accumulator -= FIXED_TIMESTEP;
         }
 
-        m_currentScene->UpdateWorldTransform();
         for (auto* node : m_nodeCache) {
-            node->Process();
+            node->Process(deltaTime);
         }
+        m_currentScene->UpdateWorldTransform();
 
         BeginImGuiFrame();
 

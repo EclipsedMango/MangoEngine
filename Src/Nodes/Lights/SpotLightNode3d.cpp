@@ -6,7 +6,7 @@ SpotLightNode3d::SpotLightNode3d(const glm::vec3 position, const glm::vec3 direc
     SetRotation(direction);
 }
 
-void SpotLightNode3d::Process() {
+void SpotLightNode3d::Process(float deltaTime) {
     m_light.SetPosition(GetPosition());
     m_light.SetDirection(GetRotation());
     m_light.SetColor(GetColor());

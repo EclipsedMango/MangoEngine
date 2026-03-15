@@ -33,7 +33,7 @@ void Node3d::PhysicsProcess(float deltaTime) {
     // override in subclasses
 }
 
-void Node3d::Process() {
+void Node3d::Process(float deltaTime) {
     // override in subclasses
 }
 

@@ -46,7 +46,7 @@ void ShadowRenderer::RemoveDirectionalLight(DirectionalLight* light) {
     m_directionalLights.erase(it);
 }
 
-void ShadowRenderer::RenderDirectionalShadows(const Camera& camera, const std::vector<MeshNode3d*>& renderQueue, const glm::vec2& viewportSize) {
+void ShadowRenderer::RenderDirectionalShadows(const CameraNode3d& camera, const std::vector<MeshNode3d*>& renderQueue, const glm::vec2& viewportSize) {
     if (m_directionalLights.empty()) {
         return;
     }
@@ -85,7 +85,7 @@ void ShadowRenderer::RenderDirectionalShadows(const Camera& camera, const std::v
     glViewport(0, 0, static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
 }
 
-void ShadowRenderer::RenderPointLightShadows(const Camera& camera, const std::vector<PointLight*>& pointLights, const std::vector<MeshNode3d*>& renderQueue, const glm::vec2& viewportSize) {
+void ShadowRenderer::RenderPointLightShadows(const CameraNode3d& camera, const std::vector<PointLight*>& pointLights, const std::vector<MeshNode3d*>& renderQueue, const glm::vec2& viewportSize) {
     if (!m_pointShadowMap || !m_pointShadowDepthShader || pointLights.empty()) {
         return;
     }
@@ -213,7 +213,7 @@ void ShadowRenderer::EnsurePointShadowMetaBuffer(const size_t pointLightCount) {
     }
 }
 
-float ShadowRenderer::ScorePointLight(const PointLight* light, const Camera& camera) {
+float ShadowRenderer::ScorePointLight(const PointLight* light, const CameraNode3d& camera) {
     const float d2 = glm::length(light->GetPosition() - camera.GetPosition());
     return d2 / glm::max(light->GetIntensity(), 0.001f);
 }

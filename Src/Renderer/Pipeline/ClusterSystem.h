@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "glm/glm.hpp"
+#include "Nodes/CameraNode3d.h"
 #include "Renderer/Shader.h"
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
 #include "Scene/Camera.h"
@@ -26,7 +27,7 @@ public:
     ClusterSystem& operator=(ClusterSystem&&)      = delete;
 
     // called when the camera projection or viewport changes
-    void Rebuild(const Camera& camera, const glm::vec2& viewportSize);
+    void Rebuild(const CameraNode3d& camera, const glm::vec2& viewportSize) const;
 
     // called once per frame after light SSBOs are uploaded
     void Cull(const ShaderStorageBuffer* pointLightSsbo, const ShaderStorageBuffer* spotLightSsbo);

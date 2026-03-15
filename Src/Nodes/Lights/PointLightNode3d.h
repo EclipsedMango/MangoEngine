@@ -15,7 +15,7 @@ public:
 
     [[nodiscard]] PointLight* GetLight() { return &m_light; }
 
-    void Process() override;
+    void Process(float deltaTime) override;
 
 private:
     PointLight m_light;

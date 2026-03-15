@@ -21,7 +21,7 @@ public:
     void PropagateExitTree();
 
     virtual void PhysicsProcess(float deltaTime);
-    virtual void Process();
+    virtual void Process(float deltaTime);
 
     void UpdateWorldTransform(const glm::mat4& parentWorld = glm::mat4(1.0f));
 

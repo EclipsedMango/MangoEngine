@@ -9,7 +9,7 @@ CascadedShadowMap::CascadedShadowMap(uint32_t width, uint32_t height, const glm:
     m_fb = std::make_unique<Framebuffer>(width, height, FramebufferType::DepthArray, NUM_CASCADES);
 }
 
-void CascadedShadowMap::Update(const Camera& camera) {
+void CascadedShadowMap::Update(const CameraNode3d& camera) {
     const float near = camera.GetNearPlane();
     const float far  = camera.GetFarPlane();
 

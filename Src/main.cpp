@@ -484,8 +484,9 @@ int main() {
         scene->AddChild(light);
     }
 
-    Camera* camera = new Camera({0, 0, 3}, 75.0f, 500.0f / 500.0f, 0.1f, 200.0f);
+    CameraNode3d* camera = new CameraNode3d({0, 0, 3}, 75.0f, 500.0f / 500.0f);
     core.SetActiveCamera(camera);
+    scene->AddChild(camera);
 
     core.Process();
 

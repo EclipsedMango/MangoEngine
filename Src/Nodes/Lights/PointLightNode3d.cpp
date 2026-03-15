@@ -5,7 +5,7 @@ PointLightNode3d::PointLightNode3d(const glm::vec3 position, const glm::vec3 col
     SetPosition(position);
 }
 
-void PointLightNode3d::Process() {
+void PointLightNode3d::Process(float deltaTime) {
     m_light.SetPosition(GetPosition());
     m_light.SetColor(GetColor());
     m_light.SetIntensity(GetIntensity());

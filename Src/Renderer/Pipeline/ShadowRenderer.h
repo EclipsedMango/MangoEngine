@@ -3,6 +3,7 @@
 #define MANGORENDERING_SHADOWRENDERER_H
 
 #include "glm/glm.hpp"
+#include "Nodes/CameraNode3d.h"
 #include "Nodes/MeshNode3d.h"
 #include "Renderer/Shader.h"
 #include "Renderer/Shadows/CascadedShadowMap.h"
@@ -42,8 +43,8 @@ public:
     void RemoveDirectionalLight(DirectionalLight* light);
 
     // called once per frame from RenderApi::Flush()
-    void RenderDirectionalShadows(const Camera& camera, const std::vector<MeshNode3d*>& renderQueue, const glm::vec2& viewportSize);
-    void RenderPointLightShadows(const Camera& camera, const std::vector<PointLight*>& pointLights, const std::vector<MeshNode3d*>& renderQueue, const glm::vec2& viewportSize);
+    void RenderDirectionalShadows(const CameraNode3d& camera, const std::vector<MeshNode3d*>& renderQueue, const glm::vec2& viewportSize);
+    void RenderPointLightShadows(const CameraNode3d& camera, const std::vector<PointLight*>& pointLights, const std::vector<MeshNode3d*>& renderQueue, const glm::vec2& viewportSize);
 
     // binds shadow uniforms onto whatever shader is currently in use for the main pass
     void BindShadowUniforms(const Shader& shader) const;
@@ -69,7 +70,7 @@ private:
     };
 
     void EnsurePointShadowMetaBuffer(size_t pointLightCount);
-    static float ScorePointLight(const PointLight* light, const Camera& camera);
+    static float ScorePointLight(const PointLight* light, const CameraNode3d& camera);
     static void BuildPointShadowFaceMatrices(const glm::vec3& lightPos, float nearPlane, float farPlane, glm::mat4 outVP[6]);
 
     // directional shadow resources

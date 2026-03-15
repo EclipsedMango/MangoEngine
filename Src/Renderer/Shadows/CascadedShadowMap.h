@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../Buffers/Framebuffer.h"
+#include "Nodes/CameraNode3d.h"
 #include "Scene/Camera.h"
 
 class CascadedShadowMap {
@@ -17,7 +18,7 @@ public:
     ~CascadedShadowMap() = default;
 
     // refit all cascade frustum to the camera, call once per frame before the shadow pass.
-    void Update(const Camera& camera);
+    void Update(const CameraNode3d& camera);
 
     void BeginRender(int index) const;
     static void EndRender();
