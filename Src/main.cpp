@@ -392,6 +392,7 @@
 #include "Renderer/Shader.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
 #include "Nodes/Lights/PointLightNode3d.h"
+#include "Renderer/Meshes/GltfLoader.h"
 
 int main() {
     // build scene
@@ -444,6 +445,10 @@ int main() {
     mesh->Upload();
 
     Shader* shader = new Shader("../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag");
+
+    Node3d* teddy = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
+    teddy->SetPosition({0, 0, 0});
+    scene->AddChild(teddy);
 
     MeshNode3d* floor = new MeshNode3d(mesh, shader);
     floor->SetPosition({0, -5, 0});

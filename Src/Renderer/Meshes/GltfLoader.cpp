@@ -8,7 +8,7 @@
 #include "Mesh.h"
 #include <iostream>
 
-std::vector<MeshNode3d*> GltfLoader::Load(const std::string& path, Shader* shader) {
+Node3d* GltfLoader::Load(const std::string& path, Shader* shader) {
     tinygltf::TinyGLTF loader;
     tinygltf::Model model;
     std::string err, warn;
@@ -17,49 +17,44 @@ std::vector<MeshNode3d*> GltfLoader::Load(const std::string& path, Shader* shade
 
     if (!warn.empty()) std::cerr << "GLTF Warning: " << warn << std::endl;
     if (!err.empty())  std::cerr << "GLTF Error: "   << err  << std::endl;
-    if (!success) return {};
+    if (!success) return nullptr;
 
-    std::vector<MeshNode3d*> nodes;
+    Node3d* root = new Node3d();
 
     for (auto& gltfMesh : model.meshes) {
         for (auto& primitive : gltfMesh.primitives) {
-            // positions
-            const auto& posAccessor = model.accessors[primitive.attributes["POSITION"]];
-            const auto& posView     = model.bufferViews[posAccessor.bufferView];
-            const float* positions = reinterpret_cast<const float*>(
+            // positions (required)
+            if (!primitive.attributes.contains("POSITION")) continue;
+
+            const auto& posAccessor = model.accessors[primitive.attributes.at("POSITION")];
+            const auto& posView = model.bufferViews[posAccessor.bufferView];
+            const float* positions  = reinterpret_cast<const float*>(
                 model.buffers[posView.buffer].data.data() + posView.byteOffset + posAccessor.byteOffset
             );
 
-            // normals
+            // normals (optional)
             const float* normals = nullptr;
             if (primitive.attributes.contains("NORMAL")) {
-                const auto& normAccessor = model.accessors[primitive.attributes["NORMAL"]];
-                const auto& normView     = model.bufferViews[normAccessor.bufferView];
+                const auto& normAccessor = model.accessors[primitive.attributes.at("NORMAL")];
+                const auto& normView = model.bufferViews[normAccessor.bufferView];
                 normals = reinterpret_cast<const float*>(
                     model.buffers[normView.buffer].data.data() + normView.byteOffset + normAccessor.byteOffset
                 );
             }
 
-            // uvs
+            // uvs (optional)
             const float* uvs = nullptr;
             if (primitive.attributes.contains("TEXCOORD_0")) {
-                const auto& uvAccessor = model.accessors[primitive.attributes["TEXCOORD_0"]];
-                const auto& uvView     = model.bufferViews[uvAccessor.bufferView];
+                const auto& uvAccessor = model.accessors[primitive.attributes.at("TEXCOORD_0")];
+                const auto& uvView = model.bufferViews[uvAccessor.bufferView];
                 uvs = reinterpret_cast<const float*>(
                     model.buffers[uvView.buffer].data.data() + uvView.byteOffset + uvAccessor.byteOffset
                 );
             }
 
-            if (primitive.material >= 0) {
-                auto& mat = model.materials[primitive.material];
-                if (mat.doubleSided) {
-                    glDisable(GL_CULL_FACE);
-                } else {
-                    glEnable(GL_CULL_FACE);
-                }
-            }
-
+            // build vertices
             std::vector<Vertex> vertices;
+            vertices.reserve(posAccessor.count);
             for (size_t i = 0; i < posAccessor.count; i++) {
                 Vertex v{};
                 v.position = { positions[i*3], positions[i*3+1], positions[i*3+2] };
@@ -68,26 +63,51 @@ std::vector<MeshNode3d*> GltfLoader::Load(const std::string& path, Shader* shade
                 vertices.push_back(v);
             }
 
-            // indices
+            // build indices
             std::vector<uint32_t> indices;
-            const auto& idxAccessor = model.accessors[primitive.indices];
-            const auto& idxView     = model.bufferViews[idxAccessor.bufferView];
-            const uint8_t* idxData  = model.buffers[idxView.buffer].data.data() + idxView.byteOffset + idxAccessor.byteOffset;
+            if (primitive.indices >= 0) {
+                const auto& idxAccessor = model.accessors[primitive.indices];
+                const auto& idxView     = model.bufferViews[idxAccessor.bufferView];
+                const uint8_t* idxData  = model.buffers[idxView.buffer].data.data() + idxView.byteOffset + idxAccessor.byteOffset;
 
-            for (size_t i = 0; i < idxAccessor.count; i++) {
-                if (idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-                    indices.push_back(reinterpret_cast<const uint16_t*>(idxData)[i]);
-                }
-                else if (idxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-                    indices.push_back(reinterpret_cast<const uint32_t*>(idxData)[i]);
+                indices.reserve(idxAccessor.count);
+                for (size_t i = 0; i < idxAccessor.count; i++) {
+                    switch (idxAccessor.componentType) {
+                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+                            indices.push_back(idxData[i]);
+                            break;
+                        }
+                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+                            indices.push_back(reinterpret_cast<const uint16_t*>(idxData)[i]);
+                            break;
+                        }
+                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
+                            indices.push_back(reinterpret_cast<const uint32_t*>(idxData)[i]);
+                            break;
+                        }
+                        default: {
+                            std::cerr << "GLTF: unsupported index component type" << std::endl;
+                            break;
+                        }
+                    }
                 }
             }
 
-            Mesh* mesh = new Mesh(vertices, indices);
-            MeshNode3d* node = new MeshNode3d(mesh, shader);
-            nodes.push_back(node);
+            // double sided material flag
+            if (primitive.material >= 0) {
+                const auto& mat = model.materials[primitive.material];
+                if (mat.doubleSided) {
+                    glDisable(GL_CULL_FACE);
+                } else {
+                    glEnable(GL_CULL_FACE);
+                }
+            }
+
+            auto* mesh = new Mesh(vertices, indices);
+            auto* node = new MeshNode3d(mesh, shader);
+            root->AddChild(node);
         }
     }
 
-    return nodes;
+    return root;
 }

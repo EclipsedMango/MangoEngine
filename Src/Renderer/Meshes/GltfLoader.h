@@ -9,8 +9,8 @@
 
 class GltfLoader {
 public:
-    // returns all objects found in the file, caller owns the pointers
-    static std::vector<MeshNode3d*> Load(const std::string& path, Shader* shader);
+    // returns a root Node3d with all meshes as children, caller owns the pointer
+    static Node3d* Load(const std::string& path, Shader* shader);
 };
 
 #endif //MANGORENDERING_GLTFLOADER_H
