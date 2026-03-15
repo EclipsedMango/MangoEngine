@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "imgui.h"
+#include "Input.h"
 #include "Nodes/MeshNode3d.h"
 #include "Nodes/CameraNode3d.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
@@ -12,6 +13,22 @@
 
 Editor::Editor(Node3d* scene) : m_core(scene) {
     m_core.Init();
+
+    const glm::vec2 winSize = m_core.GetActiveWindow()->GetSize();
+    const float aspect = (winSize.y != 0.0f) ? (winSize.x / winSize.y) : 1.0f;
+
+    m_editorCamera = std::make_unique<CameraNode3d>(glm::vec3(0, 2, 6), 75.0f, aspect);
+
+    m_core.SetEditorCamera(m_editorCamera.get());
+    m_core.SetCameraMode(Core::CameraMode::Editor);
+
+    SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
+    Input::SetMouseDeltaEnabled(false);
+}
+
+Editor::~Editor() {
+    SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
+    Input::SetMouseDeltaEnabled(false);
 }
 
 void Editor::Run() {
@@ -23,14 +40,14 @@ void Editor::Run() {
         lastTime = now;
 
         m_core.PollEvents();
+        Core::BeginImGuiFrame();
 
         if (m_state == State::Playing) {
             m_core.StepFrame(deltaTime);
         } else {
+            UpdateEditorCamera(deltaTime);
             m_core.GetScene()->UpdateWorldTransform();
         }
-
-        Core::BeginImGuiFrame();
 
         DrawMenuBar();
         DrawSceneTree(m_core.GetScene());
@@ -40,6 +57,58 @@ void Editor::Run() {
         m_core.RenderScene();
         Core::EndImGuiFrame();
         m_core.SwapBuffers();
+    }
+}
+
+void Editor::UpdateEditorCamera(const float dt) {
+    if (!m_editorCamera) return;
+
+    const ImGuiIO& io = ImGui::GetIO();
+    const bool imguiWantsMouse = io.WantCaptureMouse;
+    const bool imguiWantsKeys = io.WantCaptureKeyboard;
+
+    const bool rmbHeld = Input::IsMouseButtonHeld(SDL_BUTTON_RIGHT);
+    const bool shouldLook = rmbHeld && !imguiWantsMouse;
+
+    if (shouldLook && !m_rmbLook) {
+        m_rmbLook = true;
+        SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), true);
+        Input::SetMouseDeltaEnabled(true);
+    } else if (!shouldLook && m_rmbLook) {
+        m_rmbLook = false;
+        SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
+        Input::SetMouseDeltaEnabled(false);
+    }
+
+    if (m_rmbLook && !imguiWantsMouse) {
+        const float wheelY = Input::GetMouseWheelY();
+        if (wheelY != 0.0f) {
+            m_moveSpeed *= std::pow(1.1f, wheelY);
+            m_moveSpeed = glm::clamp(m_moveSpeed, 0.05f, 500.0f);
+        }
+    }
+
+    if (!m_rmbLook) return;
+
+    const glm::vec2 md = Input::GetMouseDelta();
+    m_editorCamera->Rotate(md.x * m_mouseSensitivity, -md.y * m_mouseSensitivity);
+
+    if (!imguiWantsKeys) {
+        float speed = m_moveSpeed;
+        if (Input::IsKeyHeld(SDL_SCANCODE_LSHIFT)) speed *= 5.0f;
+
+        glm::vec3 dir(0.0f);
+        if (Input::IsKeyHeld(SDL_SCANCODE_W)) dir += m_editorCamera->GetFront();
+        if (Input::IsKeyHeld(SDL_SCANCODE_S)) dir -= m_editorCamera->GetFront();
+        if (Input::IsKeyHeld(SDL_SCANCODE_D)) dir += m_editorCamera->GetRight();
+        if (Input::IsKeyHeld(SDL_SCANCODE_A)) dir -= m_editorCamera->GetRight();
+        if (Input::IsKeyHeld(SDL_SCANCODE_E)) dir += glm::vec3(0, 1, 0);
+        if (Input::IsKeyHeld(SDL_SCANCODE_Q)) dir -= glm::vec3(0, 1, 0);
+
+        if (glm::length(dir) > 0.0f) {
+            dir = glm::normalize(dir);
+            m_editorCamera->SetPosition(m_editorCamera->GetPosition() + dir * speed * dt);
+        }
     }
 }
 
@@ -190,13 +259,31 @@ void Editor::DrawContentBrowser() {
 void Editor::OnPlay() {
     // TODO: serialize scene state here so we can restore on stop
     m_state = State::Playing;
+
+    m_core.SetCameraMode(Core::CameraMode::Game);
+
+    m_rmbLook = false;
+    SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
+    Input::SetMouseDeltaEnabled(false);
 }
 
 void Editor::OnPause() {
-    m_state = m_state == State::Paused ? State::Playing : State::Paused;
+    if (m_state == State::Playing) {
+        m_state = State::Paused;
+        m_core.SetCameraMode(Core::CameraMode::Editor);
+    } else if (m_state == State::Paused) {
+        m_state = State::Playing;
+        m_core.SetCameraMode(Core::CameraMode::Game);
+    }
 }
 
 void Editor::OnStop() {
     // TODO: restore serialized scene state here
     m_state = State::Editing;
+
+    m_core.SetCameraMode(Core::CameraMode::Editor);
+
+    m_rmbLook = false;
+    SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
+    Input::SetMouseDeltaEnabled(false);
 }

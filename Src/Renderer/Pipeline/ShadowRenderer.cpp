@@ -71,7 +71,7 @@ void ShadowRenderer::RenderDirectionalShadows(const CameraNode3d& camera, const 
             for (const MeshNode3d* node : renderQueue) {
                 if (!node->GetMaterial().GetCastShadows()) continue;
 
-                m_shadowDepthShader->SetMatrix4("u_Model", node->GetModelMatrix());
+                m_shadowDepthShader->SetMatrix4("u_Model", node->GetWorldMatrix());
                 node->GetMesh()->GetBuffer()->Bind();
                 glDrawElements(GL_TRIANGLES, node->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, nullptr);
                 m_shadowDrawCallCount++;
@@ -161,7 +161,7 @@ void ShadowRenderer::RenderPointLightShadows(const CameraNode3d& camera, const s
                 continue;
             }
 
-            m_pointShadowDepthShader->SetMatrix4("u_Model", node->GetModelMatrix());
+            m_pointShadowDepthShader->SetMatrix4("u_Model", node->GetWorldMatrix());
             node->GetMesh()->GetBuffer()->Bind();
             glDrawElements(GL_TRIANGLES, node->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
             m_shadowDrawCallCount++;

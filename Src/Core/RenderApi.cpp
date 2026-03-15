@@ -102,7 +102,7 @@ void RenderApi::InitDepthPass() {
 
 void RenderApi::ClearColour(const glm::vec4 &colour) {
     glClearColor(colour.r, colour.g, colour.b, colour.a);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void RenderApi::HandleResizeEvent(const SDL_Event &event) {
@@ -122,9 +122,20 @@ void RenderApi::HandleResizeEvent(const SDL_Event &event) {
 
 void RenderApi::SetActiveCamera(CameraNode3d* camera) {
     m_activeCamera = camera;
-    if (!m_windows.empty()) {
-        RebuildClusters();
+
+    if (!m_activeCamera || m_windows.empty()) {
+        return;
     }
+
+    int w = 1, h = 1;
+    SDL_GetWindowSizeInPixels(m_windows[0]->GetSDLWindow(), &w, &h);
+    if (h == 0) {
+        h = 1;
+    }
+
+    m_activeCamera->SetAspectRatio(static_cast<float>(w) / static_cast<float>(h));
+
+    RebuildClusters();
 }
 
 void RenderApi::UploadCameraData() {
@@ -221,7 +232,6 @@ void RenderApi::BeginZPrepass() {
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
-    glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 void RenderApi::EndZPrepass() {
@@ -287,7 +297,7 @@ void RenderApi::DrawMeshNodeDepth(const MeshNode3d *node) const {
     }
 
     m_depthShader->Bind();
-    m_depthShader->SetMatrix4("u_Model", node->GetModelMatrix());
+    m_depthShader->SetMatrix4("u_Model", node->GetWorldMatrix());
 
     node->GetMesh()->GetBuffer()->Bind();
     glDrawElements(GL_TRIANGLES, node->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);

@@ -20,8 +20,15 @@ public:
     [[nodiscard]] static bool IsKeyJustPressed(SDL_Scancode key);
     [[nodiscard]] static bool IsKeyJustReleased(SDL_Scancode key);
 
+    [[nodiscard]] static bool IsMouseButtonHeld(int button);
+    [[nodiscard]] static bool IsMouseButtonJustPressed(int button);
+    [[nodiscard]] static bool IsMouseButtonJustReleased(int button);
+
     [[nodiscard]] static glm::vec2 GetMouseDelta()    { return m_mouseDelta; }
     [[nodiscard]] static glm::vec2 GetMousePosition() { return m_mousePosition; }
+
+    [[nodiscard]] static float GetMouseWheelY() { return m_mouseWheelY; }
+    [[nodiscard]] static float GetMouseWheelX() { return m_mouseWheelX; }
 
 private:
     static std::array<bool, SDL_SCANCODE_COUNT> m_current;
@@ -30,7 +37,13 @@ private:
     static glm::vec2 m_mouseDelta;
     static glm::vec2 m_mousePosition;
 
+    static float m_mouseWheelX;
+    static float m_mouseWheelY;
+
     static bool m_mouseDeltaEnabled;
+
+    static Uint32 m_mouseButtonsCurrent;
+    static Uint32 m_mouseButtonsPrevious;
 };
 
 

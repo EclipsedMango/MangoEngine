@@ -444,8 +444,8 @@ int main() {
     );
     mesh->Upload();
 
-    const auto texture = std::make_shared<Texture>("../Assets/Textures/face.png");
-    const auto teddyTexture = std::make_shared<Texture>("../Assets/Textures/Cubemaps/sky_16_2k/sky_16_2k.png");
+    auto texture = std::make_shared<Texture>("../Assets/Textures/face.png");
+    auto teddyTexture = std::make_shared<Texture>("../Assets/Textures/Cubemaps/sky_16_2k/sky_16_2k.png");
     Shader* shader = new Shader("../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag");
 
     Node3d* teddy = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
@@ -516,14 +516,15 @@ int main() {
     }
 
     CameraNode3d* camera = new CameraNode3d({0, 0, 3}, 75.0f, 500.0f / 500.0f);
-    editor.GetCore().SetActiveCamera(camera);
+    editor.GetCore().SetGameCamera(camera);
     scene->AddChild(camera);
 
     editor.Run();
 
+    texture.reset();
+    teddyTexture.reset();
     delete mesh;
     delete shader;
-    delete camera;
 
     return 0;
 }

@@ -8,20 +8,6 @@ CameraNode3d::CameraNode3d(const glm::vec3 position, const float fov, const floa
     UpdateVectors();
 }
 
-void CameraNode3d::Process(float deltaTime) {
-    float speed = m_moveSpeed;
-    if (Input::IsKeyHeld(SDL_SCANCODE_LSHIFT)) speed += m_fastSpeed;
-    if (Input::IsKeyHeld(SDL_SCANCODE_W)) SetPosition(GetPosition() + m_front * speed * deltaTime);
-    if (Input::IsKeyHeld(SDL_SCANCODE_A)) SetPosition(GetPosition() + -m_right * speed * deltaTime);
-    if (Input::IsKeyHeld(SDL_SCANCODE_S)) SetPosition(GetPosition() + -m_front * speed * deltaTime);
-    if (Input::IsKeyHeld(SDL_SCANCODE_D)) SetPosition(GetPosition() + m_right * speed * deltaTime);
-
-    const glm::vec2 mouseDelta = Input::GetMouseDelta();
-    if (mouseDelta.x != 0 || mouseDelta.y != 0) {
-        Rotate(mouseDelta.x * m_mouseSensitivity, -mouseDelta.y * m_mouseSensitivity);
-    }
-}
-
 glm::mat4 CameraNode3d::GetViewMatrix() const {
     return glm::lookAt(GetPosition(), GetPosition() + m_front, m_up);
 }

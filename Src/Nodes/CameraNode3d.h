@@ -15,7 +15,7 @@ public:
     void SetYaw(const float yaw)                       { m_yaw = yaw; UpdateVectors(); }
     void SetPitch(const float pitch)                   { m_pitch = pitch; UpdateVectors(); }
 
-    void Process(float deltaTime) override;
+    void Process(float deltaTime) override {}
 
     [[nodiscard]] glm::mat4 GetViewMatrix() const;
     [[nodiscard]] glm::mat4 GetProjectionMatrix() const;
@@ -46,10 +46,6 @@ private:
     float m_aspectRatio;
     float m_nearPlane = 0.1;
     float m_farPlane = 200.0;
-
-    float m_moveSpeed = 5.0f;
-    float m_fastSpeed = 50.0f;
-    float m_mouseSensitivity = 0.05f;
 };
 
 

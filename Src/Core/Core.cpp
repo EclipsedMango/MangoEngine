@@ -16,21 +16,19 @@
 Core::Core(Node3d* scene) : m_currentScene(scene) {}
 
 Core::~Core() {
-    // renderer must be destroyed before ImGui shutdown since it owns GL resources
-    m_renderer.reset();
+    delete m_currentScene;
+    m_currentScene = nullptr;
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 
-    delete m_currentScene;
+    m_renderer.reset();
 }
 
 void Core::Init() {
     InitRenderer();
     InitImGui();
-
-    Input::SetMouseDeltaEnabled(m_mouseCaptured);
 
     m_currentScene->PropagateEnterTree(this);
 }
@@ -138,12 +136,6 @@ bool Core::PollEvents() {
 
     Input::EndFrame();
 
-    if (Input::IsKeyJustPressed(SDL_SCANCODE_TAB)) {
-        m_mouseCaptured = !m_mouseCaptured;
-        SDL_SetWindowRelativeMouseMode(m_activeWindow->GetSDLWindow(), m_mouseCaptured);
-        Input::SetMouseDeltaEnabled(m_mouseCaptured);
-    }
-
     if (Input::IsKeyJustPressed(SDL_SCANCODE_ESCAPE)) {
         m_activeWindow->Close();
     }
@@ -221,6 +213,22 @@ bool Core::IsNodeCached(const Node3d* node) const {
     return std::ranges::find(m_nodeCache, node) != m_nodeCache.end();
 }
 
+void Core::ApplyCameraMode() {
+    CameraNode3d* desired = nullptr;
+
+    if (m_cameraMode == CameraMode::Editor) {
+        desired = m_editorCamera;
+    } else {
+        desired = m_gameCamera;
+    }
+
+    if (!desired) {
+        desired = m_cameraMode == CameraMode::Editor ? m_gameCamera : m_editorCamera;
+    }
+
+    SetActiveCamera(desired);
+}
+
 void Core::RegisterLight(LightNode3d *light) const {
     if (auto* d = dynamic_cast<DirectionalLightNode3d*>(light)) {
         m_renderer->AddDirectionalLight(d->GetLight());
@@ -248,9 +256,30 @@ void Core::RebuildNodeCache() {
     BuildNodeCache(m_currentScene);
 }
 
-void Core::SetActiveCamera(CameraNode3d *camera) {
+void Core::SetEditorCamera(CameraNode3d *camera) {
+    m_editorCamera = camera;
+    if (m_cameraMode == CameraMode::Editor || m_activeCamera == nullptr) {
+        ApplyCameraMode();
+    }
+}
+
+void Core::SetGameCamera(CameraNode3d *camera) {
+    m_gameCamera = camera;
+    if (m_cameraMode == CameraMode::Game) {
+        ApplyCameraMode();
+    }
+}
+
+void Core::SetActiveCamera(CameraNode3d* camera) {
     m_activeCamera = camera;
-    m_renderer->SetActiveCamera(camera);
+    if (m_renderer) {
+        m_renderer->SetActiveCamera(camera);
+    }
+}
+
+void Core::SetCameraMode(CameraMode mode) {
+    m_cameraMode = mode;
+    ApplyCameraMode();
 }
 
 void Core::ChangeScene(Node3d* scene) {

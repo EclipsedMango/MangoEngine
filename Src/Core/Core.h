@@ -13,6 +13,8 @@
 
 class Core : public TreeListener {
 public:
+    enum class CameraMode { Editor, Game };
+
     explicit Core(Node3d* scene);
     ~Core() override;
 
@@ -32,7 +34,13 @@ public:
     void ChangeScene(Node3d* scene);
     void RebuildNodeCache();
 
+    void SetEditorCamera(CameraNode3d* camera);
+    void SetGameCamera(CameraNode3d* camera);
+
+    // this function should not be used for the game loop
     void SetActiveCamera(CameraNode3d* camera);
+
+    void SetCameraMode(CameraMode mode);
 
     static void BeginImGuiFrame();
     static void EndImGuiFrame();
@@ -40,6 +48,9 @@ public:
     [[nodiscard]] Node3d* GetScene() const { return m_currentScene; }
     [[nodiscard]] RenderApi& GetRenderer() const { return *m_renderer; }
     [[nodiscard]] Window* GetActiveWindow() const { return m_activeWindow; }
+    [[nodiscard]] CameraNode3d* GetActiveCamera() const { return m_activeCamera; }
+    [[nodiscard]] CameraNode3d* GetEditorCamera() const { return m_editorCamera; }
+    [[nodiscard]] CameraNode3d* GetGameCamera() const { return m_gameCamera; }
 
 private:
     void InitRenderer();
@@ -47,6 +58,8 @@ private:
 
     void BuildNodeCache(Node3d* node);
     [[nodiscard]] bool IsNodeCached(const Node3d* node) const;
+
+    void ApplyCameraMode();
 
     void RegisterLight(LightNode3d* light) const;
     void UnregisterLight(LightNode3d* light) const;
@@ -62,8 +75,10 @@ private:
     std::vector<RenderableNode3d*> m_renderableCache;
     SkyboxNode3d* m_activeSkybox = nullptr;
 
+    CameraMode m_cameraMode = CameraMode::Editor;
+    CameraNode3d* m_editorCamera = nullptr;
+    CameraNode3d* m_gameCamera   = nullptr;
     CameraNode3d* m_activeCamera = nullptr;
-    bool m_mouseCaptured = true;
 };
 
 
