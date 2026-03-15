@@ -27,6 +27,41 @@ Core::~Core() {
 void Core::Init() {
     InitRenderer();
     InitImGui();
+    m_currentScene->PropagateEnterTree(this);
+}
+
+void Core::Notification(Node3d *node, const NodeNotification notification) {
+    switch (notification) {
+        case NodeNotification::EnterTree: {
+            m_nodeCache.push_back(node);
+            if (auto* r = dynamic_cast<RenderableNode3d*>(node)) {
+                m_renderableCache.push_back(r);
+            }
+
+            if (auto* l = dynamic_cast<LightNode3d*>(node)) {
+                RegisterLight(l);
+            }
+
+            break;
+        }
+
+        case NodeNotification::ExitTree: {
+            std::erase(m_nodeCache, node);
+            if (auto* r = dynamic_cast<RenderableNode3d*>(node)) {
+                std::erase(m_renderableCache, r);
+            }
+
+            if (auto* l = dynamic_cast<LightNode3d*>(node)) {
+                UnregisterLight(l);
+            }
+            break;
+        }
+
+        case NodeNotification::Ready: {
+            // nothing needed here yet
+            break;
+        }
+    }
 }
 
 void Core::InitRenderer() {
@@ -67,10 +102,6 @@ void Core::BuildNodeCache(Node3d *node) {
         m_renderableCache.push_back(renderable);
     }
 
-    if (auto* light = dynamic_cast<LightNode3d*>(node)) {
-        m_lightCache.push_back(light);
-    }
-
     for (const auto child : node->GetChildren()) {
         BuildNodeCache(child);
     }
@@ -100,16 +131,7 @@ void Core::RebuildNodeCache() {
     m_nodeCache.clear();
     m_renderableCache.clear();
 
-    for (auto* light : m_lightCache) {
-        UnregisterLight(light);
-    }
-    m_lightCache.clear();
-
     BuildNodeCache(m_currentScene);
-
-    for (auto* light : m_lightCache) {
-        RegisterLight(light);
-    }
 }
 
 void Core::SetActiveCamera(Camera *camera) {
@@ -122,9 +144,11 @@ void Core::Process() {
     float accumulator = 0.0f;
     uint64_t lastTime = SDL_GetTicksNS();
 
-    std::cout << "Renderable cache size: " << m_renderableCache.size() << std::endl;
+    float cpuMs = 0.0f;
+    float smoothCpuMs = 0.0f;
 
     while (m_activeWindow->IsOpen()) {
+        const uint64_t cpuFrameStart = SDL_GetTicksNS();
         const uint64_t now = SDL_GetTicksNS();
         const float deltaTime = (now - lastTime) / 1e9f;
         lastTime = now;
@@ -172,15 +196,21 @@ void Core::Process() {
             accumulator -= FIXED_TIMESTEP;
         }
 
+        m_currentScene->UpdateWorldTransform();
         for (auto* node : m_nodeCache) {
             node->Process();
         }
 
         BeginImGuiFrame();
 
+        const uint64_t cpuFrameEnd = SDL_GetTicksNS();
+        cpuMs = static_cast<float>(cpuFrameEnd - cpuFrameStart) / 1'000'000.0f;
+        smoothCpuMs = smoothCpuMs * 0.95f + cpuMs * 0.05f;
+
         ImGui::Begin("Stats");
-        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-        ImGui::Text("Frame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+        ImGui::Text("FPS:      %.1f", ImGui::GetIO().Framerate);
+        ImGui::Text("GPU Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+        ImGui::Text("CPU Time: %.3f ms", smoothCpuMs);
         ImGui::End();
 
         m_renderer->ClearColour({0.16f, 0.16f, 0.16f, 1.0f});
@@ -198,5 +228,7 @@ void Core::Process() {
 void Core::ChangeScene(Node3d* scene) {
     delete m_currentScene;
     m_currentScene = scene;
-    RebuildNodeCache();
+    m_nodeCache.clear();
+    m_renderableCache.clear();
+    m_currentScene->PropagateEnterTree(this);
 }

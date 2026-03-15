@@ -6,6 +6,9 @@
 
 #include "Transform.h"
 
+enum class NodeNotification;
+class TreeListener;
+
 class Node3d {
 public:
     Node3d();
@@ -14,8 +17,13 @@ public:
     void AddChild(Node3d* child);
     void RemoveChild(Node3d* child);
 
+    void PropagateEnterTree(TreeListener* listener);
+    void PropagateExitTree();
+
     virtual void PhysicsProcess(float deltaTime);
     virtual void Process();
+
+    void UpdateWorldTransform(const glm::mat4& parentWorld = glm::mat4(1.0f));
 
     void SetRoot();
     void SetVisible(const bool visible) { m_visible = visible; }
@@ -33,11 +41,15 @@ public:
     [[nodiscard]] glm::vec3 GetScale() const { return m_transform.Scale; }
     [[nodiscard]] glm::mat4 GetModelMatrix() const { return m_transform.GetModelMatrix(); }
     [[nodiscard]] Transform GetTransform() const { return m_transform; }
+    [[nodiscard]] glm::mat4 GetWorldMatrix() const { return m_worldMatrix; }
 
 private:
+    TreeListener* m_treeListener = nullptr;
+
     Node3d* m_parent = nullptr;
     std::vector<Node3d*> m_children;
 
+    glm::mat4 m_worldMatrix = glm::mat4(1.0f);
     Transform m_transform;
     bool m_visible = true;
     bool m_is_root = false;

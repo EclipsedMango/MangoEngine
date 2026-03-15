@@ -203,7 +203,7 @@ void RenderApi::RenderMainPass() {
 
     for (const MeshNode3d* node : m_meshQueue) {
         const Mesh* mesh = node->GetMesh();
-        const glm::vec3 worldCenter = glm::vec3(node->GetModelMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
+        const glm::vec3 worldCenter = glm::vec3(node->GetWorldMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
         const float worldRadius = mesh->GetBoundsRadius() * std::max({ node->GetScale().x, node->GetScale().y, node->GetScale().z });
 
         if (!cameraFrustum.IntersectsSphere(worldCenter, worldRadius)) {
@@ -262,8 +262,8 @@ void RenderApi::DrawMeshNode(const MeshNode3d* node) {
 
     m_shadowRenderer->BindShadowUniforms(*shader);
 
-    shader->SetMatrix4("u_Model", node->GetModelMatrix());
-    shader->SetMatrix4("u_NormalMatrix", glm::transpose(glm::inverse(node->GetModelMatrix())));
+    shader->SetMatrix4("u_Model", node->GetWorldMatrix());
+    shader->SetMatrix4("u_NormalMatrix", glm::transpose(glm::inverse(node->GetWorldMatrix())));
 
     if (m_activeCamera) {
         shader->SetFloat("u_ZNear", m_activeCamera->GetNearPlane());

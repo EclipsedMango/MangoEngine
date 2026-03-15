@@ -390,7 +390,6 @@
 #include "Nodes/MeshNode3d.h"
 #include "Renderer/Mesh.h"
 #include "Renderer/Shader.h"
-#include "Nodes/Lights/DirectionalLight.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
 #include "Nodes/Lights/PointLightNode3d.h"
 
@@ -488,7 +487,6 @@ int main() {
     Camera* camera = new Camera({0, 0, 3}, 75.0f, 500.0f / 500.0f, 0.1f, 200.0f);
     core.SetActiveCamera(camera);
 
-    core.RebuildNodeCache();
     core.Process();
 
     delete mesh;

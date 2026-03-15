@@ -3,20 +3,24 @@
 #define MANGORENDERING_CORE_H
 
 #include "RenderApi.h"
+#include "TreeListener.h"
 #include "Nodes/Node3d.h"
 #include "Window.h"
 #include "Nodes/RenderableNode3d.h"
 #include "Nodes/Lights/LightNode3d.h"
 
-class Core {
+class Core : public TreeListener {
 public:
     explicit Core(Node3d* scene);
-    ~Core();
+    ~Core() override;
 
     Core(const Core&)            = delete;
     Core& operator=(const Core&) = delete;
 
     void Init();
+
+    void Notification(Node3d* node, NodeNotification notification) override;
+
     void Process();
     void ChangeScene(Node3d* scene);
     void RebuildNodeCache();
@@ -43,7 +47,6 @@ private:
 
     std::vector<Node3d*> m_nodeCache;
     std::vector<RenderableNode3d*> m_renderableCache;
-    std::vector<LightNode3d*> m_lightCache;
 
     Camera* m_activeCamera = nullptr;
     bool m_mouseCaptured = true;
