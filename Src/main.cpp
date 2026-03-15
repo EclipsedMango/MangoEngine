@@ -444,16 +444,24 @@ int main() {
     );
     mesh->Upload();
 
+    const auto texture = std::make_shared<Texture>("../Assets/Textures/face.png");
+    const auto teddyTexture = std::make_shared<Texture>("../Assets/Textures/Cubemaps/sky_16_2k/sky_16_2k.png");
     Shader* shader = new Shader("../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag");
 
     Node3d* teddy = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
+    for (auto& children : teddy->GetChildren()) {
+        if (const auto meshNode = dynamic_cast<MeshNode3d*>(children)) {
+            meshNode->GetMaterial().SetDiffuse(teddyTexture);
+        }
+    }
+
     teddy->SetPosition({0, 0, 0});
     scene->AddChild(teddy);
 
     MeshNode3d* floor = new MeshNode3d(mesh, shader);
     floor->SetPosition({0, -5, 0});
     floor->SetScale({100, 0.5f, 100});
-    floor->GetMaterial().SetAlbedoColor({1, 1, 1, 1});
+    floor->GetMaterial().SetDiffuse(texture);
     scene->AddChild(floor);
 
     MeshNode3d* cube1 = new MeshNode3d(mesh, shader);
@@ -467,8 +475,7 @@ int main() {
     DirectionalLightNode3d* sun = new DirectionalLightNode3d({0.5f, -0.6f, -0.5f}, {0.9f, 0.65f, 0.32f}, 0.1f);
     scene->AddChild(sun);
 
-    PointLightNode3d* pointLight = new PointLightNode3d({-5, 2, 0}, {1.0f, 0.2f, 0.1f}, 1.5f, 15.0f);
-    pointLight->SetAttenuation(1.0f, 0.22f, 0.20f);
+    PointLightNode3d* pointLight = new PointLightNode3d({2, 2, -2}, {0.6f, 0.7f, 0.9f}, 1.0f, 15.0f);
     scene->AddChild(pointLight);
 
     SkyboxNode3d* skybox = new SkyboxNode3d({
@@ -486,6 +493,15 @@ int main() {
     auto randFloat = [&](const float min, const float max) {
         return std::uniform_real_distribution(min, max)(rng);
     };
+
+    constexpr int NUM_OBJECTS = 50;
+    for (int i = 0; i < NUM_OBJECTS; i++) {
+        MeshNode3d* obj = new MeshNode3d(mesh, shader);
+        obj->SetPosition({ randFloat(-30, 30), randFloat(-5, 10), randFloat(-30, 30) });
+        obj->SetScale({ randFloat(0.3f, 2.0f), randFloat(0.3f, 2.0f), randFloat(0.3f, 2.0f) });
+        obj->GetMaterial().SetDiffuse(texture);
+        scene->AddChild(obj);
+    }
 
     constexpr int NUM_LIGHTS = 10;
     for (int i = 0; i < NUM_LIGHTS; i++) {
