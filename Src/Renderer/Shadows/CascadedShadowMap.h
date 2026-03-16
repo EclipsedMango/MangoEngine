@@ -21,6 +21,8 @@ public:
     void BeginRender(int index) const;
     static void EndRender();
 
+    void SetDirection(const glm::vec3& dir) { m_lightDirection = glm::normalize(dir); }
+
     [[nodiscard]] glm::mat4 GetLightSpaceMatrix(const int index) const { return m_lightSpaceMatrices[index]; }
     [[nodiscard]] uint32_t GetTextureArray() const { return m_fb->GetDepthAttachment(); }
     [[nodiscard]] const std::array<float, NUM_CASCADES>& GetSplitDistances() const { return m_splitDistances; }

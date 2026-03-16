@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 include(FetchContent)
 
 FetchContent_Declare(sdl GIT_REPOSITORY https://github.com/libsdl-org/SDL.git GIT_TAG release-3.2.10)
+set(SDL_TEST_LIBRARY OFF)
+set(SDL_TESTS OFF)
 FetchContent_MakeAvailable(sdl)
 
 FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG 1.0.1)
@@ -15,7 +17,7 @@ FetchContent_Declare(glad GIT_REPOSITORY https://github.com/Dav1dde/glad.git GIT
 FetchContent_MakeAvailable(glad)
 glad_add_library(glad_gl REPRODUCIBLE LOADER API gl:core=4.6)
 
-FetchContent_Declare(imgui GIT_REPOSITORY https://github.com/ocornut/imgui.git GIT_TAG v1.92.6)
+FetchContent_Declare(imgui GIT_REPOSITORY https://github.com/ocornut/imgui.git GIT_TAG docking)
 FetchContent_MakeAvailable(imgui)
 
 FetchContent_Declare(stb GIT_REPOSITORY https://github.com/nothings/stb.git GIT_TAG master)
@@ -38,6 +40,7 @@ add_library(imgui STATIC
 
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
 target_link_libraries(imgui PUBLIC SDL3::SDL3 glad_gl)
+target_compile_definitions(imgui PUBLIC IMGUI_HAS_DOCK)
 
 add_executable(MangoRendering Src/main.cpp
         Src/Core/RenderApi.h

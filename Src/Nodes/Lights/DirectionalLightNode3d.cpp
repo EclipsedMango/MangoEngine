@@ -12,6 +12,7 @@ void DirectionalLightNode3d::Process(float deltaTime) {
 }
 
 void DirectionalLightNode3d::SyncLight() {
+    m_light.SetDirection(GetRotation());
     m_light.SetColor(GetColor());
     m_light.SetIntensity(GetIntensity());
 }

@@ -234,15 +234,34 @@ void Editor::DrawInspector() const {
     // point light node
     if (auto* pl = dynamic_cast<PointLightNode3d*>(m_selectedNode)) {
         if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen)) {
-            // TODO: expose light properties via PointLightNode3d getters/setters
-            ImGui::TextDisabled("Light properties coming soon");
+            glm::vec4 color = glm::vec4(pl->GetColor(), 1.0f);
+            if (ImGui::ColorEdit4("Color", &color.x)) pl->SetColor(color);
+
+            float rad = pl->GetLight()->GetRadius();
+            if (ImGui::DragFloat("Radius", &rad, 0.1f)) pl->SetRadius(rad);
+
+            float intensity = pl->GetIntensity();
+            if (ImGui::DragFloat("Intensity", &intensity, 0.1f)) pl->SetIntensity(intensity);
+
+            if (ImGui::CollapsingHeader("Attenuation", ImGuiTreeNodeFlags_DefaultOpen)) {
+                float constant = pl->GetLight()->GetConstant();
+                float linear = pl->GetLight()->GetLinear();
+                float quad = pl->GetLight()->GetQuadratic();
+                if (ImGui::SliderFloat("Constant", &constant, 0.0f, 1.0f)) pl->GetLight()->SetAttenuation(constant, linear, quad);
+                if (ImGui::SliderFloat("Linear", &linear, 0.0f, 1.0f)) pl->GetLight()->SetAttenuation(constant, linear, quad);
+                if (ImGui::SliderFloat("Quad", &quad, 0.0f, 1.0f)) pl->GetLight()->SetAttenuation(constant, linear, quad);
+            }
         }
     }
 
     // directional light node
     if (auto* dl = dynamic_cast<DirectionalLightNode3d*>(m_selectedNode)) {
         if (ImGui::CollapsingHeader("Directional Light", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::TextDisabled("Light properties coming soon");
+            glm::vec4 color = glm::vec4(dl->GetColor(), 1.0f);
+            if (ImGui::ColorEdit4("Color", &color.x)) dl->SetColor(color);
+
+            float intensity = dl->GetIntensity();
+            if (ImGui::DragFloat("Intensity", &intensity, 0.1f)) dl->SetIntensity(intensity);
         }
     }
 

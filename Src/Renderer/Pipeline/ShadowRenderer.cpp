@@ -61,6 +61,7 @@ void ShadowRenderer::RenderDirectionalShadows(const CameraNode3d& camera, const 
 
     for (size_t i = 0; i < m_directionalLights.size(); i++) {
         CascadedShadowMap* csm = m_cascadedShadowMaps[i];
+        csm->SetDirection(m_directionalLights[i]->GetDirection());
         csm->Update(camera);
 
         for (int c = 0; c < CascadedShadowMap::NUM_CASCADES; c++) {
