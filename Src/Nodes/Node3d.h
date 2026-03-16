@@ -28,7 +28,8 @@ public:
     void SetRoot();
     void SetVisible(const bool visible) { m_visible = visible; }
     void SetPosition(const glm::vec3 position) { m_transform.Position = position; }
-    void SetRotation(const glm::vec3 rotation) { m_transform.Rotation = rotation; }
+    void SetRotation(const glm::quat rotation) { m_transform.Rotation = rotation; }
+    void SetRotationEuler(const glm::vec3 degrees) { m_transform.SetEuler(degrees); }
     void SetScale(const glm::vec3 scale) { m_transform.Scale = scale; }
 
     [[nodiscard]] Node3d* GetParent() const { return m_parent; }
@@ -37,7 +38,8 @@ public:
     [[nodiscard]] bool IsRoot() const { return m_is_root; }
     [[nodiscard]] bool IsVisible() const { return m_visible; }
     [[nodiscard]] glm::vec3 GetPosition() const { return m_transform.Position; }
-    [[nodiscard]] glm::vec3 GetRotation() const { return m_transform.Rotation; }
+    [[nodiscard]] glm::quat GetRotation() const { return m_transform.Rotation; }
+    [[nodiscard]] glm::vec3 GetRotationEuler() const { return m_transform.GetEuler(); }
     [[nodiscard]] glm::vec3 GetScale() const { return m_transform.Scale; }
     [[nodiscard]] glm::mat4 GetModelMatrix() const { return m_transform.GetModelMatrix(); }
     [[nodiscard]] Transform GetTransform() const { return m_transform; }

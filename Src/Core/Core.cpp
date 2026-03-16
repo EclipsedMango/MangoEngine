@@ -13,6 +13,8 @@
 #include "Nodes/Lights/SpotLightNode3d.h"
 #include <algorithm>
 
+#include "ImGuizmo.h"
+
 Core::Core(Node3d* scene) : m_currentScene(scene) {}
 
 Core::~Core() {
@@ -109,6 +111,7 @@ void Core::BeginImGuiFrame() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);

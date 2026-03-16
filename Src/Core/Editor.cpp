@@ -3,8 +3,9 @@
 
 #include <functional>
 
-#include "imgui.h"
 #include "Input.h"
+#include "glm/gtc/quaternion.hpp"
+#include "glm/gtc/type_ptr.inl"
 #include "Nodes/MeshNode3d.h"
 #include "Nodes/CameraNode3d.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
@@ -55,6 +56,8 @@ void Editor::Run() {
         DrawContentBrowser();
 
         m_core.RenderScene();
+
+        DrawGizmo();
         Core::EndImGuiFrame();
         m_core.SwapBuffers();
     }
@@ -69,6 +72,12 @@ void Editor::UpdateEditorCamera(const float dt) {
 
     const bool rmbHeld = Input::IsMouseButtonHeld(SDL_BUTTON_RIGHT);
     const bool shouldLook = rmbHeld && !imguiWantsMouse;
+
+    if (!m_rmbLook) {
+        if (Input::IsKeyJustPressed(SDL_SCANCODE_W)) m_gizmoOp = ImGuizmo::TRANSLATE;
+        if (Input::IsKeyJustPressed(SDL_SCANCODE_E)) m_gizmoOp = ImGuizmo::ROTATE;
+        if (Input::IsKeyJustPressed(SDL_SCANCODE_R)) m_gizmoOp = ImGuizmo::SCALE;
+    }
 
     if (shouldLook && !m_rmbLook) {
         m_rmbLook = true;
@@ -202,11 +211,11 @@ void Editor::DrawInspector() const {
     // transform
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
         glm::vec3 pos = m_selectedNode->GetPosition();
-        glm::vec3 rot = m_selectedNode->GetRotation();
+        glm::vec3 rot = m_selectedNode->GetRotationEuler();
         glm::vec3 scl = m_selectedNode->GetScale();
 
         if (ImGui::DragFloat3("Position", &pos.x, 0.1f)) m_selectedNode->SetPosition(pos);
-        if (ImGui::DragFloat3("Rotation", &rot.x, 0.5f)) m_selectedNode->SetRotation(rot);
+        if (ImGui::DragFloat3("Rotation", &rot.x, 0.5f)) m_selectedNode->SetRotationEuler(rot);
         if (ImGui::DragFloat3("Scale",    &scl.x, 0.1f)) m_selectedNode->SetScale(scl);
     }
 
@@ -273,6 +282,50 @@ void Editor::DrawContentBrowser() {
     ImGui::Begin("Content Browser");
     ImGui::TextDisabled("Content browser coming soon");
     ImGui::End();
+}
+
+void Editor::DrawGizmo() {
+    if (!m_selectedNode || m_state == State::Playing) return;
+    if (!m_editorCamera || m_rmbLook) return;
+
+    const glm::vec2 winSize = m_core.GetActiveWindow()->GetSize();
+    ImGuizmo::SetRect(0, 0, winSize.x, winSize.y);
+
+    glm::mat4 view  = m_editorCamera->GetViewMatrix();
+    glm::mat4 proj  = m_editorCamera->GetProjectionMatrix();
+    glm::mat4 world = m_selectedNode->GetWorldMatrix();
+    glm::mat4 delta = glm::mat4(1.0f);
+
+    ImGuizmo::Manipulate(
+        glm::value_ptr(view),
+        glm::value_ptr(proj),
+        m_gizmoOp,
+        m_gizmoMode,
+        glm::value_ptr(world),
+        glm::value_ptr(delta)
+    );
+
+    if (!ImGuizmo::IsUsing()) return;
+
+    glm::mat4 localMatrix = world;
+    if (const Node3d* parent = m_selectedNode->GetParent())
+        localMatrix = glm::inverse(parent->GetWorldMatrix()) * world;
+
+    glm::vec3 scale = {
+        glm::length(glm::vec3(localMatrix[0])),
+        glm::length(glm::vec3(localMatrix[1])),
+        glm::length(glm::vec3(localMatrix[2]))
+    };
+
+    glm::mat3 rotMat = {
+        glm::vec3(localMatrix[0]) / scale.x,
+        glm::vec3(localMatrix[1]) / scale.y,
+        glm::vec3(localMatrix[2]) / scale.z
+    };
+
+    m_selectedNode->SetPosition(glm::vec3(localMatrix[3]));
+    m_selectedNode->SetRotation(glm::quat_cast(rotMat));
+    m_selectedNode->SetScale(scale);
 }
 
 void Editor::OnPlay() {

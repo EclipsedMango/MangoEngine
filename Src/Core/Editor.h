@@ -4,6 +4,8 @@
 
 #include "Core.h"
 #include "Nodes/Node3d.h"
+#include "imgui.h"
+#include "ImGuizmo.h"
 
 class Editor {
 public:
@@ -24,6 +26,7 @@ private:
     void DrawSceneTree(Node3d* node);
     void DrawInspector() const;
     void DrawContentBrowser();
+    void DrawGizmo();
 
     // helpers
     void OnPlay();
@@ -46,6 +49,9 @@ private:
     Core m_core;
     State m_state = State::Editing;
     Node3d* m_selectedNode = nullptr;
+
+    ImGuizmo::OPERATION m_gizmoOp = ImGuizmo::TRANSLATE;
+    ImGuizmo::MODE m_gizmoMode = ImGuizmo::WORLD;
 };
 
 
