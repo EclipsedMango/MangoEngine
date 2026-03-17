@@ -8,11 +8,14 @@
 class Mesh {
 public:
     Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+    virtual ~Mesh() = default;
 
     Mesh(const Mesh&) = delete;
     Mesh& operator=(const Mesh&) = delete;
 
     void Upload();
+    void Regenerate(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+
     [[nodiscard]] bool IsUploaded() const { return m_buffer != nullptr; }
 
     [[nodiscard]] const std::vector<Vertex>& GetVertices() const { return m_vertices; }
@@ -22,7 +25,12 @@ public:
     [[nodiscard]] glm::vec3 GetBoundsCenter() const { return m_boundsCenter; }
     [[nodiscard]] float GetBoundsRadius() const { return m_boundsRadius; }
 
+protected:
+    Mesh() = default;
+
 private:
+    void ComputeBounds();
+
     std::vector<Vertex> m_vertices;
     std::vector<uint32_t> m_indices;
     std::unique_ptr<VertexArray> m_buffer;

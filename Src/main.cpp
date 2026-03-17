@@ -10,6 +10,7 @@
 #include "Nodes/Lights/DirectionalLightNode3d.h"
 #include "Nodes/Lights/PointLightNode3d.h"
 #include "Renderer/Meshes/GltfLoader.h"
+#include "Renderer/Meshes/PrimitiveMesh.h"
 
 int main() {
     // build scene
@@ -17,48 +18,8 @@ int main() {
 
     Editor editor(scene);
 
-    Mesh* mesh = new Mesh(
-        {
-            // Back face
-            {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
-            {{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},
-            {{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
-            {{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
-            // Front face
-            {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
-            {{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
-            {{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-            {{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-            // Left face
-            {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-            {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-            {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
-            {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
-            // Right face
-            {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-            {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-            {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
-            {{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
-            // Bottom face
-            {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
-            {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
-            {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-            {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
-            // Top face
-            {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-            {{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-            {{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-            {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        },{
-            1,  0,  2,  2,  0,  3,
-            4,  5,  6,  6,  7,  4,
-            8,  9,  10, 10, 11, 8,
-            13, 12, 14, 14, 12, 15,
-            16, 17, 18, 18, 19, 16,
-            21, 20, 22, 22, 20, 23
-        }
-    );
-    mesh->Upload();
+    auto cubeMesh = std::make_shared<CubeMesh>();
+    auto planeMesh = std::make_shared<PlaneMesh>(1.0f, 1.0f, 4, 4);
 
     auto texture = std::make_shared<Texture>("../Assets/Textures/face.png");
     auto teddyTexture = std::make_shared<Texture>("../Assets/Textures/Cubemaps/sky_16_2k/sky_16_2k.png");
@@ -74,18 +35,18 @@ int main() {
     teddy->SetPosition({0, 0, 0});
     scene->AddChild(teddy);
 
-    MeshNode3d* floor = new MeshNode3d(mesh, shader);
+    MeshNode3d* floor = new MeshNode3d(planeMesh, shader);
     floor->SetPosition({0, -5, 0});
     floor->SetScale({100, 0.5f, 100});
     floor->GetActiveMaterial().SetDiffuse(texture);
     scene->AddChild(floor);
 
-    MeshNode3d* cube1 = new MeshNode3d(mesh, shader);
+    MeshNode3d* cube1 = new MeshNode3d(cubeMesh, shader);
     cube1->SetPosition({0, -2.5f, 2});
     cube1->GetActiveMaterial().SetMetallicValue(1.0);
     scene->AddChild(cube1);
 
-    MeshNode3d* cube2 = new MeshNode3d(mesh, shader);
+    MeshNode3d* cube2 = new MeshNode3d(cubeMesh, shader);
     cube2->SetPosition({0, -2.5f, -2});
     scene->AddChild(cube2);
 
@@ -113,7 +74,7 @@ int main() {
 
     constexpr int NUM_OBJECTS = 50;
     for (int i = 0; i < NUM_OBJECTS; i++) {
-        MeshNode3d* obj = new MeshNode3d(mesh, shader);
+        MeshNode3d* obj = new MeshNode3d(cubeMesh, shader);
         obj->SetPosition({ randFloat(-30, 30), randFloat(-5, 10), randFloat(-30, 30) });
         obj->SetScale({ randFloat(0.3f, 2.0f), randFloat(0.3f, 2.0f), randFloat(0.3f, 2.0f) });
         obj->GetActiveMaterial().SetDiffuse(texture);
@@ -140,7 +101,6 @@ int main() {
 
     texture.reset();
     teddyTexture.reset();
-    delete mesh;
     delete shader;
 
     return 0;

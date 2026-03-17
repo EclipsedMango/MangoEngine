@@ -3,7 +3,7 @@
 
 #include "Core/TreeListener.h"
 
-Node3d::Node3d() = default;
+Node3d::Node3d() : m_id(++s_nextId) {}
 
 Node3d::~Node3d() {
     for (const auto* child : m_children) {

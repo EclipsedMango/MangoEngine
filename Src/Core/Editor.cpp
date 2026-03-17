@@ -10,7 +10,7 @@
 #include "Nodes/CameraNode3d.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
 #include "Nodes/Lights/PointLightNode3d.h"
-#include "Nodes/Lights/SpotLightNode3d.h"
+#include "Renderer/Meshes/PrimitiveMesh.h"
 
 Editor::Editor(Node3d* scene) : m_core(scene) {
     m_core.Init();
@@ -178,15 +178,7 @@ void Editor::DrawSceneTree(Node3d* node) {
         if (n == m_selectedNode)      flags |= ImGuiTreeNodeFlags_Selected;
         if (n->GetChildren().empty()) flags |= ImGuiTreeNodeFlags_Leaf;
 
-        // use pointer as unique id, label as node type
-        const char* label = "Node3d";
-        if      (dynamic_cast<MeshNode3d*>(n))              label = "MeshNode3d";
-        else if (dynamic_cast<DirectionalLightNode3d*>(n))  label = "DirectionalLight";
-        else if (dynamic_cast<PointLightNode3d*>(n))        label = "PointLight";
-        else if (dynamic_cast<SpotLightNode3d*>(n))         label = "SpotLight";
-        else if (dynamic_cast<CameraNode3d*>(n))            label = "Camera";
-
-        const bool open = ImGui::TreeNodeEx((void*)n, flags, "%s", label);
+        const bool open = ImGui::TreeNodeEx(n, flags, "%s", n->GetName().c_str());
         if (ImGui::IsItemClicked()) m_selectedNode = n;
 
         if (open) {
@@ -208,6 +200,13 @@ void Editor::DrawInspector() const {
         return;
     }
 
+    char nameBuf[256];
+    strncpy(nameBuf, m_selectedNode->GetName().c_str(), sizeof(nameBuf));
+    nameBuf[sizeof(nameBuf) - 1] = '\0';
+    if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) m_selectedNode->SetName(nameBuf);
+
+    ImGui::Separator();
+
     // transform
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
         glm::vec3 pos = m_selectedNode->GetPosition();
@@ -221,6 +220,85 @@ void Editor::DrawInspector() const {
 
     // mesh node
     if (auto* mesh = dynamic_cast<MeshNode3d*>(m_selectedNode)) {
+        if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
+            const char* primitiveNames[] = { "Cube", "Plane", "Quad", "Sphere", "Cylinder", "Capsule" };
+
+            // figure out which item is currently selected
+            auto meshPtr = mesh->GetMeshPtr();
+            int current = -1;
+            if (std::dynamic_pointer_cast<CubeMesh>(meshPtr)) current = 0;
+            else if (std::dynamic_pointer_cast<PlaneMesh>(meshPtr)) current = 1;
+            else if (std::dynamic_pointer_cast<QuadMesh>(meshPtr)) current = 2;
+            else if (std::dynamic_pointer_cast<SphereMesh>(meshPtr)) current = 3;
+            else if (std::dynamic_pointer_cast<CylinderMesh>(meshPtr)) current = 4;
+            else if (std::dynamic_pointer_cast<CapsuleMesh>(meshPtr)) current = 5;
+
+            int preview = current == -1 ? 0 : current;
+            if (ImGui::Combo("Shape", &preview, primitiveNames, IM_ARRAYSIZE(primitiveNames))) {
+                if (preview != current) {
+                    switch (preview) {
+                        case 0: mesh->SetMesh(std::make_shared<CubeMesh>()); break;
+                        case 1: mesh->SetMesh(std::make_shared<PlaneMesh>()); break;
+                        case 2: mesh->SetMesh(std::make_shared<QuadMesh>()); break;
+                        case 3: mesh->SetMesh(std::make_shared<SphereMesh>()); break;
+                        case 4: mesh->SetMesh(std::make_shared<CylinderMesh>()); break;
+                        case 5: mesh->SetMesh(std::make_shared<CapsuleMesh>()); break;
+                        default: mesh->SetMesh(std::make_shared<CubeMesh>()); break;
+                    }
+                }
+            }
+
+            // show editable params for the current primitive type
+            if (current == 0) {
+                if (auto* cube = dynamic_cast<CubeMesh*>(meshPtr.get())) {
+                    float size = cube->GetSize();
+                    if (ImGui::DragFloat("Size", &size, 0.01f, 0.01f, 100.0f)) {
+                        cube->SetSize(size);
+                    }
+                }
+            } else if (current == 1) {
+                if (auto* plane = dynamic_cast<PlaneMesh*>(meshPtr.get())) {
+                    float w = plane->GetWidth(), d = plane->GetDepth();
+                    int sx = plane->GetSubdivisionsX(), sz = plane->GetSubdivisionsZ();
+                    if (ImGui::DragFloat("Width", &w, 0.01f, 0.01f, 100.0f)) plane->SetWidth(w);
+                    if (ImGui::DragFloat("Depth", &d, 0.01f, 0.01f, 100.0f)) plane->SetDepth(d);
+                    if (ImGui::DragInt("SubdivX", &sx, 1, 1, 64)) plane->SetSubdivisionsX(sx);
+                    if (ImGui::DragInt("SubdivZ", &sz, 1, 1, 64)) plane->SetSubdivisionsZ(sz);
+                }
+            } else if (current == 2) {
+                if (auto* quad = dynamic_cast<QuadMesh*>(meshPtr.get())) {
+                    float w = quad->GetWidth(), h = quad->GetHeight();
+                    if (ImGui::DragFloat("Width", &w, 0.01f, 0.01f, 100.0f)) quad->SetWidth(w);
+                    if (ImGui::DragFloat("Height", &h, 0.01f, 0.01f, 100.0f)) quad->SetHeight(h);
+                }
+            } else if (current == 3) {
+                if (auto* sphere = dynamic_cast<SphereMesh*>(meshPtr.get())) {
+                    float r = sphere->GetRadius();
+                    int rings = sphere->GetRings(), sectors = sphere->GetSectors();
+                    if (ImGui::DragFloat("Radius", &r, 0.01f, 0.01f, 100.0f)) sphere->SetRadius(r);
+                    if (ImGui::DragInt("Rings", &rings, 1, 3, 64)) sphere->SetRings(rings);
+                    if (ImGui::DragInt("Sectors", &sectors, 1, 3, 64)) sphere->SetSectors(sectors);
+                }
+            } else if (current == 4) {
+                if (auto* cyl = dynamic_cast<CylinderMesh*>(meshPtr.get())) {
+                    float r = cyl->GetRadius(), h = cyl->GetHeight();
+                    int sectors = cyl->GetSectors();
+                    if (ImGui::DragFloat("Radius", &r, 0.01f, 0.01f, 100.0f)) cyl->SetRadius(r);
+                    if (ImGui::DragFloat("Height", &h, 0.01f, 0.01f, 100.0f)) cyl->SetHeight(h);
+                    if (ImGui::DragInt("Sectors", &sectors, 1, 3, 64)) cyl->SetSectors(sectors);
+                }
+            } else if (current == 5) {
+                if (auto* cap = dynamic_cast<CapsuleMesh*>(meshPtr.get())) {
+                    float r = cap->GetRadius(), h = cap->GetHeight();
+                    int rings = cap->GetRings(), sectors = cap->GetSectors();
+                    if (ImGui::DragFloat("Radius", &r, 0.01f, 0.01f, 100.0f)) cap->SetRadius(r);
+                    if (ImGui::DragFloat("Height", &h, 0.01f, 0.01f, 100.0f)) cap->SetHeight(h);
+                    if (ImGui::DragInt("Rings", &rings, 1, 3, 64)) cap->SetRings(rings);
+                    if (ImGui::DragInt("Sectors", &sectors, 1, 3, 64)) cap->SetSectors(sectors);
+                }
+            }
+        }
+
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen)) {
             auto& mat = mesh->GetActiveMaterial();
 
@@ -285,11 +363,11 @@ void Editor::DrawContentBrowser() {
 }
 
 void Editor::DrawGizmo() {
-    if (!m_selectedNode || m_state == State::Playing) return;
-    if (!m_editorCamera || m_rmbLook) return;
+    if (!m_selectedNode || m_state == State::Playing || !m_editorCamera) return;
 
     const glm::vec2 winSize = m_core.GetActiveWindow()->GetSize();
     ImGuizmo::SetRect(0, 0, winSize.x, winSize.y);
+    ImGuizmo::Enable(!m_rmbLook);
 
     glm::mat4 view  = m_editorCamera->GetViewMatrix();
     glm::mat4 proj  = m_editorCamera->GetProjectionMatrix();

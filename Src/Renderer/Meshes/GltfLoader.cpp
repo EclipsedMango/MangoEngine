@@ -104,7 +104,7 @@ Node3d* GltfLoader::Load(const std::string& path, Shader* shader) {
             }
 
             auto* mesh = new Mesh(vertices, indices);
-            auto* node = new MeshNode3d(mesh, shader);
+            auto* node = new MeshNode3d(std::shared_ptr<Mesh>(mesh), shader);
             root->AddChild(node);
         }
     }

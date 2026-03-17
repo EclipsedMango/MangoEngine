@@ -5,6 +5,7 @@ SpotLightNode3d::SpotLightNode3d(const glm::vec3 position, const glm::vec3 direc
     SetPosition(position);
     glm::vec3 up = fabsf(direction.y) > 0.999f ? glm::vec3(0, 0, 1) : glm::vec3(0, 1, 0);
     SetRotation(glm::quatLookAt(glm::normalize(direction), up));
+    SetName("SpotLightNode3d");
 }
 
 void SpotLightNode3d::Process(float deltaTime) {

@@ -4,6 +4,7 @@
 DirectionalLightNode3d::DirectionalLightNode3d(const glm::vec3 direction, const glm::vec3 color, const float intensity) : LightNode3d(color, intensity), m_light(direction, color, intensity) {
     glm::vec3 up = fabsf(direction.y) > 0.999f ? glm::vec3(0, 0, 1) : glm::vec3(0, 1, 0);
     SetRotation(glm::quatLookAt(glm::normalize(direction), up));
+    SetName("DirectionalLightNode3d");
 }
 
 void DirectionalLightNode3d::Process(float deltaTime) {

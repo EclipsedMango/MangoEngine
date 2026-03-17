@@ -6,6 +6,7 @@
 CameraNode3d::CameraNode3d(const glm::vec3 position, const float fov, const float aspectRatio) : m_fov(fov), m_aspectRatio(aspectRatio) {
     SetPosition(position);
     UpdateVectors();
+    SetName("CameraNode3d");
 }
 
 glm::mat4 CameraNode3d::GetViewMatrix() const {
