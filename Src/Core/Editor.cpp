@@ -651,13 +651,13 @@ void Editor::DrawMaterialInspector(Material &mat) {
     }
 
     // blend mode combo
-    const char* blendModes[] = { "Opaque", "Alpha Blend", "Alpha Scissor" };
+    const char* blendModes[] = { "Opaque", "Alpha Blend", "Alpha Scissor", "Additive" };
     int blendIndex = 0;
     switch (mat.GetBlendMode()) {
         case BlendMode::Opaque: blendIndex = 0; break;
         case BlendMode::AlphaBlend: blendIndex = 1; break;
         case BlendMode::AlphaScissor: blendIndex = 2; break;
-        case BlendMode::Additive: break;
+        case BlendMode::Additive: blendIndex = 3; break;
     }
 
     ImGui::Text("Blend Mode");
@@ -666,6 +666,7 @@ void Editor::DrawMaterialInspector(Material &mat) {
             case 0: mat.SetBlendMode(BlendMode::Opaque); break;
             case 1: mat.SetBlendMode(BlendMode::AlphaBlend); break;
             case 2: mat.SetBlendMode(BlendMode::AlphaScissor); break;
+            case 3: mat.SetBlendMode(BlendMode::Additive); break;
             default: break;
         }
     }

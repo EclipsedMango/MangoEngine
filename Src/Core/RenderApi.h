@@ -80,9 +80,9 @@ public:
     void SetDebugCascade(int cascade);
 
     [[nodiscard]] uint32_t GetPointLightCount() const { return m_lightManager->GetPointLightCount(); }
-    [[nodiscard]] RenderStats GetStats()        const { return m_stats; }
-    [[nodiscard]] int GetDebugMode()            const { return m_debugMode; }
-    [[nodiscard]] int GetDebugCascade()         const { return m_debugCascade; }
+    [[nodiscard]] RenderStats GetStats() const { return m_stats; }
+    [[nodiscard]] int GetDebugMode() const { return m_debugMode; }
+    [[nodiscard]] int GetDebugCascade() const { return m_debugCascade; }
 
 private:
     void InitGLResources(); // called once after GLAD is loaded
@@ -96,15 +96,16 @@ private:
     void RebuildClusters();
     void RunLightCulling();
     void RenderMainPass();
+    void RenderTransparentPass();
 
     // constants
-    static constexpr uint32_t CLUSTER_DIM_X         = 16;
-    static constexpr uint32_t CLUSTER_DIM_Y         = 9;
-    static constexpr uint32_t CLUSTER_DIM_Z         = 24;
-    static constexpr uint32_t NUM_CLUSTERS           = CLUSTER_DIM_X * CLUSTER_DIM_Y * CLUSTER_DIM_Z;
+    static constexpr uint32_t CLUSTER_DIM_X = 16;
+    static constexpr uint32_t CLUSTER_DIM_Y = 9;
+    static constexpr uint32_t CLUSTER_DIM_Z = 24;
+    static constexpr uint32_t NUM_CLUSTERS = CLUSTER_DIM_X * CLUSTER_DIM_Y * CLUSTER_DIM_Z;
     static constexpr uint32_t MAX_LIGHTS_PER_CLUSTER = 100;
-    static constexpr uint32_t MAX_DIR_LIGHTS         = 4;
-    static constexpr uint32_t MAX_TEXTURE_SLOTS      = 16;
+    static constexpr uint32_t MAX_DIR_LIGHTS = 4;
+    static constexpr uint32_t MAX_TEXTURE_SLOTS = 16;
 
     std::vector<std::unique_ptr<Window>> m_windows;
 
@@ -119,12 +120,13 @@ private:
     std::unique_ptr<Shader> m_depthShader;
 
     std::vector<MeshNode3d*> m_meshQueue;
+    std::vector<MeshNode3d*> m_transparentQueue;
 
-    std::unique_ptr<Mesh>   m_debugClusterMesh;
+    std::unique_ptr<Mesh> m_debugClusterMesh;
     std::unique_ptr<Shader> m_debugClusterShader;
 
     RenderStats m_stats;
-    int m_debugMode    = 0;
+    int m_debugMode = 0;
     int m_debugCascade = 0;
 };
 

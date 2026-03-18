@@ -22,6 +22,8 @@ void Material::Bind(const Shader &shader) const {
     shader.SetFloat("u_EmissionStrength", m_emissionStrength);
     shader.SetVector3("u_EmissionColor", m_emissionColor);
     shader.SetFloat("u_DisplacementScale", m_displacementScale);
+    shader.SetBool("u_AlphaScissor", m_blendMode == BlendMode::AlphaScissor);
+    shader.SetFloat("u_AlphaScissorThreshold", m_alphaScissorThreshold);
     shader.SetVector2("u_UVScale", m_uvScale);
     shader.SetVector2("u_UVOffset", m_uvOffset);
 
@@ -48,7 +50,9 @@ void Material::Bind(const Shader &shader) const {
     if (m_metallic) {
         m_metallic->Bind(2);
         shader.SetInt("u_Metallic", 2);
-        shader.SetBool("u_HasMetallic", !packed); // suppress unpacked path
+        shader.SetBool("u_HasMetallic", !packed);
+    } else {
+        shader.SetBool("u_HasMetallic", false);
     }
 
     if (!packed && m_roughness) {

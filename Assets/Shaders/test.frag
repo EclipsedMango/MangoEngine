@@ -15,6 +15,7 @@ uniform float u_RoughnessValue;
 uniform float u_AOStrength;
 uniform float u_NormalStrength;
 uniform float u_EmissionStrength;
+uniform float u_AlphaScissorThreshold;
 uniform vec3 u_EmissionColor;
 uniform float u_DisplacementScale;
 uniform vec2 u_UVScale;
@@ -36,6 +37,7 @@ uniform bool u_HasMetallicRoughnessPacked;
 uniform bool u_HasAmbientOcclusion;
 uniform bool u_HasEmissive;
 uniform bool u_HasDisplacement;
+uniform bool  u_AlphaScissor;
 
 uniform float u_ZNear;
 uniform float u_ZFar;
@@ -129,6 +131,10 @@ void main() {
 //    handleDebugModes();
 
     vec4  albedo = u_HasDiffuse ? texture(u_Diffuse, uv) * u_AlbedoColor : u_AlbedoColor;
+    if (u_AlphaScissor && albedo.a < u_AlphaScissorThreshold) {
+        discard;
+    }
+
     float ao = u_HasAmbientOcclusion ? texture(u_AmbientOcclusion, uv).r * u_AOStrength : u_AOStrength;
 
     float metallic  = 0.0;

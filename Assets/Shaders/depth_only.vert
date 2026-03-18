@@ -3,7 +3,7 @@
 invariant gl_Position;
 
 layout (location = 0) in vec3 aPos;
-// add texture coordinates for doing alpha testing (leaves, etc)
+layout (location = 2) in vec2 aTexCoord;
 
 layout(std140, binding = 0) uniform CameraData {
     mat4 view;
@@ -12,7 +12,10 @@ layout(std140, binding = 0) uniform CameraData {
 
 uniform mat4 u_Model;
 
+out vec2 v_TexCoord;
+
 void main() {
+    v_TexCoord = aTexCoord;
     vec4 worldPosition = u_Model * vec4(aPos, 1.0);
     gl_Position = proj * view * worldPosition;
 }

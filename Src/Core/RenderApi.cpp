@@ -167,10 +167,31 @@ void RenderApi::RemoveSpotLight(SpotLight* light)   { m_lightManager->RemoveSpot
 
 void RenderApi::Flush() {
     m_stats = {};
+
+    // partition into opaque and transparent
+    m_transparentQueue.clear();
+    std::vector<MeshNode3d*> opaqueQueue;
+    for (MeshNode3d* node : m_meshQueue) {
+        const BlendMode mode = node->GetActiveMaterial().GetBlendMode();
+        if (mode == BlendMode::AlphaBlend || mode == BlendMode::Additive) {
+            m_transparentQueue.push_back(node);
+            continue;
+        }
+
+        opaqueQueue.push_back(node);
+    }
+
+    // sort transparent back to front by distance to camera
+    const glm::vec3 camPos = m_activeCamera->GetPosition();
+    std::ranges::sort(m_transparentQueue, [&](const MeshNode3d* a, const MeshNode3d* b) {
+        const float da = glm::length(glm::vec3(a->GetWorldMatrix()[3]) - camPos);
+        const float db = glm::length(glm::vec3(b->GetWorldMatrix()[3]) - camPos);
+        return da > db; // furthest first
+    });
+
     m_stats.submitted = static_cast<uint32_t>(m_meshQueue.size());
 
     UploadCameraData();
-
     m_lightManager->Upload();
     m_shadowRenderer->ResetStats();
 
@@ -178,16 +199,16 @@ void RenderApi::Flush() {
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(2.5f, 4.0f);
     glCullFace(GL_FRONT);
-    m_shadowRenderer->RenderDirectionalShadows(*m_activeCamera, m_meshQueue, m_windows[0]->GetSize());
+    m_shadowRenderer->RenderDirectionalShadows(*m_activeCamera, opaqueQueue, m_windows[0]->GetSize());
     glCullFace(GL_BACK);
     glDisable(GL_POLYGON_OFFSET_FILL);
-    m_shadowRenderer->RenderPointLightShadows(*m_activeCamera, m_lightManager->GetPointLights(), m_meshQueue, m_windows[0]->GetSize());
+    m_shadowRenderer->RenderPointLightShadows(*m_activeCamera, m_lightManager->GetPointLights(), opaqueQueue, m_windows[0]->GetSize());
 
     m_stats.shadowDrawCalls = m_shadowRenderer->GetShadowDrawCallCount();
 
     // z-prepass
     BeginZPrepass();
-    for (const MeshNode3d* mesh : m_meshQueue) {
+    for (const MeshNode3d* mesh : opaqueQueue) {
         DrawMeshNodeDepth(mesh);
     }
     EndZPrepass();
@@ -198,13 +219,18 @@ void RenderApi::Flush() {
     m_shadowRenderer->BindCSMTextures();
     m_shadowRenderer->BindPointShadowTexture();
 
+    m_meshQueue = opaqueQueue;
     RenderMainPass();
 
     if (m_skybox) {
         m_skybox->GetSkybox().Draw(m_activeCamera->GetViewMatrix(), m_activeCamera->GetProjectionMatrix());
     }
 
+    // transparent pass
+    RenderTransparentPass();
+
     m_meshQueue.clear();
+    m_transparentQueue.clear();
 }
 
 void RenderApi::RenderMainPass() {
@@ -224,6 +250,44 @@ void RenderApi::RenderMainPass() {
 
         DrawMeshNode(node);
     }
+}
+
+void RenderApi::RenderTransparentPass() {
+    if (m_transparentQueue.empty()) return;
+
+    glEnable(GL_BLEND);
+    glDepthMask(GL_FALSE);      // dont write depth
+    glDepthFunc(GL_LESS);       // test against opaque depth
+    glDisable(GL_CULL_FACE);    // see both sides of transparent surfaces
+
+    const glm::mat4 viewProj = m_activeCamera->GetProjectionMatrix() * m_activeCamera->GetViewMatrix();
+    Frustum cameraFrustum{};
+    cameraFrustum.ExtractFromMatrix(viewProj);
+
+    for (const MeshNode3d* node : m_transparentQueue) {
+        if (node->GetActiveMaterial().GetBlendMode() == BlendMode::Additive) {
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        } else {
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+
+        const Mesh* mesh = node->GetMesh();
+        const glm::vec3 worldCenter = glm::vec3(node->GetWorldMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
+        const float worldRadius = mesh->GetBoundsRadius() * std::max({ node->GetScale().x, node->GetScale().y, node->GetScale().z });
+
+        if (!cameraFrustum.IntersectsSphere(worldCenter, worldRadius)) {
+            m_stats.culled++;
+            continue;
+        }
+
+        DrawMeshNode(node);
+    }
+
+    // restore state
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+    glEnable(GL_CULL_FACE);
 }
 
 void RenderApi::BeginZPrepass() {
@@ -299,6 +363,19 @@ void RenderApi::DrawMeshNodeDepth(const MeshNode3d *node) const {
 
     m_depthShader->Bind();
     m_depthShader->SetMatrix4("u_Model", node->GetWorldMatrix());
+
+    const Material& mat = node->GetActiveMaterial();
+    m_depthShader->SetBool("u_AlphaScissor", mat.GetBlendMode() == BlendMode::AlphaScissor);
+    m_depthShader->SetFloat("u_AlphaScissorThreshold", mat.GetAlphaScissorThreshold());
+    m_depthShader->SetBool("u_HasDiffuse", mat.GetDiffuse() != nullptr);
+    m_depthShader->SetVector4("u_AlbedoColor", mat.GetAlbedoColor());
+    m_depthShader->SetVector2("u_UVScale", mat.GetUVScale());
+    m_depthShader->SetVector2("u_UVOffset", mat.GetUVOffset());
+
+    if (mat.GetDiffuse()) {
+        mat.GetDiffuse()->Bind(0);
+        m_depthShader->SetInt("u_Diffuse", 0);
+    }
 
     node->GetMesh()->GetBuffer()->Bind();
     glDrawElements(GL_TRIANGLES, node->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
