@@ -128,6 +128,9 @@ void Editor::UpdateEditorCamera(const float dt) {
 void Editor::DrawMenuBar() {
     if (!ImGui::BeginMainMenuBar()) return;
 
+    const float fps = ImGui::GetIO().Framerate;
+    ImGui::Text("FPS: %.0f (%.2f ms)", fps, 1000.0f / fps);
+
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("New Scene"))  { /* TODO */ }
         if (ImGui::MenuItem("Open Scene")) { /* TODO */ }

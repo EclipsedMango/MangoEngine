@@ -154,15 +154,12 @@ void main() {
 
     vec3 V = normalize(u_CameraPos - v_FragPos);
 
-    vec3 totalLighting = CalculateLighting(norm, v_FragPos, viewDepth, grid, V, albedo.rgb, metallic, roughness);
-
-    vec3 ambient = vec3(0.05) * albedo.rgb * ao;
-    totalLighting += ambient;
+    vec3 totalLighting = CalculateLighting(norm, v_FragPos, viewDepth, grid, V, albedo.rgb, metallic, roughness, ao);
 
     vec3 emission = u_HasEmissive ? texture(u_Emissive, uv).rgb * u_EmissionColor * u_EmissionStrength : u_EmissionColor * u_EmissionStrength;
     totalLighting += emission;
 
-    float exposure = 2.0;
+    float exposure = 0.5;
     totalLighting = ACESFilmic(totalLighting * exposure);
 
     FragColor = vec4(totalLighting, albedo.a);

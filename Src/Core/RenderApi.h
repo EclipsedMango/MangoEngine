@@ -19,6 +19,7 @@
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
 #include "Renderer/Lights/PointLight.h"
 #include "Renderer/Lights/SpotLight.h"
+#include "Renderer/Pipeline/IBLPrecomputer.h"
 #include "Renderer/Shadows/CascadedShadowMap.h"
 
 struct RenderStats {
@@ -37,10 +38,10 @@ public:
     RenderApi() = default;
     ~RenderApi();
 
-    RenderApi(const RenderApi&)            = delete;
+    RenderApi(const RenderApi&) = delete;
     RenderApi& operator=(const RenderApi&) = delete;
-    RenderApi(RenderApi&&)                 = delete;
-    RenderApi& operator=(RenderApi&&)      = delete;
+    RenderApi(RenderApi&&) = delete;
+    RenderApi& operator=(RenderApi&&) = delete;
 
     Window* CreateWindow(const char* title, glm::vec2 size, Uint32 flags);
 
@@ -60,14 +61,14 @@ public:
     void RemoveSpotLight(SpotLight* light) const;
 
     void SubmitMesh(MeshNode3d* node) { m_meshQueue.push_back(node); }
-    void SetSkybox(SkyboxNode3d* skybox)    { m_skybox = skybox; }
+    void SetSkybox(SkyboxNode3d* skybox);
 
-    [[nodiscard]] ShaderStorageBuffer* GetLightGridSsbo()   const { return m_clusterSystem->GetLightGridSsbo(); }
+    [[nodiscard]] ShaderStorageBuffer* GetLightGridSsbo() const { return m_clusterSystem->GetLightGridSsbo(); }
     [[nodiscard]] ShaderStorageBuffer* GetGlobalCountSsbo() const { return m_clusterSystem->GetGlobalCountSsbo(); }
 
     [[nodiscard]] const std::vector<CascadedShadowMap*>& GetCascadedShadowMaps() const { return m_shadowRenderer->GetCascadedShadowMaps(); }
-    [[nodiscard]] uint32_t GetShadowedPointLightCount()  const { return m_shadowRenderer->GetShadowedPointLightCount(); }
-    [[nodiscard]] uint32_t GetMaxShadowedPointLights()   const { return ShadowRenderer::MAX_SHADOWED_POINT_LIGHTS; }
+    [[nodiscard]] uint32_t GetShadowedPointLightCount() const { return m_shadowRenderer->GetShadowedPointLightCount(); }
+    static uint32_t GetMaxShadowedPointLights() { return ShadowRenderer::MAX_SHADOWED_POINT_LIGHTS; }
     [[nodiscard]] const std::vector<ShadowedPointLightDebug>& GetShadowedPointLightsDebug() const { return m_shadowRenderer->GetShadowedPointLightsDebug(); }
 
     void Flush();
@@ -122,6 +123,9 @@ private:
 
     std::vector<MeshNode3d*> m_meshQueue;
     std::vector<MeshNode3d*> m_transparentQueue;
+
+    IBLPrecomputer::Result m_ibl;
+    bool m_hasIbl = false;
 
     std::unique_ptr<Mesh> m_debugClusterMesh;
     std::unique_ptr<Shader> m_debugClusterShader;

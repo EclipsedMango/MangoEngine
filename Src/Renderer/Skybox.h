@@ -17,11 +17,12 @@ public:
     Skybox& operator=(const Skybox&) = delete;
 
     void Draw(const glm::mat4& view, const glm::mat4& projection) const;
+    [[nodiscard]] Texture& GetTexture() const { return *m_texture; }
 
 private:
-    Texture*     m_texture = nullptr;
-    Shader*      m_shader  = nullptr;
-    VertexArray* m_vao     = nullptr;
+    Texture* m_texture = nullptr;
+    Shader* m_shader = nullptr;
+    VertexArray* m_vao = nullptr;
 
     static VertexArray* CreateCubeVao();
 };

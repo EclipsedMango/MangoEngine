@@ -1,12 +1,20 @@
 #ifndef LIGHTING_GLSL
 #define LIGHTING_GLSL
 
+// shadows
 uniform sampler2DArray u_ShadowMap;
 uniform mat4 u_LightSpaceMatrix[4];
 uniform float u_CascadeSplits[4];
 uniform float u_CascadeWorldUnits[4];
 uniform int u_CascadeCount;
 uniform samplerCubeArray u_PointShadowMap;
+
+// ibl
+uniform samplerCube u_IrradianceMap;
+uniform samplerCube u_PrefilteredEnvMap;
+uniform sampler2D u_BrdfLut;
+uniform int u_MaxPrefilteredMipLevel;
+uniform bool u_HasIbl;
 
 struct DirectionalLight {
     vec4 direction;
@@ -213,6 +221,11 @@ vec3 F_Schlick(in vec3 f0, in float f90, in float u) {
     return f0 + (f90- f0) * pow(1.f- u, 5.f);
 }
 
+// roughness-aware fresnel for IBL (avoids dark edges on rough metals)
+vec3 F_SchlickRoughness(vec3 f0, float NdotV, float roughness) {
+    return f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - NdotV, 5.0);
+}
+
 float V_SmithGGXCorrelated(float NdotL, float NdotV, float alphaG) {
     // original formulation of G_SmithGGX Correlated
     // lambda_v = (-1 + sqrt(alphaG2 * (1-NdotL2) / NdotL2 + 1)) * 0.5f;
@@ -267,8 +280,29 @@ vec3 EvaluateBRDF(vec3 albedo, float metallic, float roughness, vec3 N, vec3 V, 
     return (diffuse + specular) * NdotL;
 }
 
+vec3 EvaluateIBL(vec3 albedo, float metallic, float roughness, vec3 N, vec3 V, float ao) {
+    float NdotV = max(dot(N, V), 0.0);
+    vec3 R = reflect(-V, N);
 
-vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid grid, vec3 V, vec3 albedo, float metallic, float roughness) {
+    vec3 f0 = mix(vec3(0.04), albedo, metallic);
+    vec3 F = F_SchlickRoughness(f0, NdotV, roughness);
+
+    // diffuse
+    vec3 kD = (1.0 - F) * (1.0 - metallic);
+    vec3 irradiance = texture(u_IrradianceMap, N).rgb;
+    vec3 diffuse = kD * irradiance * albedo;
+
+    // specular, sample prefiltered env map at correct mip for roughness
+    float mipLevel = roughness * float(u_MaxPrefilteredMipLevel);
+    vec3 prefilteredColor = textureLod(u_PrefilteredEnvMap, R, mipLevel).rgb;
+    vec2 brdf = texture(u_BrdfLut, vec2(NdotV, roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+
+    return (diffuse + specular) * ao;
+}
+
+
+vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid grid, vec3 V, vec3 albedo, float metallic, float roughness, float ao) {
     vec3 totalLighting = vec3(0.0);
 
     // directional lights
@@ -295,9 +329,9 @@ vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid gri
         vec3 L = toLight / max(distance, 1e-5);
 
         float attenuation = 1.0 / (light.attenuation.x + light.attenuation.y * distance + light.attenuation.z * (distance * distance));
-        float edge   = EdgeFade(distance, radius);
+        float edge = EdgeFade(distance, radius);
         float shadow = PointShadow(fragPos, norm, lightIndex, light);
-        vec3  brdf   = EvaluateBRDF(albedo, metallic, roughness, norm, V, L);
+        vec3  brdf = EvaluateBRDF(albedo, metallic, roughness, norm, V, L);
 
         totalLighting += (1.0 - shadow) * brdf * light.color.rgb * light.color.w * attenuation * edge;
     }
@@ -323,6 +357,12 @@ vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid gri
         vec3 brdf = EvaluateBRDF(albedo, metallic, roughness, norm, V, L);
 
         totalLighting += brdf * light.color.rgb * light.color.w * attenuation * intensityFactor;
+    }
+
+    if (u_HasIbl) {
+        totalLighting += EvaluateIBL(albedo, metallic, roughness, norm, V, ao);
+    } else {
+        totalLighting += vec3(0.05) * albedo * ao;
     }
 
     return totalLighting;

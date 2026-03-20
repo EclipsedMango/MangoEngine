@@ -14,7 +14,7 @@ public:
     explicit Editor(Node3d* scene);
     ~Editor();
 
-    Editor(const Editor&)            = delete;
+    Editor(const Editor&) = delete;
     Editor& operator=(const Editor&) = delete;
 
     void Run();

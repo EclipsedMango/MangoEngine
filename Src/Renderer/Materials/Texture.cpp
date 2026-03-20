@@ -73,6 +73,55 @@ Texture::Texture(const unsigned char *data, int width, int height, int channels)
     m_target = GL_TEXTURE_2D;
 }
 
+Texture::Texture(const int width, const int height, const GLenum internalFormat) {
+    m_width = width;
+    m_height = height;
+    m_channels = 0;
+    m_target = GL_TEXTURE_2D;
+
+    glGenTextures(1, &m_id);
+    glBindTexture(GL_TEXTURE_2D, m_id);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, GL_RG, GL_FLOAT, nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+Texture::Texture(const int width, const int height, const GLenum internalFormat, const int mipLevels) {
+    m_width = width;
+    m_height = height;
+    m_channels = 0;
+    m_target = GL_TEXTURE_CUBE_MAP;
+
+    glGenTextures(1, &m_id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_id);
+
+    for (int face = 0; face < 6; face++) {
+        for (int mip = 0; mip < mipLevels; mip++) {
+            const int mipWidth  = width  >> mip; // halve per mip
+            const int mipHeight = height >> mip;
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, mip, internalFormat, mipWidth, mipHeight, 0, GL_RGB, GL_FLOAT, nullptr);
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    if (mipLevels > 1) {
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, mipLevels - 1);
+        return;
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+}
+
 // expected face order:
 // 0: +X, 1: -X, 2: +Y, 3: -Y, 4: +Z, 5: -Z
 Texture::Texture(const std::vector<std::string> &paths) {

@@ -165,6 +165,17 @@ void RenderApi::RemovePointLight(PointLight* light) const { m_lightManager->Remo
 void RenderApi::AddSpotLight(SpotLight* light) const { m_lightManager->AddSpotLight(light); }
 void RenderApi::RemoveSpotLight(SpotLight* light) const { m_lightManager->RemoveSpotLight(light); }
 
+void RenderApi::SetSkybox(SkyboxNode3d *skybox) {
+    m_skybox = skybox;
+
+    if (skybox) {
+        m_ibl = IBLPrecomputer::Compute(skybox->GetSkybox().GetTexture());
+        m_hasIbl = true;
+    } else {
+        m_hasIbl = false;
+    }
+}
+
 void RenderApi::Flush() {
     m_stats = {};
 
@@ -348,6 +359,20 @@ void RenderApi::DrawMeshNode(const MeshNode3d* node) {
     shader->SetVector3("u_CameraPos", m_activeCamera->GetPosition());
 
     node->GetActiveMaterial().Bind(*shader);
+
+    if (m_hasIbl) {
+        m_ibl.irradiance->Bind(10);
+        m_ibl.prefiltered->Bind(11);
+        m_ibl.brdfLut->Bind(12);
+        shader->SetInt("u_IrradianceMap", 10);
+        shader->SetInt("u_PrefilteredEnvMap", 11);
+        shader->SetInt("u_BrdfLut", 12);
+        shader->SetInt("u_MaxPrefilteredMipLevel", IBLPrecomputer::PREFILTER_MIP_LEVELS);
+        shader->SetBool("u_HasIbl", true);
+    } else {
+        shader->SetBool("u_HasIbl", false);
+    }
+
     node->GetMesh()->GetBuffer()->Bind();
     glDrawElements(GL_TRIANGLES, node->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
 

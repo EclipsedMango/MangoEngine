@@ -19,6 +19,7 @@ int main() {
     Editor editor(scene);
 
     const auto cubeMesh = std::make_shared<CubeMesh>();
+    const auto sphereMesh = std::make_shared<SphereMesh>();
     const auto planeMesh = std::make_shared<PlaneMesh>(1.0f, 1.0f, 4, 4);
 
     auto texture = std::make_shared<Texture>("../Assets/Textures/face.png");
@@ -42,11 +43,13 @@ int main() {
     cube1->GetActiveMaterial().SetMetallicValue(1.0);
     scene->AddChild(cube1);
 
-    MeshNode3d* cube2 = new MeshNode3d(cubeMesh, shader);
-    cube2->SetPosition({0, -2.5f, -2});
-    scene->AddChild(cube2);
+    MeshNode3d* sphere = new MeshNode3d(sphereMesh, shader);
+    sphere->GetActiveMaterial().SetMetallicValue(0.75);
+    sphere->GetActiveMaterial().SetRoughnessValue(0.25);
+    sphere->SetPosition({0, -2.5f, -2});
+    scene->AddChild(sphere);
 
-    DirectionalLightNode3d* sun = new DirectionalLightNode3d({0.5f, -0.6f, -0.5f}, {0.9f, 0.65f, 0.32f}, 0.1f);
+    DirectionalLightNode3d* sun = new DirectionalLightNode3d({0.5f, -0.6f, -0.5f}, {0.9f, 0.65f, 0.32f}, 2.5f);
     scene->AddChild(sun);
 
     PointLightNode3d* pointLight = new PointLightNode3d({2, 2, -2}, {0.6f, 0.7f, 0.9f}, 1.0f, 15.0f);
