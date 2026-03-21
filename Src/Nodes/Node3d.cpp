@@ -6,7 +6,28 @@
 
 #include "Core/TreeListener.h"
 
-Node3d::Node3d() : m_id(++s_nextId) {}
+Node3d::Node3d() : m_id(++s_nextId) {
+    AddProperty("name",
+        [this]{ return GetName(); },
+        [this](const PropertyValue& val) { SetName(std::get<std::string>(val)); }
+    );
+    AddProperty("position",
+        [this]{ return GetPosition(); },
+        [this](const PropertyValue& val) { SetPosition(std::get<glm::vec3>(val)); }
+    );
+    AddProperty("rotation",
+        [this]() -> PropertyValue { return GetRotationEuler(); },
+        [this](const PropertyValue& v) { SetRotationEuler(std::get<glm::vec3>(v)); }
+    );
+    AddProperty("scale",
+        [this]() -> PropertyValue { return m_scale; },
+        [this](const PropertyValue& v) { SetScale(std::get<glm::vec3>(v)); }
+    );
+    AddProperty("visible",
+        [this]() -> PropertyValue { return IsVisible(); },
+        [this](const PropertyValue& v) { SetVisible(std::get<bool>(v)); }
+    );
+}
 
 Node3d::~Node3d() {
     for (const auto* child : m_children) {

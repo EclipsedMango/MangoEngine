@@ -4,10 +4,8 @@
 
 #include <memory>
 #include <string>
+#include "Core/PropertyHolder.h"
 
-class PointLightNode3d;
-class DirectionalLightNode3d;
-class MeshNode3d;
 class Editor;
 class Node3d;
 class Material;
@@ -23,19 +21,8 @@ public:
     void OpenTexturePreview(const Texture* tex, const char* label);
 
 private:
-    void DrawAlbedoOptions(Material& mat);
-    void DrawRoughMetalOptions(Material& mat);
-    void DrawNormalsOptions(Material& mat);
-    void DrawAoOptions(Material& mat);
-    void DrawEmissiveOptions(Material& mat);
-    static void DrawUvOptions(Material& mat);
-    static void DrawRenderFlags(Material& mat);
-
-    static void DrawTransformOptions(Node3d* node);
-    void DrawNodeSpecificOptions(Node3d* node);
-    void DrawMeshOptions(MeshNode3d* node);
-    static void DrawDirLightOptions(DirectionalLightNode3d* node);
-    static void DrawPointLightOptions(PointLightNode3d* node);
+    void DrawProperties(PropertyHolder* holder);
+    void DrawPropertyValue(const std::string& name, PropertyHolder* holder);
 
     void DrawTexturePreviewPopup();
     void TextureSlot(const char* label, const std::shared_ptr<Texture>& tex);

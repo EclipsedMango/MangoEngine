@@ -9,10 +9,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "Core/PropertyHolder.h"
+
 enum class NodeNotification;
 class TreeListener;
 
-class Node3d {
+class Node3d : public PropertyHolder {
 public:
     Node3d();
     virtual ~Node3d();

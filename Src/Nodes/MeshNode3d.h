@@ -19,7 +19,7 @@ public:
     void SetMaterialOverride(const std::shared_ptr<Material> &material) { m_materialOverride = material; }
     void ClearMaterialOverride() { m_materialOverride = nullptr; }
 
-    [[nodiscard]] Mesh*   GetMesh()   const { return m_mesh ? m_mesh.get() : nullptr; }
+    [[nodiscard]] Mesh* GetMesh()   const { return m_mesh ? m_mesh.get() : nullptr; }
     [[nodiscard]] Shader* GetShader() const { return m_shader; }
     [[nodiscard]] Material& GetActiveMaterial() { return m_materialOverride ? *m_materialOverride : *m_material; }
     [[nodiscard]] const Material& GetActiveMaterial() const { return m_materialOverride ? *m_materialOverride : *m_material; }
@@ -28,9 +28,11 @@ public:
     [[nodiscard]] std::shared_ptr<Material> GetMaterialPtr() { return m_material; }
 
 private:
+    void Init();
+
     Shader* m_shader = nullptr;
 
-    std::shared_ptr<Mesh>     m_mesh;
+    std::shared_ptr<Mesh> m_mesh;
     std::shared_ptr<Material> m_material;
     std::shared_ptr<Material> m_materialOverride;
 };

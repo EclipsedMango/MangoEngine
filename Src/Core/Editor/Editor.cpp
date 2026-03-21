@@ -6,11 +6,7 @@
 #include "../Input.h"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtc/type_ptr.inl"
-#include "Nodes/MeshNode3d.h"
 #include "Nodes/CameraNode3d.h"
-#include "Nodes/Lights/DirectionalLightNode3d.h"
-#include "Nodes/Lights/PointLightNode3d.h"
-#include "Renderer/Meshes/PrimitiveMesh.h"
 
 Editor::Editor(Node3d* scene) : m_core(scene), m_inspector(this), m_sceneTree(this) {
     m_core.Init();

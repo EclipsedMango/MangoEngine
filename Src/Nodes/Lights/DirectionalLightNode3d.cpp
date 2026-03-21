@@ -5,6 +5,10 @@ DirectionalLightNode3d::DirectionalLightNode3d(const glm::vec3 direction, const 
     glm::vec3 up = fabsf(direction.y) > 0.999f ? glm::vec3(0, 0, 1) : glm::vec3(0, 1, 0);
     SetRotation(glm::quatLookAt(glm::normalize(direction), up));
     SetName("DirectionalLightNode3d");
+    AddProperty("intensity",
+        [this]{ return GetIntensity(); },
+        [this](const PropertyValue& v) { SetIntensity(std::get<float>(v)); }
+    );
 }
 
 void DirectionalLightNode3d::Process(float deltaTime) {

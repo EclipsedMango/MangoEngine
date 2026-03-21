@@ -1,6 +1,37 @@
 
 #include "Material.h"
 
+Material::Material() {
+    AddProperty("albedo_color",
+        [this]() -> PropertyValue { return glm::vec3(GetAlbedoColor()); },
+        [this](const PropertyValue& v) { SetAlbedoColor(glm::vec4(std::get<glm::vec3>(v), m_albedoColor.a)); }
+    );
+    AddProperty("metallic",
+        [this]() -> PropertyValue { return GetMetallicValue(); },
+        [this](const PropertyValue& v) { SetMetallicValue(std::get<float>(v)); }
+    );
+    AddProperty("roughness",
+        [this]() -> PropertyValue { return GetRoughnessValue(); },
+        [this](const PropertyValue& v) { SetRoughnessValue(std::get<float>(v)); }
+    );
+    AddProperty("normal_strength",
+        [this]() -> PropertyValue { return GetNormalStrength(); },
+        [this](const PropertyValue& v) { SetNormalStrength(std::get<float>(v)); }
+    );
+    AddProperty("emission_strength",
+        [this]() -> PropertyValue { return GetEmissionStrength(); },
+        [this](const PropertyValue& v) { SetEmissionStrength(std::get<float>(v)); }
+    );
+    AddProperty("double_sided",
+        [this]() -> PropertyValue { return GetDoubleSided(); },
+        [this](const PropertyValue& v) { SetDoubleSided(std::get<bool>(v)); }
+    );
+    AddProperty("cast_shadows",
+        [this]() -> PropertyValue { return m_castShadows; },
+        [this](const PropertyValue& v) { SetCastShadows(std::get<bool>(v)); }
+    );
+}
+
 /*
  * Material textures layout order:
  *

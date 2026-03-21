@@ -6,12 +6,15 @@
 #include "Texture.h"
 #include <glm/glm.hpp>
 
+#include "Core/PropertyHolder.h"
 #include "Renderer/Shader.h"
 
 enum class BlendMode { Opaque, AlphaBlend, AlphaScissor, Additive };
 
-class Material {
+class Material : public PropertyHolder {
 public:
+    Material();
+
     void Bind(const Shader& shader) const;
 
     void SetName(const std::string& name) {
@@ -140,24 +143,24 @@ private:
     std::string m_name;
 
     glm::vec4 m_albedoColor = glm::vec4(1.0f);
-    float m_metallicValue    = 0.0f; // used when no metallic tex bound
-    float m_roughnessValue   = 0.5f;
-    float m_aoStrength       = 1.0f;
-    float m_normalStrength   = 1.0f;
+    float m_metallicValue = 0.0f; // used when no metallic tex bound
+    float m_roughnessValue = 0.5f;
+    float m_aoStrength = 1.0f;
+    float m_normalStrength = 1.0f;
     float m_emissionStrength = 1.0f;
     glm::vec3 m_emissionColor = glm::vec3(0.0f);
 
     float m_displacementScale = 0.05f;
 
-    bool m_useDisplacement  = false;
-    bool m_castShadows      = true;
-    bool m_doubleSided      = false;
-    bool m_dirty            = false;
+    bool m_useDisplacement = false;
+    bool m_castShadows = true;
+    bool m_doubleSided = false;
+    bool m_dirty = false;
 
     BlendMode m_blendMode = BlendMode::Opaque;
     float m_alphaScissorThreshold = 0.5f;
 
-    glm::vec2 m_uvScale  = glm::vec2(1.0f);
+    glm::vec2 m_uvScale = glm::vec2(1.0f);
     glm::vec2 m_uvOffset = glm::vec2(0.0f);
 
     std::shared_ptr<Texture> m_diffuse {};

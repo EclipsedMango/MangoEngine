@@ -40,7 +40,7 @@ private:
     CameraNode3d* m_gameCamera = nullptr;
 
     // flycam controls
-    bool  m_rmbLook = false;
+    bool m_rmbLook = false;
     float m_moveSpeed = 5.0f;
     float m_mouseSensitivity = 0.08f;
 
