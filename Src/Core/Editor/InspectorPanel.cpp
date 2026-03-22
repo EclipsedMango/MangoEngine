@@ -7,6 +7,7 @@
 
 #include "Editor.h"
 #include "imgui.h"
+#include "Core/ResourceManager.h"
 #include "glm/glm.hpp"
 #include "Nodes/Node3d.h"
 
@@ -93,9 +94,7 @@ void InspectorPanel::DrawProperties(PropertyHolder* holder) {
 
     for (const auto& name : holder->GetPropertyOrder()) {
         const PropertyValue v = holder->GetProperty(name);
-        const bool isSub =
-            std::holds_alternative<std::shared_ptr<PropertyHolder>>(v) ||
-            std::holds_alternative<std::shared_ptr<Texture>>(v);
+        const bool isSub = std::holds_alternative<std::shared_ptr<PropertyHolder>>(v);
         (isSub ? subProps : flatProps).push_back(name);
     }
 
@@ -160,14 +159,62 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
                     holder->Set(name, std::string(meshTypes[idx]));
                 }
 
-            } else {
-                PropertyLabel(name.c_str());
-                char buf[256];
-                strncpy(buf, val.c_str(), sizeof(buf));
-                buf[sizeof(buf)-1] = '\0';
-                if (ImGui::InputText("##v", buf, sizeof(buf))) {
-                    holder->Set(name, std::string(buf));
+                return;
+            }
+
+            if (name == "diffuse" || name == "normal" || name == "metallic" || name == "roughness" || name == "ambient_occlusion" || name == "emissive" || name == "displacement") {
+                ImGui::Spacing();
+
+                if (val.empty()) {
+                    ImGui::PushStyleColor(ImGuiCol_Text, COL_LABEL);
+                    ImGui::TextUnformatted(name.c_str());
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("None");
+                    ImGui::PopStyleColor();
+                    ImGui::Spacing();
+                    return;
                 }
+
+                // get the texture from resource manager for display
+                const auto tex = ResourceManager::Get().LoadTexture(val);
+
+                const bool clicked = ImGui::ImageButton(
+                    "##thumb",
+                    static_cast<ImTextureID>(static_cast<intptr_t>(tex->GetGLHandle())),
+                    ImVec2(40, 40)
+                );
+
+                if (clicked) OpenTexturePreview(tex.get(), name.c_str());
+
+                ImGui::SameLine();
+                ImGui::BeginGroup();
+                ImGui::PushStyleColor(ImGuiCol_Text, COL_HEADER);
+                ImGui::TextUnformatted(name.c_str());
+                ImGui::PopStyleColor();
+                ImGui::PushStyleColor(ImGuiCol_Text, COL_LABEL);
+                ImGui::Text("%dx%d  •  %dch", tex->GetWidth(), tex->GetHeight(), tex->GetChannels());
+                ImGui::PopStyleColor();
+                ImGui::EndGroup();
+
+                const std::string treeId = name + "_props";
+                ImGui::PushStyleColor(ImGuiCol_Text, COL_LABEL);
+                const bool open = ImGui::TreeNodeEx(treeId.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth, "Details");
+                ImGui::PopStyleColor();
+                if (open) {
+                    DrawProperties(tex.get());
+                    ImGui::TreePop();
+                }
+
+                ImGui::Spacing();
+                return;
+            }
+
+            PropertyLabel(name.c_str());
+            char buf[256];
+            strncpy(buf, val.c_str(), sizeof(buf));
+            buf[sizeof(buf)-1] = '\0';
+            if (ImGui::InputText("##v", buf, sizeof(buf))) {
+                holder->Set(name, std::string(buf));
             }
         }
 
@@ -211,53 +258,6 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
                 ImGui::PushStyleColor(ImGuiCol_TableBorderLight, COL_SEPARATOR);
                 DrawProperties(val.get());
                 ImGui::PopStyleColor();
-                ImGui::TreePop();
-            }
-
-            ImGui::Spacing();
-        }
-
-        if constexpr (std::is_same_v<T, std::shared_ptr<Texture>>) {
-            ImGui::Spacing();
-
-            if (!val) {
-                // empty slot, show label + greyed "None"
-                ImGui::PushStyleColor(ImGuiCol_Text, COL_LABEL);
-                ImGui::TextUnformatted(name.c_str());
-                ImGui::SameLine();
-                ImGui::TextDisabled("None");
-                ImGui::PopStyleColor();
-                ImGui::Spacing();
-                return;
-            }
-
-            // thumbnail row
-            const bool clicked = ImGui::ImageButton(
-                "##thumb",
-                static_cast<ImTextureID>(static_cast<intptr_t>(val->GetGLHandle())),
-                ImVec2(40, 40));
-
-            if (clicked) {
-                OpenTexturePreview(val.get(), name.c_str());
-            }
-
-            ImGui::SameLine();
-            ImGui::BeginGroup();
-            ImGui::PushStyleColor(ImGuiCol_Text, COL_HEADER);
-            ImGui::TextUnformatted(name.c_str());
-            ImGui::PopStyleColor();
-            ImGui::PushStyleColor(ImGuiCol_Text, COL_LABEL);
-            ImGui::Text("%dx%d  •  %dch", val->GetWidth(), val->GetHeight(), val->GetChannels());
-            ImGui::PopStyleColor();
-            ImGui::EndGroup();
-
-            // expandable sub-properties (width, height, channels, GL handle)
-            const std::string treeId = name + "_props";
-            ImGui::PushStyleColor(ImGuiCol_Text, COL_LABEL);
-            const bool open = ImGui::TreeNodeEx(treeId.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth, "Details");
-            ImGui::PopStyleColor();
-            if (open) {
-                DrawProperties(val.get());
                 ImGui::TreePop();
             }
 

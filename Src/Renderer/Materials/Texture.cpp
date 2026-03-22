@@ -6,6 +6,7 @@
 
 #include "stb_image.h"
 #include <stdexcept>
+#include <utility>
 
 static void GetFormats(const int channels, const std::string& label, GLenum& internalFormat, GLenum& format) {
     switch (channels) {
@@ -17,7 +18,11 @@ static void GetFormats(const int channels, const std::string& label, GLenum& int
     }
 }
 
-Texture::Texture(const std::string& path, const bool flipVertically) {
+Texture::Texture(const std::string& path, const bool flipVertically) : m_path(path) {
+    if (path.empty()) {
+        throw std::runtime_error("Texture: Cannot load an empty file path.");
+    }
+
     stbi_set_flip_vertically_on_load(flipVertically);
 
     unsigned char* data = stbi_load(path.c_str(), &m_width, &m_height, &m_channels, 0);
@@ -42,7 +47,7 @@ Texture::Texture(const std::string& path, const bool flipVertically) {
     RegisterProperties();
 }
 
-Texture::Texture(const unsigned char *data, int width, int height, int channels) {
+Texture::Texture(const unsigned char *data, const int width, const int height, const int channels, std::string key) : m_path(std::move(key)) {
     m_width = width;
     m_height = height;
     m_channels = channels;

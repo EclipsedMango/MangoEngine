@@ -17,72 +17,23 @@ public:
 
     void Bind(const Shader& shader) const;
 
-    void SetName(const std::string& name) {
-        m_name = name;
-    }
-    void SetAlbedoColor(const glm::vec4& color) {
-        m_albedoColor = color;
-        m_dirty = true;
-    }
-    void SetMetallicValue(const float value) {
-        m_metallicValue = value;
-        m_dirty = true;
-    }
-    void SetRoughnessValue(const float value) {
-        m_roughnessValue = value;
-        m_dirty = true;
-    }
-    void SetAOStrength(const float value) {
-        m_aoStrength = value;
-        m_dirty = true;
-    }
-    void SetNormalStrength(const float value) {
-        m_normalStrength = value;
-        m_dirty = true;
-    }
-    void SetEmissionStrength(const float value) {
-        m_emissionStrength = value;
-        m_dirty = true;
-    }
-    void SetEmissionColor(const glm::vec3& color) {
-        m_emissionColor = color;
-        m_dirty = true;
-    }
-    void SetDisplacementScale(const float value) {
-        m_displacementScale = value;
-        m_dirty = true;
-    }
-    void SetUseDisplacement(const bool value) {
-        m_useDisplacement = value;
-        m_dirty = true;
-    }
-    void SetCastShadows(const bool value) {
-        m_castShadows = value;
-        m_dirty = true;
-    }
-    void SetDoubleSided(const bool value) {
-        m_doubleSided = value;
-        m_dirty = true;
-    }
-    void SetDirty(const bool value) {
-        m_dirty = value;
-    }
-    void SetBlendMode(const BlendMode mode) {
-        m_blendMode = mode;
-        m_dirty = true;
-    }
-    void SetAlphaScissorThreshold(const float value) {
-        m_alphaScissorThreshold = value;
-        m_dirty = true;
-    }
-    void SetUVScale(const glm::vec2& scale) {
-        m_uvScale = scale;
-        m_dirty = true;
-    }
-    void SetUVOffset(const glm::vec2& offset) {
-        m_uvOffset = offset;
-        m_dirty = true;
-    }
+    void SetName(const std::string& name);
+    void SetAlbedoColor(const glm::vec4& color);
+    void SetMetallicValue(const float value);
+    void SetRoughnessValue(const float value);
+    void SetAOStrength(const float value);
+    void SetNormalStrength(const float value);
+    void SetEmissionStrength(const float value);
+    void SetEmissionColor(const glm::vec3& color);
+    void SetDisplacementScale(const float value);
+    void SetUseDisplacement(const bool value);
+    void SetCastShadows(const bool value);
+    void SetDoubleSided(const bool value);
+    void SetDirty(const bool value);
+    void SetBlendMode(const BlendMode mode);
+    void SetAlphaScissorThreshold(const float value);
+    void SetUVScale(const glm::vec2& scale);
+    void SetUVOffset(const glm::vec2& offset);
 
     [[nodiscard]] std::string GetName() const { return m_name; }
     [[nodiscard]] glm::vec4 GetAlbedoColor() const { return m_albedoColor; }
@@ -102,34 +53,13 @@ public:
     [[nodiscard]] glm::vec2 GetUVScale() const { return m_uvScale; }
     [[nodiscard]] glm::vec2 GetUVOffset() const { return m_uvOffset; }
 
-    void SetDiffuse(const std::shared_ptr<Texture> &texture) {
-        m_diffuse = texture;
-        m_dirty = true;
-    }
-    void SetAmbientOcclusion(const std::shared_ptr<Texture> &texture) {
-        m_ambientOcclusion = texture;
-        m_dirty = true;
-    }
-    void SetNormal(const std::shared_ptr<Texture> &texture) {
-        m_normal = texture;
-        m_dirty = true;
-    }
-    void SetRoughness(const std::shared_ptr<Texture> &texture) {
-        m_roughness = texture;
-        m_dirty = true;
-    }
-    void SetMetallic(const std::shared_ptr<Texture> &texture) {
-        m_metallic = texture;
-        m_dirty = true;
-    }
-    void SetDisplacement(const std::shared_ptr<Texture> &texture) {
-        m_displacement = texture;
-        m_dirty = true;
-    }
-    void SetEmissive(const std::shared_ptr<Texture> &texture) {
-        m_emissive = texture;
-        m_dirty = true;
-    }
+    void SetDiffuse(const std::string& path);
+    void SetAmbientOcclusion(const std::string& path);
+    void SetNormal(const std::string& path);
+    void SetRoughness(const std::string& path);
+    void SetMetallic(const std::string& path);
+    void SetDisplacement(const std::string& path);
+    void SetEmissive(const std::string& path);
 
     [[nodiscard]] std::shared_ptr<Texture> GetDiffuse() const { return m_diffuse; }
     [[nodiscard]] std::shared_ptr<Texture> GetAmbientOcclusion() const { return m_ambientOcclusion; }

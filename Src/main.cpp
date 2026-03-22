@@ -43,6 +43,17 @@ int main() {
     sphere->SetPosition({0, 4, -2});
     scene->AddChild(sphere);
 
+    for (int i = 0; i < 100; i++) {
+        MeshNode3d* cube = new MeshNode3d(cubeMesh, shader);
+        cube->SetPosition({
+            (i % 10) * 2.0f - 9.0f,
+            -4.9f,
+            (i / 10) * 2.0f
+        });
+        cube->SetScale({0.3f, 0.3f, 0.3f});
+        scene->AddChild(cube);
+    }
+
     DirectionalLightNode3d* sun = new DirectionalLightNode3d({0.5f, -0.6f, -0.5f}, {0.9f, 0.65f, 0.32f}, 2.5f);
     scene->AddChild(sun);
 

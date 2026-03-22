@@ -11,6 +11,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <functional>
+#include <memory>
+
+#include "Core/ResourceManager.h"
 
 // read a float from a buffer respecting componentType, normalization, and byte stride
 static float ReadFloat(const uint8_t* base, const int componentType, const size_t index, const size_t byteStride, const size_t componentOffset) {
@@ -23,19 +26,6 @@ static float ReadFloat(const uint8_t* base, const int componentType, const size_
         case TINYGLTF_COMPONENT_TYPE_SHORT: return std::max(*reinterpret_cast<const int16_t*>(ptr) / 32767.0f, -1.0f);
         default: return 0.0f;
     }
-}
-
-std::shared_ptr<Texture> LoadTexture(const tinygltf::Model &model, const int textureIndex) {
-    if (textureIndex < 0) return nullptr;
-
-    const auto& gltfImage = model.images[model.textures[textureIndex].source];
-
-    return std::make_shared<Texture>(
-        gltfImage.image.data(),
-        gltfImage.width,
-        gltfImage.height,
-        gltfImage.component
-    );
 }
 
 struct AccessorData {
@@ -69,42 +59,35 @@ static AccessorData GetAccessorData(const tinygltf::Model& model, const int acce
     return d;
 }
 
-std::shared_ptr<Texture> LoadTexture(const tinygltf::Model& model, const int textureIndex, std::unordered_map<int, std::shared_ptr<Texture>>& cache) {
-    if (textureIndex < 0) return nullptr;
-
-    // return cached texture if already loaded
-    const auto it = cache.find(textureIndex);
-    if (it != cache.end()) {
-        return it->second;
+static std::string ExtractTexture(const tinygltf::Model& model, const int textureIndex, const std::string& gltfPath) {
+    if (textureIndex < 0 || textureIndex >= static_cast<int>(model.textures.size())) {
+        return "";
     }
 
     const auto& gltfTexture = model.textures[textureIndex];
     if (gltfTexture.source < 0 || gltfTexture.source >= static_cast<int>(model.images.size())) {
-        return nullptr;
+        return "";
     }
 
     const auto& gltfImage = model.images[gltfTexture.source];
 
-    // guard against failed image decodes
-    if (gltfImage.image.empty() || gltfImage.width <= 0 || gltfImage.height <= 0) {
-        std::cerr << "GLTF: image data empty or invalid for texture index " << textureIndex << " (source: " << gltfTexture.source << ")" << std::endl;
-        return nullptr;
+    const std::string outPath = gltfPath + "_tex" + std::to_string(textureIndex) + ".png";
+
+    if (!std::filesystem::exists(outPath)) {
+        if (!gltfImage.image.empty() && gltfImage.width > 0 && gltfImage.height > 0) {
+            stbi_write_png(outPath.c_str(), gltfImage.width, gltfImage.height,
+                           gltfImage.component, gltfImage.image.data(),
+                           gltfImage.width * gltfImage.component);
+            std::cout << "GLTF: Extracted new texture to: " << outPath << std::endl;
+        } else {
+            return "";
+        }
     }
 
-    auto tex = std::make_shared<Texture>(
-        gltfImage.image.data(),
-        gltfImage.width,
-        gltfImage.height,
-        gltfImage.component
-    );
-
-    cache[textureIndex] = tex;
-    return tex;
+    return outPath;
 }
-
-std::shared_ptr<Material> BuildMaterial(const tinygltf::Model& model, const int materialIndex, std::unordered_map<int, std::shared_ptr<Texture>>& texCache) {
+std::shared_ptr<Material> BuildMaterial(const tinygltf::Model& model, const int materialIndex, const std::string& gltfPath) {
     auto mat = std::make_shared<Material>();
-
     if (materialIndex < 0) {
         return mat;
     }
@@ -123,16 +106,24 @@ std::shared_ptr<Material> BuildMaterial(const tinygltf::Model& model, const int 
     mat->SetMetallicValue(static_cast<float>(pbr.metallicFactor));
     mat->SetRoughnessValue(static_cast<float>(pbr.roughnessFactor));
 
-    mat->SetDiffuse(LoadTexture(model, pbr.baseColorTexture.index, texCache));
+    std::string path = ExtractTexture(model, gltfMat.pbrMetallicRoughness.baseColorTexture.index, gltfPath);
+    if (!path.empty()) mat->SetDiffuse(path);
 
     // GLTF packs metallic (B channel) and roughness (G channel) into one texture
-    const auto metallicRoughness = LoadTexture(model, pbr.metallicRoughnessTexture.index, texCache);
-    mat->SetMetallic(metallicRoughness);
-    mat->SetRoughness(metallicRoughness);
+    path = ExtractTexture(model, gltfMat.pbrMetallicRoughness.metallicRoughnessTexture.index, gltfPath);
+    if (!path.empty()) {
+        mat->SetMetallic(path);
+        mat->SetRoughness(path);
+    }
 
-    mat->SetNormal(LoadTexture(model, gltfMat.normalTexture.index, texCache));
-    mat->SetAmbientOcclusion(LoadTexture(model, gltfMat.occlusionTexture.index, texCache));
-    mat->SetEmissive(LoadTexture(model, gltfMat.emissiveTexture.index, texCache));
+    path = ExtractTexture(model, gltfMat.normalTexture.index, gltfPath);
+    if (!path.empty()) mat->SetNormal(path);
+
+    path = ExtractTexture(model, gltfMat.occlusionTexture.index, gltfPath);
+    if (!path.empty()) mat->SetAmbientOcclusion(path);
+
+    path = ExtractTexture(model, gltfMat.emissiveTexture.index, gltfPath);
+    if (!path.empty()) mat->SetEmissive(path);
 
     if (gltfMat.emissiveFactor.size() == 3) {
         mat->SetEmissionColor(glm::vec3(
@@ -168,7 +159,6 @@ Node3d* GltfLoader::Load(const std::string& path, Shader* shader) {
 
     Node3d* root = new Node3d();
 
-    std::unordered_map<int, std::shared_ptr<Texture>> texCache;
     std::unordered_map<int, std::vector<std::shared_ptr<Mesh>>> meshCache;
 
     std::function<void(int, Node3d*)> ProcessNode = [&](int nodeIndex, Node3d* parent) {
@@ -321,12 +311,12 @@ Node3d* GltfLoader::Load(const std::string& path, Shader* shader) {
                         }
                     }
 
-                    sharedMesh = std::shared_ptr<Mesh>(new Mesh(vertices, indices));
+                    sharedMesh = std::make_shared<Mesh>(vertices, indices);
                     meshCache[gltfNode.mesh].push_back(sharedMesh);
                 }
 
                 auto* meshNode = new MeshNode3d(sharedMesh, shader);
-                meshNode->SetMaterial(BuildMaterial(model, primitive.material, texCache));
+                meshNode->SetMaterial(BuildMaterial(model, primitive.material, path));
                 sceneNode->AddChild(meshNode);
             }
         }

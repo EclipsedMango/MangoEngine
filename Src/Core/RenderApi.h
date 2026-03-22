@@ -91,6 +91,8 @@ private:
     void InitGLResources(); // called once after GLAD is loaded
     void InitDepthPass();
 
+    void SubmitToGpu(const MeshNode3d* node, const Shader* shader);
+
     void DrawMeshNode(const MeshNode3d* node);
     void DrawMeshNodeDepth(const MeshNode3d* node) const;
 

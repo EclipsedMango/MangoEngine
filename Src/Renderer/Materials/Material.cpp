@@ -1,14 +1,16 @@
 
 #include "Material.h"
 
+#include "Core/ResourceManager.h"
+
 Material::Material() {
     AddProperty("albedo_color",
         [this]() -> PropertyValue { return glm::vec3(GetAlbedoColor()); },
         [this](const PropertyValue& v) { SetAlbedoColor(glm::vec4(std::get<glm::vec3>(v), m_albedoColor.a)); }
     );
     AddProperty("diffuse",
-        [this]() -> PropertyValue { return m_diffuse; },
-        [this](const PropertyValue& v) { SetDiffuse(std::get<std::shared_ptr<Texture>>(v)); }
+        [this]() -> PropertyValue { return m_diffuse ? m_diffuse->GetPath() : std::string(""); },
+        [this](const PropertyValue& v) { SetDiffuse(std::get<std::string>(v)); }
     );
 
     AddProperty("metallic_value",
@@ -16,8 +18,8 @@ Material::Material() {
         [this](const PropertyValue& v) { SetMetallicValue(std::get<float>(v)); }
     );
     AddProperty("metallic",
-        [this]() -> PropertyValue { return m_metallic; },
-        [this](const PropertyValue& v) { SetMetallic(std::get<std::shared_ptr<Texture>>(v)); }
+        [this]() -> PropertyValue { return m_metallic ? m_metallic->GetPath() : std::string(""); },
+        [this](const PropertyValue& v) { SetMetallic(std::get<std::string>(v)); }
     );
 
     AddProperty("roughness_value",
@@ -25,8 +27,8 @@ Material::Material() {
         [this](const PropertyValue& v) { SetRoughnessValue(std::get<float>(v)); }
     );
     AddProperty("roughness",
-        [this]() -> PropertyValue { return m_roughness; },
-        [this](const PropertyValue& v) { SetRoughness(std::get<std::shared_ptr<Texture>>(v)); }
+        [this]() -> PropertyValue { return m_roughness ? m_roughness->GetPath() : std::string(""); },
+        [this](const PropertyValue& v) { SetRoughness(std::get<std::string>(v)); }
     );
 
     AddProperty("ao_strength_value",
@@ -34,8 +36,8 @@ Material::Material() {
         [this](const PropertyValue& v) { SetAOStrength(std::get<float>(v)); }
     );
     AddProperty("ambient_occlusion",
-        [this]() -> PropertyValue { return m_ambientOcclusion; },
-        [this](const PropertyValue& v) { SetAmbientOcclusion(std::get<std::shared_ptr<Texture>>(v)); }
+        [this]() -> PropertyValue { return m_ambientOcclusion ? m_ambientOcclusion->GetPath() : std::string(""); },
+        [this](const PropertyValue& v) { SetAmbientOcclusion(std::get<std::string>(v)); }
     );
 
     AddProperty("displacement_scale_value",
@@ -43,8 +45,8 @@ Material::Material() {
         [this](const PropertyValue& v) { SetDisplacementScale(std::get<float>(v)); }
     );
     AddProperty("displacement",
-        [this]() -> PropertyValue { return m_displacement; },
-        [this](const PropertyValue& v) { SetDisplacement(std::get<std::shared_ptr<Texture>>(v)); }
+        [this]() -> PropertyValue { return m_displacement ? m_displacement->GetPath() : std::string(""); },
+        [this](const PropertyValue& v) { SetDisplacement(std::get<std::string>(v)); }
     );
 
     AddProperty("normal_strength",
@@ -52,8 +54,8 @@ Material::Material() {
         [this](const PropertyValue& v) { SetNormalStrength(std::get<float>(v)); }
     );
     AddProperty("normal",
-        [this]() -> PropertyValue { return m_normal; },
-        [this](const PropertyValue& v) { SetNormal(std::get<std::shared_ptr<Texture>>(v)); }
+        [this]() -> PropertyValue { return m_normal ? m_normal->GetPath() : std::string(""); },
+        [this](const PropertyValue& v) { SetNormal(std::get<std::string>(v)); }
     );
 
     AddProperty("emission_strength",
@@ -61,8 +63,8 @@ Material::Material() {
         [this](const PropertyValue& v) { SetEmissionStrength(std::get<float>(v)); }
     );
     AddProperty("emissive",
-        [this]() -> PropertyValue { return m_emissive; },
-        [this](const PropertyValue& v) { SetEmissive(std::get<std::shared_ptr<Texture>>(v)); }
+        [this]() -> PropertyValue { return m_emissive ? m_emissive->GetPath() : std::string(""); },
+        [this](const PropertyValue& v) { SetEmissive(std::get<std::string>(v)); }
     );
 
     AddProperty("double_sided",
@@ -161,4 +163,123 @@ void Material::Bind(const Shader &shader) const {
     } else {
         shader.SetBool("u_HasDisplacement", false);
     }
+}
+
+void Material::SetName(const std::string &name) {
+    m_name = name;
+    m_dirty = true;
+}
+
+void Material::SetAlbedoColor(const glm::vec4 &color) {
+    m_albedoColor = color;
+    m_dirty = true;
+}
+
+void Material::SetMetallicValue(const float value) {
+    m_metallicValue = value;
+    m_dirty = true;
+}
+
+void Material::SetRoughnessValue(const float value) {
+    m_roughnessValue = value;
+    m_dirty = true;
+}
+
+void Material::SetAOStrength(const float value) {
+    m_aoStrength = value;
+    m_dirty = true;
+}
+
+void Material::SetNormalStrength(const float value) {
+    m_normalStrength = value;
+    m_dirty = true;
+}
+
+void Material::SetEmissionStrength(const float value) {
+    m_emissionStrength = value;
+    m_dirty = true;
+}
+
+void Material::SetEmissionColor(const glm::vec3 &color) {
+    m_emissionColor = color;
+    m_dirty = true;
+}
+
+void Material::SetDisplacementScale(const float value) {
+    m_displacementScale = value;
+    m_dirty = true;
+}
+
+void Material::SetUseDisplacement(const bool value) {
+    m_useDisplacement = value;
+    m_dirty = true;
+}
+
+void Material::SetCastShadows(const bool value) {
+    m_castShadows = value;
+    m_dirty = true;
+}
+
+void Material::SetDoubleSided(const bool value) {
+    m_doubleSided = value;
+    m_dirty = true;
+}
+
+void Material::SetDirty(const bool value) {
+    m_dirty = value;
+}
+
+void Material::SetBlendMode(const BlendMode mode) {
+    m_blendMode = mode;
+    m_dirty = true;
+}
+
+void Material::SetAlphaScissorThreshold(const float value) {
+    m_alphaScissorThreshold = value;
+    m_dirty = true;
+}
+
+void Material::SetUVScale(const glm::vec2 &scale) {
+    m_uvScale = scale;
+    m_dirty = true;
+}
+
+void Material::SetUVOffset(const glm::vec2 &offset) {
+    m_uvOffset = offset;
+    m_dirty = true;
+}
+
+void Material::SetDiffuse(const std::string &path) {
+    m_diffuse = ResourceManager::Get().LoadTexture(path);
+    m_dirty = true;
+}
+
+void Material::SetAmbientOcclusion(const std::string &path) {
+    m_ambientOcclusion = ResourceManager::Get().LoadTexture(path);
+    m_dirty = true;
+}
+
+void Material::SetNormal(const std::string &path) {
+    m_normal = ResourceManager::Get().LoadTexture(path);
+    m_dirty = true;
+}
+
+void Material::SetRoughness(const std::string &path) {
+    m_roughness = ResourceManager::Get().LoadTexture(path);
+    m_dirty = true;
+}
+
+void Material::SetMetallic(const std::string &path) {
+    m_metallic = ResourceManager::Get().LoadTexture(path);
+    m_dirty = true;
+}
+
+void Material::SetDisplacement(const std::string &path) {
+    m_displacement = ResourceManager::Get().LoadTexture(path);
+    m_dirty = true;
+}
+
+void Material::SetEmissive(const std::string &path) {
+    m_emissive = ResourceManager::Get().LoadTexture(path);
+    m_dirty = true;
 }

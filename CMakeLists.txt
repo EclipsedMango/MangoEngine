@@ -131,7 +131,8 @@ add_executable(MangoRendering Src/main.cpp
         Src/Renderer/Meshes/CubeGeometry.h
         Src/Core/PackedScene.cpp
         Src/Core/PackedScene.h
-        Src/Core/PropertyHolder.h)
+        Src/Core/PropertyHolder.h
+        Src/Core/ResourceManager.h)
 
 target_link_libraries(MangoRendering SDL3::SDL3 glad_gl imgui ${CMAKE_DL_LIBS} nlohmann_json::nlohmann_json)
 target_include_directories(MangoRendering PRIVATE ${CMAKE_SOURCE_DIR}/Src include ${glm_SOURCE_DIR} ${stb_SOURCE_DIR} ${tinygltf_SOURCE_DIR})

@@ -10,7 +10,7 @@
 class Texture : public PropertyHolder {
 public:
     explicit Texture(const std::string& path, bool flipVertically = true);
-    explicit Texture(const unsigned char* data, int width, int height, int channels);
+    explicit Texture(const unsigned char* data, int width, int height, int channels, std::string key);
     explicit Texture(int width, int height, GLenum internalFormat);
     explicit Texture(int width, int height, GLenum internalFormat, int mipLevels);
     explicit Texture(const std::vector<std::string>& paths);
@@ -25,6 +25,7 @@ public:
 
     static Texture* LoadHDR(const std::string& path);
 
+    [[nodiscard]] const std::string& GetPath() const { return m_path; }
     [[nodiscard]] GLuint GetGLHandle()  const { return m_id; }
     [[nodiscard]] int GetWidth() const { return m_width; }
     [[nodiscard]] int GetHeight() const { return m_height; }
@@ -35,6 +36,7 @@ private:
     Texture() = default;
     void RegisterProperties();
 
+    std::string m_path;
     unsigned int m_id = 0;
     GLenum m_target = GL_TEXTURE_2D;
     int m_width = 0;

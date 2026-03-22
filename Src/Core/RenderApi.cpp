@@ -102,6 +102,17 @@ void RenderApi::InitDepthPass() {
     m_depthShader = std::make_unique<Shader>("../Assets/Shaders/depth_only.vert", "../Assets/Shaders/depth_only.frag");
 }
 
+void RenderApi::SubmitToGpu(const MeshNode3d *node, const Shader *shader) {
+    shader->SetMatrix4("u_Model", node->GetWorldMatrix());
+    shader->SetMatrix4("u_NormalMatrix", glm::transpose(glm::inverse(node->GetWorldMatrix())));
+
+    node->GetMesh()->GetBuffer()->Bind();
+    glDrawElements(GL_TRIANGLES, node->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
+
+    m_stats.drawCalls++;
+    m_stats.triangles += node->GetMesh()->GetBuffer()->GetIndexCount() / 3;
+}
+
 void RenderApi::ApplyMaterialCull(const Material &mat) {
     if (mat.GetDoubleSided()) {
         glDisable(GL_CULL_FACE);
@@ -256,6 +267,15 @@ void RenderApi::RenderMainPass() {
     Frustum cameraFrustum{};
     cameraFrustum.ExtractFromMatrix(viewProj);
 
+    std::ranges::sort(m_meshQueue, [](const MeshNode3d* a, const MeshNode3d* b) {
+        if (a->GetShader() != b->GetShader())
+            return a->GetShader() < b->GetShader();
+        return &a->GetActiveMaterial() < &b->GetActiveMaterial();
+    });
+
+    const Shader* lastShader = nullptr;
+    const Material* lastMaterial = nullptr;
+
     for (const MeshNode3d* node : m_meshQueue) {
         const Mesh* mesh = node->GetMesh();
         const glm::vec3 worldCenter = glm::vec3(node->GetWorldMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
@@ -266,7 +286,48 @@ void RenderApi::RenderMainPass() {
             continue;
         }
 
-        DrawMeshNode(node);
+        const Shader* currentShader = node->GetShader();
+        const Material& currentMat = node->GetActiveMaterial();
+
+        if (currentShader != lastShader) {
+            currentShader->Bind();
+
+            // set shader global uniforms
+            currentShader->SetVector3("u_CameraPos", m_activeCamera->GetPosition());
+            currentShader->SetVector2("u_ScreenSize", m_windows[0]->GetSize());
+            currentShader->SetFloat("u_ZNear", m_activeCamera->GetNearPlane());
+            currentShader->SetFloat("u_ZFar", m_activeCamera->GetFarPlane());
+            currentShader->SetInt("u_DebugMode", m_debugMode);
+            currentShader->SetInt("u_DebugCascade", m_debugCascade);
+
+            m_shadowRenderer->BindShadowUniforms(*currentShader);
+
+            if (m_hasIbl) {
+                m_ibl.irradiance->Bind(20);
+                m_ibl.prefiltered->Bind(21);
+                m_ibl.brdfLut->Bind(22);
+                currentShader->SetInt("u_IrradianceMap", 20);
+                currentShader->SetInt("u_PrefilteredEnvMap", 21);
+                currentShader->SetInt("u_BrdfLut", 22);
+                currentShader->SetInt("u_MaxPrefilteredMipLevel", IBLPrecomputer::PREFILTER_MIP_LEVELS);
+                currentShader->SetBool("u_HasIbl", true);
+                currentShader->SetFloat("u_IblDiffuseIntensity", 0.5f);
+                currentShader->SetFloat("u_IblSpecularIntensity", 0.5f);
+            } else {
+                currentShader->SetBool("u_HasIbl", false);
+            }
+
+            lastShader = currentShader;
+            lastMaterial = nullptr;
+        }
+
+        if (&currentMat != lastMaterial) {
+            ApplyMaterialCull(currentMat);
+            currentMat.Bind(*currentShader);
+            lastMaterial = &currentMat;
+        }
+
+        SubmitToGpu(node, currentShader);
     }
 }
 
@@ -274,13 +335,11 @@ void RenderApi::RenderTransparentPass() {
     if (m_transparentQueue.empty()) return;
 
     glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);      // dont write depth
-    glDepthFunc(GL_LESS);       // test against opaque depth
-    glDisable(GL_CULL_FACE);    // see both sides of transparent surfaces
+    glDepthMask(GL_FALSE);
+    glDepthFunc(GL_LESS);
 
-    const glm::mat4 viewProj = m_activeCamera->GetProjectionMatrix() * m_activeCamera->GetViewMatrix();
-    Frustum cameraFrustum{};
-    cameraFrustum.ExtractFromMatrix(viewProj);
+    const Shader* lastShader = nullptr;
+    const Material* lastMaterial = nullptr;
 
     for (const MeshNode3d* node : m_transparentQueue) {
         if (node->GetActiveMaterial().GetBlendMode() == BlendMode::Additive) {
@@ -289,23 +348,26 @@ void RenderApi::RenderTransparentPass() {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
 
-        const Mesh* mesh = node->GetMesh();
-        const glm::vec3 worldCenter = glm::vec3(node->GetWorldMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
-        const float worldRadius = mesh->GetBoundsRadius() * std::max({ node->GetScale().x, node->GetScale().y, node->GetScale().z });
+        const Shader* currentShader = node->GetShader();
+        const Material& currentMat = node->GetActiveMaterial();
 
-        if (!cameraFrustum.IntersectsSphere(worldCenter, worldRadius)) {
-            m_stats.culled++;
-            continue;
+        if (currentShader != lastShader) {
+            currentShader->Bind();
+            lastShader = currentShader;
+            lastMaterial = nullptr;
         }
 
-        DrawMeshNode(node);
+        if (&currentMat != lastMaterial) {
+            currentMat.Bind(*currentShader);
+            lastMaterial = &currentMat;
+        }
+
+        SubmitToGpu(node, currentShader);
     }
 
     // restore state
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LEQUAL);
-    glEnable(GL_CULL_FACE);
 }
 
 void RenderApi::BeginZPrepass() {
