@@ -108,6 +108,19 @@ void RenderApi::InitDepthPass() {
     m_depthShader = std::make_unique<Shader>("../Assets/Shaders/depth_only.vert", "../Assets/Shaders/depth_only.frag");
 }
 
+bool RenderApi::IsVisible(const MeshNode3d *node, const Frustum &frustum) {
+    const Mesh* mesh = node->GetMesh();
+    const glm::vec3 worldCenter = glm::vec3(node->GetWorldMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
+    const float worldRadius = mesh->GetBoundsRadius() * std::max({ node->GetScale().x, node->GetScale().y, node->GetScale().z });
+
+    if (!frustum.IntersectsSphere(worldCenter, worldRadius)) {
+        m_stats.culled++;
+        return true;
+    }
+
+    return false;
+}
+
 // expects shaders and materials to be bound already
 void RenderApi::SubmitToGpu(const MeshNode3d *node, const Shader *shader) {
     shader->SetMatrix4("u_Model", node->GetWorldMatrix());
@@ -224,10 +237,16 @@ void RenderApi::Flush() {
 
     // sort transparent back to front by distance to camera
     const glm::vec3 camPos = m_activeCamera->GetPosition();
+    const glm::vec3 forward = m_activeCamera->GetFront();
     std::ranges::sort(m_transparentQueue, [&](const MeshNode3d* a, const MeshNode3d* b) {
-        const float da = glm::length(glm::vec3(a->GetWorldMatrix()[3]) - camPos);
-        const float db = glm::length(glm::vec3(b->GetWorldMatrix()[3]) - camPos);
-        return da > db; // furthest first
+        const glm::vec3 posA = glm::vec3(a->GetWorldMatrix()[3]);
+        const glm::vec3 posB = glm::vec3(b->GetWorldMatrix()[3]);
+
+        // project distance along the cameras forward vector
+        const float depthA = glm::dot(posA - camPos, forward);
+        const float depthB = glm::dot(posB - camPos, forward);
+
+        return depthA > depthB;
     });
 
     m_stats.submitted = static_cast<uint32_t>(m_meshQueue.size());
@@ -240,8 +259,8 @@ void RenderApi::Flush() {
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(2.5f, 3.0f);
     m_shadowRenderer->RenderDirectionalShadows(*m_activeCamera, opaqueQueue, m_windows[0]->GetSize());
-    glDisable(GL_POLYGON_OFFSET_FILL);
     m_shadowRenderer->RenderPointLightShadows(*m_activeCamera, m_lightManager->GetPointLights(), opaqueQueue, m_windows[0]->GetSize());
+    glDisable(GL_POLYGON_OFFSET_FILL);
 
     m_stats.shadowDrawCalls = m_shadowRenderer->GetShadowDrawCallCount();
 
@@ -250,6 +269,7 @@ void RenderApi::Flush() {
 
     // z-prepass
     BeginZPrepass();
+    m_depthShader->Bind();
     for (const MeshNode3d* mesh : opaqueQueue) {
         DrawMeshNodeDepth(mesh);
     }
@@ -290,14 +310,7 @@ void RenderApi::RenderMainPass() {
     const Material* lastMaterial = nullptr;
 
     for (const MeshNode3d* node : m_meshQueue) {
-        const Mesh* mesh = node->GetMesh();
-        const glm::vec3 worldCenter = glm::vec3(node->GetWorldMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
-        const float worldRadius = mesh->GetBoundsRadius() * std::max({ node->GetScale().x, node->GetScale().y, node->GetScale().z });
-
-        if (!cameraFrustum.IntersectsSphere(worldCenter, worldRadius)) {
-            m_stats.culled++;
-            continue;
-        }
+        if (IsVisible(node, cameraFrustum)) continue;
 
         const Shader* currentShader = node->GetShader().get();
         const Material& currentMat = node->GetActiveMaterial();
@@ -318,14 +331,12 @@ void RenderApi::RenderMainPass() {
             if (m_hasIbl) {
                 m_ibl.irradiance->Bind(20);
                 m_ibl.prefiltered->Bind(21);
-                m_ibl.brdfLut->Bind(22);
                 currentShader->SetInt("u_IrradianceMap", 20);
                 currentShader->SetInt("u_PrefilteredEnvMap", 21);
-                currentShader->SetInt("u_BrdfLut", 22);
                 currentShader->SetInt("u_MaxPrefilteredMipLevel", IBLPrecomputer::PREFILTER_MIP_LEVELS);
                 currentShader->SetBool("u_HasIbl", true);
-                currentShader->SetFloat("u_IblDiffuseIntensity", 0.5f);
-                currentShader->SetFloat("u_IblSpecularIntensity", 0.5f);
+                currentShader->SetFloat("u_IblDiffuseIntensity", m_skybox->GetIntensity());
+                currentShader->SetFloat("u_IblSpecularIntensity", m_skybox->GetSpecularIntensity());
             } else {
                 currentShader->SetBool("u_HasIbl", false);
             }
@@ -347,6 +358,10 @@ void RenderApi::RenderMainPass() {
 void RenderApi::RenderTransparentPass() {
     if (m_transparentQueue.empty()) return;
 
+    const glm::mat4 viewProj = m_activeCamera->GetProjectionMatrix() * m_activeCamera->GetViewMatrix();
+    Frustum cameraFrustum{};
+    cameraFrustum.ExtractFromMatrix(viewProj);
+
     glEnable(GL_BLEND);
     glDepthMask(GL_FALSE);
     glDepthFunc(GL_LESS);
@@ -355,6 +370,8 @@ void RenderApi::RenderTransparentPass() {
     const Material* lastMaterial = nullptr;
 
     for (const MeshNode3d* node : m_transparentQueue) {
+        if (IsVisible(node, cameraFrustum)) continue;
+
         if (node->GetActiveMaterial().GetBlendMode() == BlendMode::Additive) {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         } else {
@@ -381,6 +398,7 @@ void RenderApi::RenderTransparentPass() {
     // restore state
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
 }
 
 void RenderApi::BeginZPrepass() {
@@ -415,57 +433,6 @@ void RenderApi::RunLightCulling() const {
     m_clusterSystem->Cull(m_lightManager->GetPointLightSsbo(), m_lightManager->GetSpotLightSsbo());
 }
 
-void RenderApi::DrawMeshNode(const MeshNode3d* node) {
-    if (!node) throw std::runtime_error("DrawObject: null object");
-    if (!node->GetMesh()->IsUploaded()) throw std::runtime_error("DrawObject: mesh not uploaded to GPU");
-
-    const Material& mat = node->GetActiveMaterial();
-    ApplyMaterialCull(mat);
-
-    const Shader* shader = node->GetShader().get();
-    shader->Bind();
-    m_shadowRenderer->BindShadowUniforms(*shader);
-
-    shader->SetInt("u_DebugMode", m_debugMode);
-    shader->SetInt("u_DebugCascade", m_debugCascade);
-
-    shader->SetMatrix4("u_Model", node->GetWorldMatrix());
-    shader->SetMatrix4("u_NormalMatrix", glm::transpose(glm::inverse(node->GetWorldMatrix())));
-
-    if (m_activeCamera) {
-        shader->SetFloat("u_ZNear", m_activeCamera->GetNearPlane());
-        shader->SetFloat("u_ZFar", m_activeCamera->GetFarPlane());
-    }
-
-    shader->SetVector2("u_ScreenSize", m_windows[0]->GetSize());
-    shader->SetVector3("u_CameraPos", m_activeCamera->GetPosition());
-
-    mat.Bind(*shader);
-
-    if (m_hasIbl) {
-        m_ibl.irradiance->Bind(20);
-        m_ibl.prefiltered->Bind(21);
-        m_ibl.brdfLut->Bind(22);
-        shader->SetInt("u_IrradianceMap", 20);
-        shader->SetInt("u_PrefilteredEnvMap", 21);
-        shader->SetInt("u_BrdfLut", 22);
-        shader->SetInt("u_MaxPrefilteredMipLevel", IBLPrecomputer::PREFILTER_MIP_LEVELS);
-        shader->SetBool("u_HasIbl", true);
-
-        // TODO: make these values changable, or move to the skybox or something / env node idk
-        shader->SetFloat("u_IblDiffuseIntensity", 0.5f);
-        shader->SetFloat("u_IblSpecularIntensity", 0.5f);
-    } else {
-        shader->SetBool("u_HasIbl", false);
-    }
-
-    node->GetMesh()->GetBuffer()->Bind();
-    glDrawElements(GL_TRIANGLES, node->GetMesh()->GetBuffer()->GetIndexCount(), GL_UNSIGNED_INT, 0);
-
-    m_stats.drawCalls++;
-    m_stats.triangles += node->GetMesh()->GetBuffer()->GetIndexCount() / 3;
-}
-
 void RenderApi::DrawMeshNodeDepth(const MeshNode3d *node) const {
     if (!node || !node->GetMesh()->IsUploaded()) {
         std::cerr << "DrawObjectDepth called with null Object/Mesh" << std::endl;
@@ -475,7 +442,6 @@ void RenderApi::DrawMeshNodeDepth(const MeshNode3d *node) const {
     const Material& mat = node->GetActiveMaterial();
     ApplyMaterialCull(mat);
 
-    m_depthShader->Bind();
     m_depthShader->SetMatrix4("u_Model", node->GetWorldMatrix());
 
     m_depthShader->SetBool("u_AlphaScissor", mat.GetBlendMode() == BlendMode::AlphaScissor);

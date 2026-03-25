@@ -22,13 +22,23 @@ int main() {
     auto teddyTexture = std::make_shared<Texture>("../Assets/Textures/Cubemaps/sky_16_2k/sky_16_2k.png");
     const auto shader = ResourceManager::Get().LoadShader("default", "../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag");
 
-    Node3d* teddy = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
-    teddy->SetPosition({0, 0, 5});
-    scene->AddChild(teddy);
+    // Node3d* teddy = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
+    // teddy->SetPosition({0, 0, 5});
+    // scene->AddChild(teddy);
 
-    Node3d* house = GltfLoader::Load("../Assets/Models/stylised_sky_player_home_dioroma.glb", shader);
+    MeshNode3d* quad = new MeshNode3d(shader);
+    quad->SetMeshByName("Quad");
+    quad->SetScale({4.0f, 4.0f, 4.0f});
+    quad->GetActiveMaterial().SetDiffuse("../Assets/Textures/RedBrick/red_brick_03_diff_1k.png");
+    quad->GetActiveMaterial().SetAmbientOcclusion("../Assets/Textures/RedBrick/red_brick_03_ao_1k.png");
+    quad->GetActiveMaterial().SetDisplacement("../Assets/Textures/RedBrick/red_brick_03_disp_1k.png");
+    quad->GetActiveMaterial().SetNormal("../Assets/Textures/RedBrick/red_brick_03_nor_gl_1k.png");
+    quad->GetActiveMaterial().SetRoughness("../Assets/Textures/RedBrick/red_brick_03_rough_1k.png");
+    scene->AddChild(quad);
+
+    Node3d* house = GltfLoader::Load("../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb", shader);
     house->SetScale({0.15f, 0.15f, 0.15f});
-    house->SetPosition({0, -4, -4});
+    house->SetPosition({0, -4, -15});
     scene->AddChild(house);
 
     MeshNode3d* cube1 = new MeshNode3d(shader);
@@ -45,18 +55,6 @@ int main() {
     sphere->GetActiveMaterial().SetRoughnessValue(0.25);
     sphere->SetPosition({0, 4, -2});
     scene->AddChild(sphere);
-
-    for (int i = 0; i < 100; i++) {
-        MeshNode3d* cube = new MeshNode3d(shader);
-        cube->SetMeshByName("Cube");
-        cube->SetPosition({
-            (i % 10) * 2.0f - 9.0f,
-            -4.9f,
-            (i / 10) * 2.0f
-        });
-        cube->SetScale({0.3f, 0.3f, 0.3f});
-        scene->AddChild(cube);
-    }
 
     DirectionalLightNode3d* sun = new DirectionalLightNode3d({0.5f, -0.6f, -0.5f}, {0.9f, 0.65f, 0.32f}, 2.5f);
     scene->AddChild(sun);

@@ -90,6 +90,15 @@ Material::Material() {
         [this](const PropertyValue& v) { SetAlphaScissorThreshold(std::get<float>(v)); }
     );
 
+    AddProperty("uv_scale",
+        [this]() -> PropertyValue { return GetUVScale(); },
+        [this](const PropertyValue& v) { SetUVScale(std::get<glm::vec2>(v)); }
+    );
+    AddProperty("uv_offset",
+        [this]() -> PropertyValue { return GetUVOffset(); },
+        [this](const PropertyValue& v) { SetUVOffset(std::get<glm::vec2>(v)); }
+    );
+
     AddProperty("double_sided",
         [this]() -> PropertyValue { return GetDoubleSided(); },
         [this](const PropertyValue& v) { SetDoubleSided(std::get<bool>(v)); }

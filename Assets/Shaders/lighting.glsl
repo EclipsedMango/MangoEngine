@@ -15,7 +15,6 @@ uniform samplerCubeArray u_PointShadowMap;
 // ibl
 uniform samplerCube u_IrradianceMap;
 uniform samplerCube u_PrefilteredEnvMap;
-uniform sampler2D u_BrdfLut;
 uniform int u_MaxPrefilteredMipLevel;
 uniform bool u_HasIbl;
 uniform float u_IblDiffuseIntensity;
@@ -310,23 +309,32 @@ vec3 EvaluateBRDF(vec3 albedo, float metallic, float roughness, vec3 N, vec3 V, 
     return (diffuse + specular) * NdotL;
 }
 
+vec2 EnvBRDFApprox(float roughness, float NdotV) {
+    vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022);
+    vec4 c1 = vec4(1.0, 0.0425, 1.04, -0.04);
+    vec4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28 * NdotV)) * r.x + r.y;
+    return vec2(-1.04, 1.04) * a004 + r.zw;
+}
+
 vec3 EvaluateIBL(vec3 albedo, float metallic, float roughness, vec3 N, vec3 V, float ao) {
-    float NdotV = max(dot(N, V), 0.0);
+    float NdotV = max(dot(N, V), 1e-4);
     vec3 R = reflect(-V, N);
 
     vec3 f0 = mix(vec3(0.04), albedo, metallic);
-    vec3 F = F_SchlickRoughness(f0, NdotV, roughness);
+    float f90 = clamp(50.0 * dot(f0, vec3(0.333333)), 0.0, 1.0);
 
-    // diffuse
-    vec3 kD = (1.0 - F) * (1.0 - metallic);
-    vec3 irradiance = texture(u_IrradianceMap, N).rgb * u_IblDiffuseIntensity;;
-    vec3 diffuse = kD * irradiance * albedo;
+    vec2 dfg = EnvBRDFApprox(roughness, NdotV);
 
-    // specular, sample prefiltered env map at correct mip for roughness
     float mipLevel = roughness * float(u_MaxPrefilteredMipLevel);
     vec3 prefilteredColor = textureLod(u_PrefilteredEnvMap, R, mipLevel).rgb * u_IblSpecularIntensity;
-    vec2 brdf = texture(u_BrdfLut, vec2(NdotV, roughness)).rg;
-    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+    vec3 specular = prefilteredColor * (f0 * dfg.x + f90 * dfg.y);
+
+    vec3 kS = f0 * dfg.x + f90 * dfg.y; // total specular energy reflected
+    vec3 kD = (1.0 - kS) * (1.0 - metallic);
+
+    vec3 irradiance = texture(u_IrradianceMap, N).rgb * u_IblDiffuseIntensity;
+    vec3 diffuse = kD * irradiance * albedo;
 
     return (diffuse + specular) * ao;
 }
@@ -392,7 +400,7 @@ vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid gri
     if (u_HasIbl) {
         totalLighting += EvaluateIBL(albedo, metallic, roughness, norm, V, ao);
     } else {
-        totalLighting += vec3(0.05) * albedo * ao;
+        totalLighting += vec3(0.25) * albedo * ao;
     }
 
     return totalLighting;

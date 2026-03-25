@@ -102,6 +102,7 @@ const uint GRID_SIZE_Z = 24;
 //}
 
 void main() {
+    vec3 V = normalize(u_CameraPos - v_FragPos);
     vec2 uv = v_TexCoord * u_UVScale + u_UVOffset;
 
     vec3 norm;
@@ -111,6 +112,14 @@ void main() {
         norm = normalize(v_TBN * normalSample);
     } else {
         norm = normalize(v_Normal);
+    }
+
+    if (u_HasDisplacement) {
+        vec3 viewDirTangent = normalize(transpose(v_TBN) * V);
+        float height = texture(u_Displacement, uv).r;
+
+        vec2 parallaxOffset = viewDirTangent.xy * (height * u_DisplacementScale);
+        uv -= parallaxOffset;
     }
 
     // correct lighting for two sided materials (foliage/cards)
@@ -157,8 +166,6 @@ void main() {
 
     // clamp roughness to avoid precision issues at zero
     roughness = max(roughness, 0.045);
-
-    vec3 V = normalize(u_CameraPos - v_FragPos);
 
     vec3 totalLighting = CalculateLighting(norm, v_FragPos, viewDepth, grid, V, albedo.rgb, metallic, roughness, ao);
 

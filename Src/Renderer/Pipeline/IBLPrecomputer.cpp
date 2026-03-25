@@ -56,12 +56,10 @@ IBLPrecomputer::Result IBLPrecomputer::Compute(const Texture &envCubemap) {
 
     const Shader irradianceShader("../Assets/Shaders/ibl_capture.vert", "../Assets/Shaders/ibl_irradiance.frag");
     const Shader prefilterShader("../Assets/Shaders/ibl_capture.vert", "../Assets/Shaders/ibl_prefilter.frag");
-    const Shader brdfShader("../Assets/Shaders/ibl_brdf_lut.vert", "../Assets/Shaders/ibl_brdf_lut.frag");
 
     Result result;
     result.irradiance = ComputeIrradiance (envCubemap, captureFbo, captureRbo, irradianceShader, *cube);
     result.prefiltered = ComputePrefiltered(envCubemap, captureFbo, captureRbo, prefilterShader, *cube);
-    result.brdfLut = ComputeBrdfLut(captureFbo, captureRbo, brdfShader);
 
     glDeleteFramebuffers(1, &captureFbo);
     glDeleteRenderbuffers(1, &captureRbo);
@@ -142,27 +140,4 @@ std::unique_ptr<Texture> IBLPrecomputer::ComputePrefiltered(const Texture &env, 
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return prefiltered;
-}
-
-std::unique_ptr<Texture> IBLPrecomputer::ComputeBrdfLut(const GLuint captureFbo, const GLuint captureRbo, const Shader &shader) {
-    auto brdfLut = std::make_unique<Texture>(BRDF_LUT_SIZE, BRDF_LUT_SIZE, GL_RG16F);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, captureFbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, captureRbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, BRDF_LUT_SIZE, BRDF_LUT_SIZE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLut->GetGLHandle(), 0);
-
-    glViewport(0, 0, BRDF_LUT_SIZE, BRDF_LUT_SIZE);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // fullscreen triangle
-    shader.Bind();
-    GLuint dummyVao;
-    glGenVertexArrays(1, &dummyVao);
-    glBindVertexArray(dummyVao);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDeleteVertexArrays(1, &dummyVao);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    return brdfLut;
 }

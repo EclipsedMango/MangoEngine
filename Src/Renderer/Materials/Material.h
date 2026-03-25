@@ -76,13 +76,13 @@ private:
 
     glm::vec4 m_albedoColor = glm::vec4(1.0f);
     float m_metallicValue = 0.0f; // used when no metallic tex bound
-    float m_roughnessValue = 0.5f;
+    float m_roughnessValue = 1.0f;
     float m_aoStrength = 1.0f;
     float m_normalStrength = 1.0f;
     float m_emissionStrength = 1.0f;
     glm::vec3 m_emissionColor = glm::vec3(0.0f);
 
-    float m_displacementScale = 0.05f;
+    float m_displacementScale = 0.01f;
 
     bool m_useDisplacement = false;
     bool m_castShadows = true;

@@ -24,6 +24,14 @@ void SkyboxNode3d::RegisterProperties() {
         [this]() -> PropertyValue { return m_hdrPath; },
         [this](const PropertyValue& v) { SetHdrPath(std::get<std::string>(v)); }
     );
+    AddProperty("intensity",
+    [this]() -> PropertyValue { return m_intensity; },
+    [this](const PropertyValue& v) { SetIntensity(std::get<float>(v)); }
+    );
+    AddProperty("specular_intensity",
+        [this]() -> PropertyValue { return m_specularIntensity; },
+        [this](const PropertyValue& v) { SetSpecularIntensity(std::get<float>(v)); }
+    );
 }
 
 void SkyboxNode3d::SetHdrPath(const std::string &path) {
@@ -31,4 +39,12 @@ void SkyboxNode3d::SetHdrPath(const std::string &path) {
     if (!path.empty()) {
         m_skybox = std::make_unique<Skybox>(m_hdrPath);
     }
+}
+
+void SkyboxNode3d::SetIntensity(const float intensity) {
+    m_intensity = intensity;
+}
+
+void SkyboxNode3d::SetSpecularIntensity(const float intensity) {
+    m_specularIntensity = intensity;
 }

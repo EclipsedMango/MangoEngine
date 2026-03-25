@@ -16,12 +16,19 @@ public:
     ~SkyboxNode3d() override = default;
 
     void SetHdrPath(const std::string& path);
+    void SetIntensity(float intensity);
+    void SetSpecularIntensity(float intensity);
 
     [[nodiscard]] std::string GetNodeType() const override { return "SkyboxNode3d"; }
     [[nodiscard]] Skybox* GetSkybox() const { return m_skybox.get(); }
+    [[nodiscard]] float GetIntensity() const { return m_intensity; }
+    [[nodiscard]] float GetSpecularIntensity() const { return m_specularIntensity; }
 
 private:
     void RegisterProperties();
+
+    float m_intensity = 0.25;
+    float m_specularIntensity = 0.25;
 
     std::string m_hdrPath;
     std::unique_ptr<Skybox> m_skybox;

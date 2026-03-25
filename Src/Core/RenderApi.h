@@ -22,6 +22,8 @@
 #include "Renderer/Pipeline/IBLPrecomputer.h"
 #include "Renderer/Shadows/CascadedShadowMap.h"
 
+class Frustum;
+
 struct RenderStats {
     uint32_t drawCalls       = 0;
     uint32_t shadowDrawCalls = 0;
@@ -94,9 +96,11 @@ private:
     void InitGLResources(); // called once after GLAD is loaded
     void InitDepthPass();
 
+    // for frustum culling
+    [[nodiscard]] bool IsVisible(const MeshNode3d* node, const Frustum& frustum);
+
     void SubmitToGpu(const MeshNode3d* node, const Shader* shader);
 
-    void DrawMeshNode(const MeshNode3d* node);
     void DrawMeshNodeDepth(const MeshNode3d* node) const;
 
     static void BeginZPrepass();
