@@ -13,6 +13,10 @@ DirectionalLightNode3d::DirectionalLightNode3d(const glm::vec3 direction, const 
         [this]{ return GetIntensity(); },
         [this](const PropertyValue& v) { SetIntensity(std::get<float>(v)); }
     );
+    AddProperty("color",
+        [this]{ return GetColor(); },
+        [this](const PropertyValue& v) { SetColor(std::get<glm::vec3>(v)); }
+    );
 }
 
 void DirectionalLightNode3d::Process(float deltaTime) {

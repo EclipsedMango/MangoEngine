@@ -2,8 +2,7 @@
 #define MANGORENDERING_GLTFLOADER_H
 
 #include <string>
-#include <vector>
-
+#include "tiny_gltf.h"
 #include "Nodes/MeshNode3d.h"
 #include "Renderer/Shader.h"
 
@@ -12,8 +11,11 @@ public:
     // loads the full scene hierarchy, caller owns the returned Node3d pointer
     static Node3d* Load(const std::string& path, std::shared_ptr<Shader> shader);
 
-    // extracts just the first mesh found in the file (useful for the ResourceManager)
-    static std::shared_ptr<Mesh> ExtractFirstMesh(const std::string& path);
+    // extracts specific sub mesh
+    static std::shared_ptr<Mesh> ExtractMesh(const std::string& path, int meshIndex, int primIndex);
+
+private:
+    static std::shared_ptr<tinygltf::Model> GetParsedModel(const std::string& path);
 };
 
 #endif //MANGORENDERING_GLTFLOADER_H

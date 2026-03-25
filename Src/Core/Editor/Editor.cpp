@@ -4,6 +4,7 @@
 #include "imgui_impl_sdl3.h"
 #include "../Input.h"
 #include "Core/PackedScene.h"
+#include "Core/ResourceManager.h"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtc/type_ptr.inl"
 #include "Nodes/CameraNode3d.h"
@@ -195,7 +196,8 @@ void Editor::DrawMenuBar() {
         if (ImGui::MenuItem("New Scene"))  { /* TODO */ }
         if (ImGui::MenuItem("Open Scene")) {
             PackedScene scene = PackedScene::LoadFromFile("../Assets/john.yml");
-            m_core.ChangeScene(scene.Instantiate());
+            Node3d* node = scene.Instantiate();
+            m_core.ChangeScene(node);
         }
         if (ImGui::MenuItem("Save Scene")) {
             PackedScene* scene = new PackedScene(m_core.GetScene());

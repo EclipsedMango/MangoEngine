@@ -69,6 +69,27 @@ Material::Material() {
         [this](const PropertyValue& v) { SetEmissive(std::get<std::string>(v)); }
     );
 
+    AddProperty("blend_mode",
+        [this]() -> PropertyValue {
+            switch (m_blendMode) {
+                case BlendMode::Opaque: return std::string("Opaque");
+                case BlendMode::AlphaBlend: return std::string("AlphaBlend");
+                case BlendMode::AlphaScissor: return std::string("AlphaScissor");
+                default: return std::string("Opaque");
+            }
+        },
+        [this](const PropertyValue& v) {
+            const std::string& str = std::get<std::string>(v);
+            if (str == "AlphaBlend") SetBlendMode(BlendMode::AlphaBlend);
+            else if (str == "AlphaScissor") SetBlendMode(BlendMode::AlphaScissor);
+            else SetBlendMode(BlendMode::Opaque);
+        }
+    );
+    AddProperty("alpha_scissor_threshold",
+        [this]() -> PropertyValue { return GetAlphaScissorThreshold(); },
+        [this](const PropertyValue& v) { SetAlphaScissorThreshold(std::get<float>(v)); }
+    );
+
     AddProperty("double_sided",
         [this]() -> PropertyValue { return GetDoubleSided(); },
         [this](const PropertyValue& v) { SetDoubleSided(std::get<bool>(v)); }

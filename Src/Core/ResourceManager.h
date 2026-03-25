@@ -50,6 +50,11 @@ public:
         return std::make_shared<Material>(*source);
     }
 
+    // ----- meshes -----
+    void RegisterMesh(const std::string& name, const std::shared_ptr<Mesh> &mesh) {
+        m_meshes[name] = mesh;
+    }
+
     std::shared_ptr<Mesh> LoadMesh(const std::string& nameOrPath, const CacheMode mode = CacheMode::Reuse) {
         if (nameOrPath.empty() || nameOrPath == "None") return nullptr;
 
@@ -60,8 +65,17 @@ public:
             if (nameOrPath == "Quad") return std::make_shared<QuadMesh>();
             if (nameOrPath == "Cylinder") return std::make_shared<CylinderMesh>();
             if (nameOrPath == "Capsule") return std::make_shared<CapsuleMesh>();
-            if (nameOrPath.ends_with(".gltf") || nameOrPath.ends_with(".glb")) {
-                return GltfLoader::ExtractFirstMesh(nameOrPath);
+            const size_t hashPos = nameOrPath.find_last_of('#');
+            if (hashPos != std::string::npos && (nameOrPath.find(".gltf") != std::string::npos || nameOrPath.find(".glb") != std::string::npos)) {
+                std::string path = nameOrPath.substr(0, hashPos);
+                std::string indices = nameOrPath.substr(hashPos + 1);
+                const size_t underscore = indices.find('_');
+
+                if (underscore != std::string::npos) {
+                    int meshIdx = std::stoi(indices.substr(0, underscore));
+                    int primIdx = std::stoi(indices.substr(underscore + 1));
+                    return GltfLoader::ExtractMesh(path, meshIdx, primIdx);
+                }
             }
 
             std::cerr << "[ResourceManager] Unknown mesh or primitive: " << nameOrPath << std::endl;
@@ -109,7 +123,6 @@ public:
         EraseExpired(m_meshes);
         EraseExpired(m_shaders);
     }
-
 
 private:
     ResourceManager() = default;

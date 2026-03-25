@@ -4,7 +4,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-#include "tiny_gltf.h"
 #include "GltfLoader.h"
 #include "Mesh.h"
 #include <iostream>
@@ -14,6 +13,8 @@
 #include <memory>
 
 #include "Core/ResourceManager.h"
+
+static std::unordered_map<std::string, std::shared_ptr<tinygltf::Model>> s_parsedModels;
 
 // read a float from a buffer respecting componentType, normalization, and byte stride
 static float ReadFloat(const uint8_t* base, const int componentType, const size_t index, const size_t byteStride, const size_t componentOffset) {
@@ -147,15 +148,9 @@ std::shared_ptr<Material> BuildMaterial(const tinygltf::Model& model, const int 
 }
 
 Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader) {
-    tinygltf::TinyGLTF loader;
-    tinygltf::Model model;
-    std::string err, warn;
-
-    const bool success = path.ends_with(".glb") ? loader.LoadBinaryFromFile(&model, &err, &warn, path) : loader.LoadASCIIFromFile(&model, &err, &warn, path);
-
-    if (!warn.empty()) std::cerr << "GLTF Warning: " << warn << std::endl;
-    if (!err.empty())  std::cerr << "GLTF Error: "   << err  << std::endl;
-    if (!success) return nullptr;
+    auto modelPtr = GetParsedModel(path);
+    if (!modelPtr) return nullptr;
+    const auto& model = *modelPtr;
 
     Node3d* root = new Node3d();
 
@@ -202,7 +197,11 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
                     continue;
                 }
 
+                // register mesh for resource manager
                 std::shared_ptr<Mesh> sharedMesh;
+                std::string meshID = path + "#" + std::to_string(gltfNode.mesh) + "_" + std::to_string(primIndex);
+                ResourceManager::Get().RegisterMesh(meshID, sharedMesh);
+
                 auto cacheIt = meshCache.find(gltfNode.mesh);
                 if (cacheIt != meshCache.end() && primIndex < cacheIt->second.size()) {
                     sharedMesh = cacheIt->second[primIndex];
@@ -316,6 +315,7 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
                 }
 
                 auto* meshNode = new MeshNode3d(sharedMesh, shader);
+                meshNode->SetMeshByName(meshID);
                 meshNode->SetMaterial(BuildMaterial(model, primitive.material, path));
                 sceneNode->AddChild(meshNode);
             }
@@ -369,15 +369,16 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
     return root;
 }
 
-std::shared_ptr<Mesh> GltfLoader::ExtractFirstMesh(const std::string& path) {
-    tinygltf::TinyGLTF loader;
-    tinygltf::Model model;
-    std::string err, warn;
+std::shared_ptr<Mesh> GltfLoader::ExtractMesh(const std::string &path, int meshIndex, int primIndex) {
+    auto modelPtr = GetParsedModel(path);
+    if (!modelPtr) return nullptr;
+    const auto& model = *modelPtr;
 
-    const bool success = path.ends_with(".glb") ? loader.LoadBinaryFromFile(&model, &err, &warn, path) : loader.LoadASCIIFromFile(&model, &err, &warn, path);
-    if (!success || model.meshes.empty() || model.meshes[0].primitives.empty()) return nullptr;
+    // safety bounds checking
+    if (meshIndex < 0 || meshIndex >= model.meshes.size()) return nullptr;
+    if (primIndex < 0 || primIndex >= model.meshes[meshIndex].primitives.size()) return nullptr;
 
-    const auto& primitive = model.meshes[0].primitives[0];
+    const auto& primitive = model.meshes[meshIndex].primitives[primIndex];
     if (!primitive.attributes.contains("POSITION")) return nullptr;
 
     AccessorData posData = GetAccessorData(model, primitive.attributes.at("POSITION"));
@@ -422,8 +423,8 @@ std::shared_ptr<Mesh> GltfLoader::ExtractFirstMesh(const std::string& path) {
     std::vector<uint32_t> indices;
     if (primitive.indices >= 0) {
         const auto& idxAccessor = model.accessors[primitive.indices];
-        const auto& idxView = model.bufferViews[idxAccessor.bufferView];
-        const uint8_t* idxData = model.buffers[idxView.buffer].data.data() + idxView.byteOffset + idxAccessor.byteOffset;
+        const auto& idxView     = model.bufferViews[idxAccessor.bufferView];
+        const uint8_t* idxData  = model.buffers[idxView.buffer].data.data() + idxView.byteOffset + idxAccessor.byteOffset;
         size_t idxStride = idxView.byteStride > 0 ? idxView.byteStride : tinygltf::GetComponentSizeInBytes(idxAccessor.componentType);
 
         indices.reserve(idxAccessor.count);
@@ -439,4 +440,26 @@ std::shared_ptr<Mesh> GltfLoader::ExtractFirstMesh(const std::string& path) {
     }
 
     return std::make_shared<Mesh>(vertices, indices);
+}
+
+std::shared_ptr<tinygltf::Model> GltfLoader::GetParsedModel(const std::string &path) {
+    if (s_parsedModels.contains(path)) {
+        return s_parsedModels[path];
+    }
+
+    auto model = std::make_shared<tinygltf::Model>();
+    tinygltf::TinyGLTF loader;
+    std::string err, warn;
+
+    const bool success = path.ends_with(".glb") ? loader.LoadBinaryFromFile(model.get(), &err, &warn, path) : loader.LoadASCIIFromFile(model.get(), &err, &warn, path);
+
+    if (!warn.empty()) std::cerr << "GLTF Warning: " << warn << std::endl;
+    if (!err.empty())  std::cerr << "GLTF Error: "   << err  << std::endl;
+
+    if (success) {
+        s_parsedModels[path] = model;
+        return model;
+    }
+
+    return nullptr;
 }
