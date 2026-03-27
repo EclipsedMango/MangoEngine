@@ -4,7 +4,7 @@
 #include <functional>
 #include <memory>
 
-#include "Editor.h"
+#include "../Editor.h"
 #include "Core/Core.h"
 #include "Core/ResourceManager.h"
 #include "glm/vec2.hpp"
@@ -148,7 +148,11 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
     std::function<void(Node3d*)> drawNode = [&](Node3d* n) {
         const ImGuiID sid = n->GetId();
 
-        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
+
+        if (n == m_editor->GetCore().GetScene()) {
+            flags |= ImGuiTreeNodeFlags_DefaultOpen;
+        }
 
         if (n->GetChildren().empty()) {
             flags |= ImGuiTreeNodeFlags_Leaf;
@@ -161,7 +165,9 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
         ImGui::SetNextItemSelectionUserData(sid);
 
         ImGui::PushID(static_cast<int>(sid));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(3.0f, 3.0f));
         const bool open = ImGui::TreeNodeEx("##node", flags, "%s", n->GetName().c_str());
+        ImGui::PopStyleVar();
         ImGui::PopID();
 
         if (ImGui::BeginPopupContextItem("node_ctx")) {

@@ -1,0 +1,107 @@
+
+#include "ViewportWindow.h"
+
+#include <utility>
+
+#include "Core/Input.h"
+#include "Core/Editor/Editor.h"
+#include "Core/Editor/EditorCameraController.h"
+#include "Core/Editor/Utils/DebugDraw.h"
+#include "glm/glm.hpp"
+#include "Nodes/CameraNode3d.h"
+
+ViewportWindow::ViewportWindow(Editor* editor, std::string  name) : m_editor(editor), m_name(std::move(name)) {
+    const glm::vec2 winSize = m_editor->GetCore().GetActiveWindow()->GetSize();
+    const float aspect = winSize.y != 0.0f ? winSize.x / winSize.y : 1.0f;
+
+    m_camera = std::make_unique<CameraNode3d>(glm::vec3(0, 2, 6), 75.0f, aspect);
+    m_cameraController = std::make_unique<EditorCameraController>(m_camera.get(), m_editor->GetCore().GetActiveWindow());
+
+    m_framebuffer = std::make_unique<Framebuffer>(
+        static_cast<uint32_t>(winSize.x),
+        static_cast<uint32_t>(winSize.y),
+        FramebufferType::ColorDepth
+    );
+}
+
+ViewportWindow::~ViewportWindow() = default;
+
+void ViewportWindow::Update(const float deltaTime) {
+    m_timeSinceLastRender += deltaTime;
+
+    if (m_editor->GetState() != Editor::State::Playing) {
+        m_cameraController->Update(deltaTime, m_viewportHovered);
+    }
+}
+
+void ViewportWindow::Draw() {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::Begin(m_name.c_str());
+
+    const ImVec2 viewportPos = ImGui::GetCursorScreenPos();
+    const ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+
+    if (viewportSize.x > 0 && viewportSize.y > 0) {
+        const uint32_t w = static_cast<uint32_t>(viewportSize.x);
+        const uint32_t h = static_cast<uint32_t>(viewportSize.y);
+
+        bool shouldRender = true;
+
+        if (!m_viewportHovered && !m_cameraController->IsLooking()) {
+            if (m_timeSinceLastRender < 0.1f) {
+                shouldRender = false;
+            }
+        }
+
+        if (m_framebuffer->GetWidth() != w || m_framebuffer->GetHeight() != h) {
+            m_framebuffer->Resize(w, h);
+            shouldRender = true;
+        }
+
+        m_camera->SetAspectRatio(viewportSize.x / viewportSize.y);
+
+        if (shouldRender) {
+            m_editor->GetCore().RenderScene(m_camera.get(), m_framebuffer.get());
+            m_timeSinceLastRender = 0.0f;
+        }
+
+        const ImTextureID texId = static_cast<ImTextureID>(static_cast<intptr_t>(m_framebuffer->GetColorAttachment()));
+        ImGui::Image(texId, viewportSize, ImVec2(0, 1), ImVec2(1, 0));
+
+        m_viewportPos = viewportPos;
+        m_viewportSize = viewportSize;
+
+        const bool isPlaying = m_editor->GetState() == Editor::State::Playing;
+
+        m_editor->GetGizmoSystem().UpdateAndDraw(
+            m_camera.get(),
+            m_editor->GetSceneTree().GetSelectedNodes(),
+            m_viewportPos,
+            m_viewportSize,
+            isPlaying,
+            m_cameraController->IsLooking()
+        );
+    }
+
+    const glm::mat4 viewProj = m_camera->GetProjectionMatrix() * m_camera->GetViewMatrix();
+
+    for (const auto node : m_editor->GetSceneTree().GetSelectedNodes()) {
+        glm::vec3 minB( FLT_MAX);
+        glm::vec3 maxB(-FLT_MAX);
+
+        glm::mat4 rootWorldInv = glm::inverse(node->GetWorldMatrix());
+        DebugDraw::ExpandLocalAABB(node, node, rootWorldInv, minB, maxB);
+
+        const glm::vec3 localCenter = (minB + maxB) * 0.5f;
+        const glm::vec3 half = (maxB - minB) * 0.5f + 0.05f;
+
+        DebugDraw::DrawWorldOBB(viewProj, node->GetWorldMatrix(), localCenter, half, IM_COL32(255, 105, 5, 255), m_viewportPos, m_viewportSize);
+    }
+
+    if (!Input::IsMouseButtonHeld(SDL_BUTTON_RIGHT)) {
+        m_viewportHovered = ImGui::IsWindowHovered();
+    }
+
+    ImGui::End();
+    ImGui::PopStyleVar();
+}

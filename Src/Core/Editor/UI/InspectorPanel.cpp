@@ -5,7 +5,7 @@
 #include <memory>
 #include <ranges>
 
-#include "Editor.h"
+#include "../Editor.h"
 #include "imgui.h"
 #include "Core/ResourceManager.h"
 #include "glm/glm.hpp"

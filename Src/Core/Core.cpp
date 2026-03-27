@@ -14,6 +14,7 @@
 #include <algorithm>
 
 #include "ResourceManager.h"
+#include "Editor/EditorStyle.h"
 
 Core::Core(Node3d* scene) : m_currentScene(scene) {}
 
@@ -21,6 +22,7 @@ Core::~Core() {
     delete m_currentScene;
     m_currentScene = nullptr;
     m_defaultShader.reset();
+    m_mainFramebuffer.reset();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
@@ -83,11 +85,19 @@ void Core::Notification(Node3d *node, const NodeNotification notification) {
     }
 }
 
+GLuint Core::GetMainViewportTexture() const {
+    return m_mainFramebuffer ? m_mainFramebuffer->GetColorAttachment() : 0;
+}
+
 void Core::InitRenderer() {
     RenderApi::InitSDL();
 
     m_renderer = std::make_unique<RenderApi>();
     m_activeWindow = m_renderer->CreateWindow("Mango", {1280, 720}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+
+    int w, h;
+    SDL_GetWindowSizeInPixels(m_activeWindow->GetSDLWindow(), &w, &h);
+    m_mainFramebuffer = std::make_unique<Framebuffer>(w, h, FramebufferType::ColorDepth);
 
     std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
     std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
@@ -105,6 +115,8 @@ void Core::InitImGui() const {
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    EditorStyle::Get().Init(io);
 
     ImGui_ImplSDL3_InitForOpenGL(m_activeWindow->GetSDLWindow(), m_activeWindow->GetContext());
     ImGui_ImplOpenGL3_Init("#version 460");
@@ -153,7 +165,14 @@ bool Core::PollEvents() const {
     while (SDL_PollEvent(&event)) {
         ImGui_ImplSDL3_ProcessEvent(&event);
         Input::ProcessEvent(event);
-        m_renderer->HandleResizeEvent(event);
+
+        if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+            int w, h;
+            SDL_GetWindowSizeInPixels(m_activeWindow->GetSDLWindow(), &w, &h);
+            if (w > 0 && h > 0) {
+                m_mainFramebuffer->Resize(w, h);
+            }
+        }
 
         if (event.type == SDL_EVENT_QUIT) {
             m_activeWindow->Close();
@@ -170,18 +189,25 @@ bool Core::PollEvents() const {
     return m_activeWindow->IsOpen();
 }
 
-void Core::RenderScene() const {
+void Core::SubmitFrameRenderables() const {
+    m_renderer->ClearQueues();
+    for (auto* renderable : m_renderableCache) {
+        renderable->SubmitToRenderer(*m_renderer);
+    }
+}
+
+void Core::RenderScene(const CameraNode3d* camera, const Framebuffer* targetFbo) const {
+    if (!camera || !targetFbo) {
+        return;
+    }
+
     m_currentScene->UpdateWorldTransform();
 
     for (auto* l : m_lightNodeCache) {
         l->SyncLight();
     }
 
-    RenderApi::ClearColour({0.16f, 0.16f, 0.16f, 1.0f});
-    for (auto* renderable : m_renderableCache) {
-        renderable->SubmitToRenderer(*m_renderer);
-    }
-    m_renderer->Flush();
+    m_renderer->RenderScene(camera, targetFbo);
 }
 
 void Core::StepFrame(const float deltaTime) {
@@ -213,19 +239,14 @@ void Core::Process() {
         PollEvents();
         StepFrame(deltaTime);
 
+        SubmitFrameRenderables();
+        if (m_activeCamera) {
+            RenderScene(m_activeCamera, m_mainFramebuffer.get());
+        }
+
         BeginImGuiFrame();
-
-        const float cpuMs = static_cast<float>(SDL_GetTicksNS() - cpuFrameStart) / 1'000'000.0f;
-        smoothCpuMs = smoothCpuMs * 0.95f + cpuMs * 0.05f;
-
-        ImGui::Begin("Stats");
-        ImGui::Text("FPS:      %.1f", ImGui::GetIO().Framerate);
-        ImGui::Text("GPU Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
-        ImGui::Text("CPU Time: %.3f ms", smoothCpuMs);
-        ImGui::End();
-
-        RenderScene();
         EndImGuiFrame();
+
         SwapBuffers();
     }
 }
@@ -305,12 +326,9 @@ void Core::SetGameCamera(CameraNode3d *camera) {
 
 void Core::SetActiveCamera(CameraNode3d* camera) {
     m_activeCamera = camera;
-    if (m_renderer) {
-        m_renderer->SetActiveCamera(camera);
-    }
 }
 
-void Core::SetCameraMode(CameraMode mode) {
+void Core::SetCameraMode(const CameraMode mode) {
     m_cameraMode = mode;
     ApplyCameraMode();
 }

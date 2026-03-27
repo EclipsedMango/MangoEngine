@@ -1,0 +1,10 @@
+
+#ifndef MANGORENDERING_MENUBAR_H
+#define MANGORENDERING_MENUBAR_H
+
+
+class MenuBar {
+};
+
+
+#endif //MANGORENDERING_MENUBAR_H

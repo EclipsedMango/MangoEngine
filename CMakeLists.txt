@@ -120,10 +120,10 @@ add_executable(MangoRendering Src/main.cpp
         Src/Core/Editor/Editor.h
         Src/Renderer/Meshes/PrimitiveMesh.cpp
         Src/Renderer/Meshes/PrimitiveMesh.h
-        Src/Core/Editor/InspectorPanel.cpp
-        Src/Core/Editor/InspectorPanel.h
-        Src/Core/Editor/SceneTreePanel.cpp
-        Src/Core/Editor/SceneTreePanel.h
+        Src/Core/Editor/UI/InspectorPanel.cpp
+        Src/Core/Editor/UI/InspectorPanel.h
+        Src/Core/Editor/UI/SceneTreePanel.cpp
+        Src/Core/Editor/UI/SceneTreePanel.h
         Src/Renderer/Pipeline/IBLPrecomputer.cpp
         Src/Renderer/Pipeline/IBLPrecomputer.h
         Src/Renderer/Materials/EquirectToCubemap.cpp
@@ -136,6 +136,20 @@ add_executable(MangoRendering Src/main.cpp
         Src/Core/NodeRegistry.h
         Src/Core/PropertyRegistry.h
         Src/Core/PropertyHolder.cpp
+        Src/Core/Editor/EditorStyle.cpp
+        Src/Core/Editor/EditorStyle.h
+        Src/Core/Editor/Utils/DebugDraw.cpp
+        Src/Core/Editor/Utils/DebugDraw.h
+        Src/Core/Editor/EditorCameraController.cpp
+        Src/Core/Editor/EditorCameraController.h
+        Src/Core/Editor/GizmoSystem.cpp
+        Src/Core/Editor/GizmoSystem.h
+        Src/Core/Editor/UI/ContentBrowserWindow.cpp
+        Src/Core/Editor/UI/ContentBrowserWindow.h
+        Src/Core/Editor/UI/ViewportWindow.cpp
+        Src/Core/Editor/UI/ViewportWindow.h
+        Src/Core/Editor/UI/MenuBar.cpp
+        Src/Core/Editor/UI/MenuBar.h
 )
 
 target_link_libraries(MangoRendering SDL3::SDL3 glad_gl imgui ${CMAKE_DL_LIBS} fkYAML::fkYAML)

@@ -2,6 +2,7 @@
 #ifndef MANGORENDERING_CORE_H
 #define MANGORENDERING_CORE_H
 
+#include "imgui.h"
 #include "RenderApi.h"
 #include "TreeListener.h"
 #include "Nodes/Node3d.h"
@@ -26,7 +27,8 @@ public:
     void Notification(Node3d* node, NodeNotification notification) override;
 
     bool PollEvents() const; // returns false when window should close
-    void RenderScene() const;
+    void SubmitFrameRenderables() const;
+    void RenderScene(const CameraNode3d* camera, const Framebuffer* targetFbo) const;
     void SwapBuffers() const;
     void StepFrame(float deltaTime);
     void Process();
@@ -52,6 +54,10 @@ public:
     [[nodiscard]] CameraNode3d* GetEditorCamera() const { return m_editorCamera; }
     [[nodiscard]] CameraNode3d* GetGameCamera() const { return m_gameCamera; }
 
+    [[nodiscard]] GLuint GetMainViewportTexture() const;
+    [[nodiscard]] ImFont* GetMainFont() const { return m_mainFont; }
+    [[nodiscard]] ImFont* GetMonoFont() const { return m_monoFont; }
+
 private:
     void InitRenderer();
     void InitImGui() const;
@@ -73,10 +79,15 @@ private:
 
     std::shared_ptr<Shader> m_defaultShader;
 
+    ImFont* m_mainFont;
+    ImFont* m_monoFont;
+
     std::vector<Node3d*> m_nodeCache;
     std::vector<RenderableNode3d*> m_renderableCache;
     std::vector<LightNode3d*> m_lightNodeCache;
     SkyboxNode3d* m_activeSkybox = nullptr;
+
+    std::unique_ptr<Framebuffer> m_mainFramebuffer;
 
     CameraMode m_cameraMode = CameraMode::Editor;
     CameraNode3d* m_editorCamera = nullptr;

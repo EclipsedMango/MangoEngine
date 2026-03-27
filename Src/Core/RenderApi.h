@@ -25,16 +25,16 @@
 class Frustum;
 
 struct RenderStats {
-    uint32_t drawCalls       = 0;
+    uint32_t drawCalls = 0;
     uint32_t shadowDrawCalls = 0;
-    uint32_t culled          = 0;
-    uint32_t triangles       = 0;
-    uint32_t submitted       = 0;
+    uint32_t culled = 0;
+    uint32_t triangles = 0;
+    uint32_t submitted = 0;
 };
 
 class RenderApi {
 public:
-    // Initializes SDL and sets GL attributes, MUST be called before constructing RenderApi
+    // initializes SDL and sets GL attributes, MUST be called before constructing RenderApi
     static void InitSDL();
 
     RenderApi() = default;
@@ -46,49 +46,38 @@ public:
     RenderApi& operator=(RenderApi&&) = delete;
 
     Window* CreateWindow(const char* title, glm::vec2 size, Uint32 flags);
-
     static void ClearColour(const glm::vec4& colour);
     void HandleResizeEvent(const SDL_Event& event) const;
 
-    void SetActiveCamera(CameraNode3d* camera);
-    void UploadCameraData() const;
-
     void AddDirectionalLight(DirectionalLight* light) const;
     void RemoveDirectionalLight(DirectionalLight* light) const;
-
     void AddPointLight(PointLight* light) const;
     void RemovePointLight(PointLight* light) const;
-
     void AddSpotLight(SpotLight* light) const;
     void RemoveSpotLight(SpotLight* light) const;
 
+    void ClearQueues() { m_meshQueue.clear(); }
     void SubmitMesh(MeshNode3d* node) { m_meshQueue.push_back(node); }
     void SetSkybox(SkyboxNode3d* skybox);
 
     [[nodiscard]] ShaderStorageBuffer* GetLightGridSsbo() const { return m_clusterSystem->GetLightGridSsbo(); }
     [[nodiscard]] ShaderStorageBuffer* GetGlobalCountSsbo() const { return m_clusterSystem->GetGlobalCountSsbo(); }
-
     [[nodiscard]] const std::vector<CascadedShadowMap*>& GetCascadedShadowMaps() const { return m_shadowRenderer->GetCascadedShadowMaps(); }
     [[nodiscard]] uint32_t GetShadowedPointLightCount() const { return m_shadowRenderer->GetShadowedPointLightCount(); }
-    static uint32_t GetMaxShadowedPointLights() { return ShadowRenderer::MAX_SHADOWED_POINT_LIGHTS; }
+    [[nodiscard]] static uint32_t GetMaxShadowedPointLights() { return ShadowRenderer::MAX_SHADOWED_POINT_LIGHTS; }
     [[nodiscard]] const std::vector<ShadowedPointLightDebug>& GetShadowedPointLightsDebug() const { return m_shadowRenderer->GetShadowedPointLightsDebug(); }
 
     static void ApplyMaterialCull(const Material& mat);
 
-    void Flush();
+    RenderStats RenderScene(const CameraNode3d* camera, const Framebuffer* targetFbo) const;
 
     static void DrawMesh(const Mesh& mesh, const Shader& shader);
-    void DrawClusterVisualizer();
-
-    [[nodiscard]] GLuint GetFinalScreenBuffer() const { return m_sceneFbo->GetColorAttachment(); }
-    void ResizeSceneFbo(uint32_t w, uint32_t h) const;
 
     // Debug
     void SetDebugMode(int mode);
     void SetDebugCascade(int cascade);
 
     [[nodiscard]] uint32_t GetPointLightCount() const { return m_lightManager->GetPointLightCount(); }
-    [[nodiscard]] RenderStats GetStats() const { return m_stats; }
     [[nodiscard]] int GetDebugMode() const { return m_debugMode; }
     [[nodiscard]] int GetDebugCascade() const { return m_debugCascade; }
 
@@ -97,32 +86,26 @@ private:
     void InitDepthPass();
 
     // for frustum culling
-    [[nodiscard]] bool IsVisible(const MeshNode3d* node, const Frustum& frustum);
-
-    void SubmitToGpu(const MeshNode3d* node, const Shader* shader);
-
+    [[nodiscard]] static bool IsVisible(const MeshNode3d* node, const Frustum& frustum, RenderStats& stats);
+    static void SubmitToGpu(const MeshNode3d* node, const Shader* shader, RenderStats& stats);
     void DrawMeshNodeDepth(const MeshNode3d* node) const;
 
     static void BeginZPrepass();
     static void EndZPrepass();
 
-    void RebuildClusters() const;
+    void RebuildClusters(const CameraNode3d* camera, const Framebuffer* targetFbo) const;
     void RunLightCulling() const;
-    void RenderMainPass();
-    void RenderTransparentPass();
+    void RenderMainPass(const CameraNode3d* camera, const Framebuffer* targetFbo, const std::vector<MeshNode3d*>& opaqueQueue, RenderStats& stats) const;
+    void RenderTransparentPass(const CameraNode3d* camera, const std::vector<MeshNode3d*>& transparentQueue, RenderStats& stats) const;
+    void UploadCameraData(const CameraNode3d* camera) const;
 
     // constants
     static constexpr uint32_t CLUSTER_DIM_X = 16;
     static constexpr uint32_t CLUSTER_DIM_Y = 9;
     static constexpr uint32_t CLUSTER_DIM_Z = 24;
     static constexpr uint32_t NUM_CLUSTERS = CLUSTER_DIM_X * CLUSTER_DIM_Y * CLUSTER_DIM_Z;
-    static constexpr uint32_t MAX_LIGHTS_PER_CLUSTER = 100;
-    static constexpr uint32_t MAX_DIR_LIGHTS = 4;
-    static constexpr uint32_t MAX_TEXTURE_SLOTS = 16;
 
     std::vector<std::unique_ptr<Window>> m_windows;
-
-    CameraNode3d* m_activeCamera = nullptr;
     SkyboxNode3d* m_skybox = nullptr;
 
     std::unique_ptr<ClusterSystem> m_clusterSystem;
@@ -133,17 +116,10 @@ private:
     std::unique_ptr<Shader> m_depthShader;
 
     std::vector<MeshNode3d*> m_meshQueue;
-    std::vector<MeshNode3d*> m_transparentQueue;
 
     IBLPrecomputer::Result m_ibl;
     bool m_hasIbl = false;
 
-    std::unique_ptr<Framebuffer> m_sceneFbo;
-
-    std::unique_ptr<Mesh> m_debugClusterMesh;
-    std::unique_ptr<Shader> m_debugClusterShader;
-
-    RenderStats m_stats;
     int m_debugMode = 0;
     int m_debugCascade = 0;
 };
