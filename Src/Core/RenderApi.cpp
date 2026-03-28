@@ -73,14 +73,13 @@ RenderApi::~RenderApi() {
     m_depthShader.reset();
     m_cameraUbo.reset();
     m_ibl = {};
-    m_skybox = nullptr;
 
     m_windows.clear(); // destroys the window and GL context
 
     SDL_Quit();
 }
 
-Window* RenderApi::CreateWindow(const char* title, const glm::vec2 size, const Uint32 flags) {
+std::unique_ptr<Window> RenderApi::CreateWindow(const char* title, const glm::vec2 size, const Uint32 flags) {
     auto window = std::make_unique<Window>(title, size, flags);
     window->MakeCurrent();
 
@@ -96,7 +95,7 @@ Window* RenderApi::CreateWindow(const char* title, const glm::vec2 size, const U
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    Window* raw = window.get();
+    std::unique_ptr<Window> raw = std::move(window);
     m_windows.push_back(std::move(window));
     return raw;
 }
@@ -173,8 +172,15 @@ void RenderApi::RemovePointLight(PointLight* light) const { m_lightManager->Remo
 void RenderApi::AddSpotLight(SpotLight* light) const { m_lightManager->AddSpotLight(light); }
 void RenderApi::RemoveSpotLight(SpotLight* light) const { m_lightManager->RemoveSpotLight(light); }
 
-void RenderApi::SetSkybox(SkyboxNode3d *skybox) {
-    m_skybox = skybox;
+void RenderApi::SubmitRenderable(RenderableNode3d* node) {
+    if (const auto meshNode = dynamic_cast<MeshNode3d*>(node)) {
+        m_meshQueue.push_back(meshNode);
+    }
+}
+
+void RenderApi::SetSkybox(SkyboxNode3d* skybox) {
+    if (m_skybox == skybox) return;
+    m_skybox = std::move(skybox);
 
     if (skybox && skybox->GetSkybox()) {
         m_ibl = IBLPrecomputer::Compute(skybox->GetSkybox()->GetTexture());

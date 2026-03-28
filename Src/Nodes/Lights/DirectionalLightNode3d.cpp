@@ -19,8 +19,8 @@ DirectionalLightNode3d::DirectionalLightNode3d(const glm::vec3 direction, const 
     );
 }
 
-Node3d * DirectionalLightNode3d::Clone() {
-    DirectionalLightNode3d* clone = new DirectionalLightNode3d();
+std::unique_ptr<Node3d> DirectionalLightNode3d::Clone() {
+    auto clone = std::make_unique<DirectionalLightNode3d>();
     clone->SetName(GetName());
     clone->SetLocalTransform(GetLocalMatrix());
     clone->SetLight(m_light);

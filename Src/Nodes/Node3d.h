@@ -20,13 +20,14 @@ public:
     Node3d();
     virtual ~Node3d();
 
-    void AddChild(Node3d* child);
+    void AddChild(std::unique_ptr<Node3d> child);
     void RemoveChild(Node3d* child);
+    std::unique_ptr<Node3d> DetachChild(Node3d* child);
 
     void PropagateEnterTree(TreeListener* listener);
     void PropagateExitTree();
 
-    [[nodiscard]] virtual Node3d* Clone();
+    [[nodiscard]] virtual std::unique_ptr<Node3d> Clone();
 
     virtual void PhysicsProcess(float deltaTime);
     virtual void Process(float deltaTime);

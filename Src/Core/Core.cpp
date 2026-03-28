@@ -16,11 +16,8 @@
 #include "ResourceManager.h"
 #include "Editor/EditorStyle.h"
 
-Core::Core(Node3d* scene) : m_currentScene(scene) {}
-
 Core::~Core() {
-    delete m_currentScene;
-    m_currentScene = nullptr;
+    m_currentScene.reset();
     m_defaultShader.reset();
     m_mainFramebuffer.reset();
 
@@ -35,7 +32,9 @@ void Core::Init() {
     InitRenderer();
     InitImGui();
 
-    m_currentScene->PropagateEnterTree(this);
+    if (m_currentScene) {
+        m_currentScene->PropagateEnterTree(this);
+    }
 }
 
 void Core::Notification(Node3d *node, const NodeNotification notification) {
@@ -52,8 +51,7 @@ void Core::Notification(Node3d *node, const NodeNotification notification) {
             }
 
             if (auto* s = dynamic_cast<SkyboxNode3d*>(node)) {
-                m_activeSkybox = s;
-                m_renderer->SetSkybox(s);
+                m_skyboxCache.push_back(s);
             }
 
             break;
@@ -71,8 +69,7 @@ void Core::Notification(Node3d *node, const NodeNotification notification) {
             }
 
             if (auto* s = dynamic_cast<SkyboxNode3d*>(node)) {
-                m_activeSkybox = nullptr;
-                m_renderer->SetSkybox(nullptr);
+                std::erase(m_skyboxCache, s);
             }
 
             break;
@@ -93,7 +90,7 @@ void Core::InitRenderer() {
     RenderApi::InitSDL();
 
     m_renderer = std::make_unique<RenderApi>();
-    m_activeWindow = m_renderer->CreateWindow("Mango", {1280, 720}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+    m_activeWindow = std::move(m_renderer->CreateWindow("Mango", {1280, 720}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL));
 
     int w, h;
     SDL_GetWindowSizeInPixels(m_activeWindow->GetSDLWindow(), &w, &h);
@@ -189,19 +186,42 @@ bool Core::PollEvents() const {
     return m_activeWindow->IsOpen();
 }
 
-void Core::SubmitFrameRenderables() const {
-    m_renderer->ClearQueues();
-    for (auto* renderable : m_renderableCache) {
-        renderable->SubmitToRenderer(*m_renderer);
+bool Core::IsInScene(const Node3d* node, const Node3d* sceneRoot) {
+    while (node) {
+        if (node == sceneRoot) return true;
+        node = node->GetParent();
     }
+
+    return false;
 }
 
-void Core::RenderScene(const CameraNode3d* camera, const Framebuffer* targetFbo) const {
-    if (!camera || !targetFbo) {
+void Core::RenderScene(Node3d* sceneRoot, const CameraNode3d* camera, const Framebuffer* targetFbo) const {
+    if (!camera || !targetFbo || !sceneRoot) {
         return;
     }
 
-    m_currentScene->UpdateWorldTransform();
+    sceneRoot->UpdateWorldTransform();
+
+    m_renderer->ClearQueues();
+
+    for (auto* renderable : m_renderableCache) {
+        if (IsInScene(renderable, sceneRoot)) {
+            if (const auto* meshNode = dynamic_cast<const MeshNode3d*>(renderable)) {
+                if (meshNode->IsVisible() && meshNode->GetMesh() && meshNode->GetShader()) {
+                    m_renderer->SubmitRenderable(renderable);
+                }
+            }
+        }
+    }
+
+    SkyboxNode3d* sceneSkybox = nullptr;
+    for (const auto s : m_skyboxCache) {
+        if (IsInScene(s, sceneRoot)) {
+            sceneSkybox = s;
+            break;
+        }
+    }
+    m_renderer->SetSkybox(sceneSkybox);
 
     for (auto* l : m_lightNodeCache) {
         l->SyncLight();
@@ -223,7 +243,11 @@ void Core::StepFrame(const float deltaTime) {
         node->Process(deltaTime);
     }
 
-    m_currentScene->UpdateWorldTransform();
+    for (auto* node : m_nodeCache) {
+        if (!node->GetParent()) {
+            node->UpdateWorldTransform();
+        }
+    }
 }
 
 void Core::Process() {
@@ -239,9 +263,8 @@ void Core::Process() {
         PollEvents();
         StepFrame(deltaTime);
 
-        SubmitFrameRenderables();
         if (m_activeCamera) {
-            RenderScene(m_activeCamera, m_mainFramebuffer.get());
+            RenderScene(m_currentScene.get(), m_activeCamera, m_mainFramebuffer.get());
         }
 
         BeginImGuiFrame();
@@ -251,16 +274,12 @@ void Core::Process() {
     }
 }
 
+void Core::RegisterScene(Node3d *scene) {
+    scene->PropagateEnterTree(this);
+}
 
-void Core::BuildNodeCache(Node3d *node) {
-    m_nodeCache.push_back(node);
-    if (auto* renderable = dynamic_cast<RenderableNode3d*>(node)) {
-        m_renderableCache.push_back(renderable);
-    }
-
-    for (const auto child : node->GetChildren()) {
-        BuildNodeCache(child);
-    }
+void Core::UnregisterScene(Node3d *scene) {
+    scene->PropagateExitTree();
 }
 
 bool Core::IsNodeCached(const Node3d* node) const {
@@ -304,10 +323,21 @@ void Core::UnregisterLight(LightNode3d *light) const {
 }
 
 void Core::RebuildNodeCache() {
+    std::vector<Node3d*> roots;
+    for (auto* node : m_nodeCache) {
+        if (!node->GetParent()) {
+            roots.push_back(node);
+        }
+    }
+
     m_nodeCache.clear();
     m_renderableCache.clear();
+    m_lightNodeCache.clear();
+    m_skyboxCache.clear();
 
-    BuildNodeCache(m_currentScene);
+    for (auto* root : roots) {
+        root->PropagateEnterTree(this);
+    }
 }
 
 void Core::SetEditorCamera(CameraNode3d *camera) {
@@ -333,19 +363,17 @@ void Core::SetCameraMode(const CameraMode mode) {
     ApplyCameraMode();
 }
 
-void Core::ChangeScene(Node3d* scene) {
+void Core::ChangeScene(std::unique_ptr<Node3d> scene) {
     if (m_currentScene) {
         m_currentScene->PropagateExitTree();
     }
 
-    delete m_currentScene;
-    m_currentScene = scene;
+    m_currentScene.reset();
+    m_currentScene = std::move(scene);
 
-    m_nodeCache.clear();
-    m_renderableCache.clear();
-    m_lightNodeCache.clear();
     m_gameCamera = nullptr;
-    m_activeSkybox = nullptr;
 
-    m_currentScene->PropagateEnterTree(this);
+    if (m_currentScene) {
+        m_currentScene->PropagateEnterTree(this);
+    }
 }

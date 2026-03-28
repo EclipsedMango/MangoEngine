@@ -32,7 +32,8 @@ CameraNode3d::CameraNode3d(const glm::vec3 position, const float fov, const floa
     );
 }
 
-Node3d * CameraNode3d::Clone() {
+// TODO: finish this
+std::unique_ptr<Node3d> CameraNode3d::Clone() {
     return Node3d::Clone();
 }
 

@@ -9,7 +9,6 @@ class RenderApi;
 class RenderableNode3d : public Node3d {
 public:
     ~RenderableNode3d() override;
-    virtual void SubmitToRenderer(RenderApi& renderer) = 0;
 };
 
 

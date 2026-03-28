@@ -45,7 +45,7 @@ public:
     RenderApi(RenderApi&&) = delete;
     RenderApi& operator=(RenderApi&&) = delete;
 
-    Window* CreateWindow(const char* title, glm::vec2 size, Uint32 flags);
+    std::unique_ptr<Window> CreateWindow(const char* title, glm::vec2 size, Uint32 flags);
     static void ClearColour(const glm::vec4& colour);
     void HandleResizeEvent(const SDL_Event& event) const;
 
@@ -56,6 +56,7 @@ public:
     void AddSpotLight(SpotLight* light) const;
     void RemoveSpotLight(SpotLight* light) const;
 
+    void SubmitRenderable(RenderableNode3d* node);
     void ClearQueues() { m_meshQueue.clear(); }
     void SubmitMesh(MeshNode3d* node) { m_meshQueue.push_back(node); }
     void SetSkybox(SkyboxNode3d* skybox);
@@ -68,9 +69,7 @@ public:
     [[nodiscard]] const std::vector<ShadowedPointLightDebug>& GetShadowedPointLightsDebug() const { return m_shadowRenderer->GetShadowedPointLightsDebug(); }
 
     static void ApplyMaterialCull(const Material& mat);
-
     RenderStats RenderScene(const CameraNode3d* camera, const Framebuffer* targetFbo) const;
-
     static void DrawMesh(const Mesh& mesh, const Shader& shader);
 
     // Debug

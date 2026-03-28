@@ -2,7 +2,6 @@
 #ifndef MANGORENDERING_EDITOR_H
 #define MANGORENDERING_EDITOR_H
 
-#include "EditorCameraController.h"
 #include "GizmoSystem.h"
 #include "../Core.h"
 #include "UI/InspectorPanel.h"
@@ -10,10 +9,14 @@
 #include "UI/ViewportWindow.h"
 
 class ViewportWindow;
+struct SceneTab {
+    std::string name;
+    bool open = true;
+};
 
 class Editor {
 public:
-    explicit Editor(Node3d* scene);
+    explicit Editor(std::unique_ptr<Node3d> scene);
     ~Editor();
 
     Editor(const Editor&) = delete;
@@ -24,6 +27,7 @@ public:
     void Run();
 
     [[nodiscard]] Core& GetCore() { return m_core; }
+    [[nodiscard]] ViewportWindow* GetActiveViewport() const { return m_activeViewport; }
     [[nodiscard]] SceneTreePanel& GetSceneTree() { return m_sceneTree; }
     [[nodiscard]] GizmoSystem& GetGizmoSystem() { return m_gizmoSystem; }
     [[nodiscard]] State GetState() const { return m_state; }
@@ -32,6 +36,7 @@ public:
 
 private:
     // panels
+    void DrawViewportTabs();
     void DrawMenuBar();
     void DrawContentBrowser();
 
@@ -42,6 +47,7 @@ private:
 
     [[nodiscard]] bool IsAnyViewportLooking() const;
     std::vector<std::unique_ptr<ViewportWindow>> m_viewports;
+    ViewportWindow* m_activeViewport = nullptr;
 
     // cameras
     std::unique_ptr<CameraNode3d> m_gameCamera {};
@@ -52,6 +58,9 @@ private:
     GizmoSystem m_gizmoSystem;
 
     State m_state = State::Editing;
+
+    std::vector<SceneTab> m_sceneTabs;
+    int m_activeTab = 0;
 
     float m_cpuTime = 0.0f;
 };

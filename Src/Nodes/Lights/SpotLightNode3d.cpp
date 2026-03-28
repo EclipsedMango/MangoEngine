@@ -12,8 +12,8 @@ SpotLightNode3d::SpotLightNode3d(const glm::vec3 position, const glm::vec3 direc
     SetName("SpotLightNode3d");
 }
 
-Node3d* SpotLightNode3d::Clone() {
-    SpotLightNode3d *clone = new SpotLightNode3d();
+std::unique_ptr<Node3d> SpotLightNode3d::Clone() {
+    auto clone = std::make_unique<SpotLightNode3d>();
     clone->SetName(GetName());
     clone->SetLocalTransform(GetLocalMatrix());
     clone->SetLight(m_light);

@@ -19,8 +19,8 @@ MeshNode3d::MeshNode3d(std::shared_ptr<Mesh> mesh, std::shared_ptr<Shader> shade
     Init();
 }
 
-Node3d* MeshNode3d::Clone() {
-    MeshNode3d* clone = new MeshNode3d(m_mesh, m_shader);
+std::unique_ptr<Node3d> MeshNode3d::Clone() {
+    auto clone = std::make_unique<MeshNode3d>(m_mesh, m_shader);
 
     clone->SetName(GetName());
     clone->SetVisible(IsVisible());
@@ -40,11 +40,6 @@ Node3d* MeshNode3d::Clone() {
     }
 
     return clone;
-}
-
-void MeshNode3d::SubmitToRenderer(RenderApi& renderer) {
-    if (!m_mesh || !m_shader || !IsVisible()) return;
-    renderer.SubmitMesh(this);
 }
 
 void MeshNode3d::SetMeshByName(const std::string &name) {

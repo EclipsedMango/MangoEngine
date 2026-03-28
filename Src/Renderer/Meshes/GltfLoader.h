@@ -8,10 +8,10 @@
 
 class GltfLoader {
 public:
-    // loads the full scene hierarchy, caller owns the returned Node3d pointer
-    static Node3d* Load(const std::string& path, std::shared_ptr<Shader> shader);
+    // loads the full scene hierarchy, caller owns the returned tree
+    static std::unique_ptr<Node3d> Load(const std::string& path, std::shared_ptr<Shader> shader);
 
-    // extracts specific sub mesh
+    // extracts a specific sub mesh
     static std::shared_ptr<Mesh> ExtractMesh(const std::string& path, int meshIndex, int primIndex);
 
 private:

@@ -1,6 +1,7 @@
 
 #include "Editor.h"
 
+#include "EditorCameraController.h"
 #include "Utils/DebugDraw.h"
 #include "../Input.h"
 #include "Core/PackedScene.h"
@@ -8,12 +9,16 @@
 #include "glm/gtc/type_ptr.inl"
 #include "UI/ViewportWindow.h"
 
-Editor::Editor(Node3d* scene) : m_core(scene), m_inspector(this), m_sceneTree(this) {
+Editor::Editor(std::unique_ptr<Node3d> scene) : m_inspector(this), m_sceneTree(this) {
     m_core.Init();
     m_viewports.push_back(std::make_unique<ViewportWindow>(this, "Viewport 1"));
+    m_viewports[0]->LoadScene(std::move(scene));
+    m_activeViewport = m_viewports[0].get();
 
     m_core.SetEditorCamera(m_viewports[0]->GetCamera());
     m_core.SetCameraMode(Core::CameraMode::Editor);
+
+    m_sceneTabs.push_back({ "main" });
 
     SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
     Input::SetMouseDeltaEnabled(false);
@@ -21,7 +26,9 @@ Editor::Editor(Node3d* scene) : m_core(scene), m_inspector(this), m_sceneTree(th
 
 Editor::~Editor() {
     for (auto& viewport : m_viewports) {
-        viewport.reset();
+        if (viewport) {
+            viewport.reset();
+        }
     }
 
     SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
@@ -51,7 +58,6 @@ void Editor::Run() {
         const bool isLooking = IsAnyViewportLooking();
 
         m_gizmoSystem.HandleShortcuts(isLooking);
-        m_core.SubmitFrameRenderables();
         Core::BeginImGuiFrame();
 
         if (isLooking) {
@@ -59,22 +65,32 @@ void Editor::Run() {
         }
 
         if (m_state != State::Playing) {
+            std::vector<Node3d*> scenesToUpdate;
+            if (m_core.GetScene()) scenesToUpdate.push_back(m_core.GetScene());
+
             for (const auto& viewport : m_viewports) {
                 viewport->Update(deltaTime);
+                Node3d* s = viewport->GetScene();
+                if (s && std::ranges::find(scenesToUpdate, s) == scenesToUpdate.end()) {
+                    scenesToUpdate.push_back(s);
+                }
             }
-            m_core.GetScene()->UpdateWorldTransform();
+
+            for (auto* s : scenesToUpdate) {
+                s->UpdateWorldTransform();
+            }
         } else {
             m_core.StepFrame(deltaTime);
         }
 
         DrawMenuBar();
-        m_sceneTree.DrawSceneTree(m_core.GetScene());
+        DrawViewportTabs();
+
+        Node3d* sceneToDraw = m_state == State::Playing ? m_core.GetScene() : m_activeViewport->GetScene();
+        m_sceneTree.DrawSceneTree(sceneToDraw);
+
         m_inspector.DrawInspector(m_sceneTree.GetSelectedNode());
         DrawContentBrowser();
-
-        for (const auto& viewport : m_viewports) {
-            viewport->Draw();
-        }
 
         if (Input::IsKeyJustPressed(SDL_SCANCODE_DELETE)) {
             m_sceneTree.DeleteSelectedNodes();
@@ -89,6 +105,63 @@ void Editor::Run() {
     }
 }
 
+void Editor::DrawViewportTabs() {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::Begin("Viewports", nullptr);
+
+    if (ImGui::BeginTabBar("##viewport_tabs", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs)) {
+        for (int i = 0; i < static_cast<int>(m_viewports.size()); i++) {
+            bool open = true;
+            const std::string& name = m_viewports[i]->GetName();
+
+            if (ImGui::BeginTabItem(name.c_str(), &open)) {
+                if (m_activeViewport != m_viewports[i].get()) {
+                    m_activeViewport = m_viewports[i].get();
+                    m_core.SetEditorCamera(m_activeViewport->GetCamera());
+                }
+
+                m_viewports[i]->DrawContent();
+                ImGui::EndTabItem();
+            }
+
+            if (!open && m_viewports.size() > 1) {
+                if (m_activeViewport == m_viewports[i].get()) {
+                    const int next = i > 0 ? i - 1 : 1;
+                    m_activeViewport = m_viewports[next].get();
+                    m_core.SetEditorCamera(m_activeViewport->GetCamera());
+                }
+
+                m_viewports[i]->DetachScene();
+                m_viewports.erase(m_viewports.begin() + i);
+                m_sceneTree.ClearSelection();
+                i--;
+            }
+        }
+
+        if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing)) {
+            const std::string name = "Viewport " + std::to_string(m_viewports.size() + 1);
+            auto vp = std::make_unique<ViewportWindow>(this, name);
+
+            auto newScene = std::make_unique<Node3d>();
+            newScene->SetName("New Scene");
+
+            auto skybox = std::make_unique<SkyboxNode3d>("../Assets/Textures/Cubemaps/kloppenheim_06_puresky_1k.hdr");
+            newScene->AddChild(std::move(skybox));
+            vp->LoadScene(std::move(newScene));
+
+            m_viewports.push_back(std::move(vp));
+            m_activeViewport = m_viewports.back().get();
+            m_core.SetEditorCamera(m_activeViewport->GetCamera());
+            m_sceneTree.ClearSelection();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
+
 void Editor::DrawMenuBar() {
     if (!ImGui::BeginMainMenuBar()) return;
 
@@ -98,13 +171,18 @@ void Editor::DrawMenuBar() {
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("New Scene"))  { /* TODO */ }
         if (ImGui::MenuItem("Open Scene")) {
-            PackedScene scene = PackedScene::LoadFromFile("../Assets/john.yml");
-            Node3d* node = scene.Instantiate();
-            m_core.ChangeScene(node);
+            const Node3d* activeScene = m_state == State::Playing ? m_core.GetScene() : m_activeViewport->GetScene();
+            if (activeScene) {
+                PackedScene scene(activeScene);
+                scene.SaveToFile("../Assets/john.yml");
+            }
         }
         if (ImGui::MenuItem("Save Scene")) {
-            PackedScene* scene = new PackedScene(m_core.GetScene());
-            scene->SaveToFile("../Assets/john.yml");
+            const Node3d* activeScene = m_state == State::Playing ? m_core.GetScene() : m_activeViewport->GetScene();
+            if (activeScene) {
+                PackedScene scene(activeScene);
+                scene.SaveToFile("../Assets/john.yml");
+            }
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Exit")) m_core.GetActiveWindow()->Close();
@@ -154,8 +232,24 @@ void Editor::DrawContentBrowser() {
 }
 
 void Editor::OnPlay() {
-    m_state = State::Playing;
+    for (auto& vp : m_viewports) {
+        if (Node3d* scene = vp->GetScene()) {
+            vp->SaveSnapshot(scene->Clone());
+        }
+    }
+
+    auto globalRoot = std::make_unique<Node3d>();
+    globalRoot->SetName("GlobalRoot");
+
+    for (const auto& vp : m_viewports) {
+        if (auto scene = vp->DetachScene()) {
+            globalRoot->AddChild(std::move(scene));
+        }
+    }
+
+    m_core.ChangeScene(std::move(globalRoot));
     m_core.SetCameraMode(Core::CameraMode::Game);
+    m_state = State::Playing;
 
     for (const auto& vp : m_viewports) {
         vp->GetCameraController()->CancelLook();
@@ -176,10 +270,16 @@ void Editor::OnPause() {
 }
 
 void Editor::OnStop() {
-    // TODO: restore scene using deserialization
+    m_core.ChangeScene(nullptr);
 
-    m_state = State::Editing;
+    for (auto& vp : m_viewports) {
+        if (auto snapshot = vp->TakeSnapshot()) {
+            vp->LoadScene(std::move(snapshot));
+        }
+    }
+
     m_core.SetCameraMode(Core::CameraMode::Editor);
+    m_state = State::Editing;
 
     for (const auto& vp : m_viewports) {
         vp->GetCameraController()->CancelLook();

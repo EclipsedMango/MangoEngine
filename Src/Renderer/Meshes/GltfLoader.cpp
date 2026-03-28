@@ -61,25 +61,17 @@ static AccessorData GetAccessorData(const tinygltf::Model& model, const int acce
 }
 
 static std::string ExtractTexture(const tinygltf::Model& model, const int textureIndex, const std::string& gltfPath) {
-    if (textureIndex < 0 || textureIndex >= static_cast<int>(model.textures.size())) {
-        return "";
-    }
+    if (textureIndex < 0 || textureIndex >= static_cast<int>(model.textures.size())) return "";
 
     const auto& gltfTexture = model.textures[textureIndex];
-    if (gltfTexture.source < 0 || gltfTexture.source >= static_cast<int>(model.images.size())) {
-        return "";
-    }
+    if (gltfTexture.source < 0 || gltfTexture.source >= static_cast<int>(model.images.size())) return "";
 
     const auto& gltfImage = model.images[gltfTexture.source];
-
     const std::string outPath = gltfPath + "_tex" + std::to_string(textureIndex) + ".png";
 
     if (!std::filesystem::exists(outPath)) {
         if (!gltfImage.image.empty() && gltfImage.width > 0 && gltfImage.height > 0) {
-            stbi_write_png(outPath.c_str(), gltfImage.width, gltfImage.height,
-                           gltfImage.component, gltfImage.image.data(),
-                           gltfImage.width * gltfImage.component);
-            std::cout << "GLTF: Extracted new texture to: " << outPath << std::endl;
+            stbi_write_png(outPath.c_str(), gltfImage.width, gltfImage.height, gltfImage.component, gltfImage.image.data(), gltfImage.width * gltfImage.component);
         } else {
             return "";
         }
@@ -89,9 +81,7 @@ static std::string ExtractTexture(const tinygltf::Model& model, const int textur
 }
 std::shared_ptr<Material> BuildMaterial(const tinygltf::Model& model, const int materialIndex, const std::string& gltfPath) {
     auto mat = std::make_shared<Material>();
-    if (materialIndex < 0) {
-        return mat;
-    }
+    if (materialIndex < 0) return mat;
 
     const auto& gltfMat = model.materials[materialIndex];
     mat->SetName(gltfMat.name);
@@ -147,18 +137,19 @@ std::shared_ptr<Material> BuildMaterial(const tinygltf::Model& model, const int 
     return mat;
 }
 
-Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader) {
+std::unique_ptr<Node3d> GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader) {
     auto modelPtr = GetParsedModel(path);
     if (!modelPtr) return nullptr;
     const auto& model = *modelPtr;
 
-    Node3d* root = new Node3d();
+    auto root = std::make_unique<Node3d>();
 
     std::unordered_map<int, std::vector<std::shared_ptr<Mesh>>> meshCache;
 
+    // process node builds the subtree and adds it to parent, parent is a raw observer
     std::function<void(int, Node3d*)> ProcessNode = [&](int nodeIndex, Node3d* parent) {
         const auto& gltfNode = model.nodes[nodeIndex];
-        auto* sceneNode = new Node3d();
+        auto sceneNode = std::make_unique<Node3d>();
         sceneNode->SetName(gltfNode.name);
 
         // Build local transform
@@ -192,30 +183,23 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
 
             for (size_t primIndex = 0; primIndex < gltfMesh.primitives.size(); ++primIndex) {
                 const auto& primitive = gltfMesh.primitives[primIndex];
-
-                if (!primitive.attributes.contains("POSITION")) {
-                    continue;
-                }
+                if (!primitive.attributes.contains("POSITION")) continue;
 
                 // register mesh for resource manager
-                std::shared_ptr<Mesh> sharedMesh;
                 std::string meshID = path + "#" + std::to_string(gltfNode.mesh) + "_" + std::to_string(primIndex);
-                ResourceManager::Get().RegisterMesh(meshID, sharedMesh);
 
+                std::shared_ptr<Mesh> sharedMesh;
                 auto cacheIt = meshCache.find(gltfNode.mesh);
                 if (cacheIt != meshCache.end() && primIndex < cacheIt->second.size()) {
                     sharedMesh = cacheIt->second[primIndex];
                 } else {
-                    // POSITION
                     AccessorData posData = GetAccessorData(model, primitive.attributes.at("POSITION"));
 
-                    // NORMAL
                     AccessorData normData;
                     if (primitive.attributes.contains("NORMAL")) {
                         normData = GetAccessorData(model, primitive.attributes.at("NORMAL"));
                     }
 
-                    // TANGENT
                     AccessorData tanData;
                     if (primitive.attributes.contains("TANGENT")) {
                         tanData = GetAccessorData(model, primitive.attributes.at("TANGENT"));
@@ -232,20 +216,17 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
 
                     std::vector<Vertex> vertices;
                     vertices.reserve(posData.count);
-
                     const size_t floatSize = sizeof(float);
 
                     for (size_t i = 0; i < posData.count; i++) {
                         Vertex v{};
 
-                        // Position
                         v.position = {
                             ReadFloat(posData.base, TINYGLTF_COMPONENT_TYPE_FLOAT, i, posData.stride, 0),
                             ReadFloat(posData.base, TINYGLTF_COMPONENT_TYPE_FLOAT, i, posData.stride, floatSize),
                             ReadFloat(posData.base, TINYGLTF_COMPONENT_TYPE_FLOAT, i, posData.stride, floatSize * 2)
                         };
 
-                        // Normal respects stride and component type
                         if (normData.valid) {
                             v.normal = {
                                 ReadFloat(normData.base, normData.compType, i, normData.stride, 0),
@@ -256,7 +237,6 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
                             v.normal = glm::vec3(0, 1, 0);
                         }
 
-                        // Tangent, W is handedness sign
                         if (tanData.valid) {
                             const size_t cs = tinygltf::GetComponentSizeInBytes(tanData.compType);
                             v.tangent = {
@@ -269,7 +249,6 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
                             v.tangent = glm::vec4(0.0f);
                         }
 
-                        // UV respects stride and component type (byte/short normalized)
                         if (uvData.valid) {
                             const size_t cs = tinygltf::GetComponentSizeInBytes(uvData.compType);
                             v.texCoord = {
@@ -283,29 +262,22 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
                         vertices.push_back(v);
                     }
 
-                    // Indices
+                    // indices
                     std::vector<uint32_t> indices;
                     if (primitive.indices >= 0) {
                         const auto& idxAccessor = model.accessors[primitive.indices];
-                        const auto& idxView     = model.bufferViews[idxAccessor.bufferView];
-                        const uint8_t* idxData  = model.buffers[idxView.buffer].data.data()
-                                                 + idxView.byteOffset + idxAccessor.byteOffset;
-
-                        // Effective stride for index buffer
+                        const auto& idxView = model.bufferViews[idxAccessor.bufferView];
+                        const uint8_t* idxData = model.buffers[idxView.buffer].data.data() + idxView.byteOffset + idxAccessor.byteOffset;
                         size_t idxStride = idxView.byteStride > 0 ? idxView.byteStride : tinygltf::GetComponentSizeInBytes(idxAccessor.componentType);
 
                         indices.reserve(idxAccessor.count);
                         for (size_t i = 0; i < idxAccessor.count; i++) {
                             const uint8_t* p = idxData + i * idxStride;
                             switch (idxAccessor.componentType) {
-                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
-                                    indices.push_back(*p); break;
-                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
-                                    indices.push_back(*reinterpret_cast<const uint16_t*>(p)); break;
-                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-                                    indices.push_back(*reinterpret_cast<const uint32_t*>(p)); break;
-                                default:
-                                    std::cerr << "GLTF: unsupported index component type" << std::endl; break;
+                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: indices.push_back(*p); break;
+                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: indices.push_back(*reinterpret_cast<const uint16_t*>(p)); break;
+                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: indices.push_back(*reinterpret_cast<const uint32_t*>(p)); break;
+                                default: std::cerr << "GLTF: unsupported index component type" << std::endl; break;
                             }
                         }
                     }
@@ -314,23 +286,26 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
                     meshCache[gltfNode.mesh].push_back(sharedMesh);
                 }
 
-                auto* meshNode = new MeshNode3d(sharedMesh, shader);
+                ResourceManager::Get().RegisterMesh(meshID, sharedMesh);
+
+                auto meshNode = std::make_unique<MeshNode3d>(sharedMesh, shader);
                 meshNode->SetMeshByName(meshID);
                 meshNode->SetMaterial(BuildMaterial(model, primitive.material, path));
-                sceneNode->AddChild(meshNode);
+                sceneNode->AddChild(std::move(meshNode));
             }
         }
 
-        parent->AddChild(sceneNode);
+        Node3d* sceneNodeRaw = sceneNode.get();
+        parent->AddChild(std::move(sceneNode));
 
         for (int childIndex : gltfNode.children) {
-            ProcessNode(childIndex, sceneNode);
+            ProcessNode(childIndex, sceneNodeRaw);
         }
     };
 
     const auto& scene = model.scenes[model.defaultScene >= 0 ? model.defaultScene : 0];
     for (const int nodeIndex : scene.nodes) {
-        ProcessNode(nodeIndex, root);
+        ProcessNode(nodeIndex, root.get());
     }
 
     // compute world-space AABB over all mesh nodes
@@ -354,14 +329,14 @@ Node3d* GltfLoader::Load(const std::string& path, std::shared_ptr<Shader> shader
         }
     };
 
-    ComputeAABB(root, glm::mat4(1.0f));
+    ComputeAABB(root.get(), glm::mat4(1.0f));
 
     const glm::vec3 size = maxBounds - minBounds;
     const glm::vec3 center = (minBounds + maxBounds) * 0.5f;
     const float extent = std::max({ size.x, size.y, size.z });
 
     if (extent > 0.0f) {
-        const float scale = 1.0f / extent;  // fits longest axis to 1 unit
+        const float scale = 1.0f / extent;
         const glm::mat4 normalize = glm::scale(glm::mat4(1.0f), glm::vec3(scale)) * glm::translate(glm::mat4(1.0f), -center);
         root->SetLocalTransform(normalize);
     }

@@ -22,8 +22,8 @@ PointLightNode3d::PointLightNode3d(const glm::vec3 position, const glm::vec3 col
     );
 }
 
-Node3d* PointLightNode3d::Clone() {
-    PointLightNode3d* clone = new PointLightNode3d();
+std::unique_ptr<Node3d> PointLightNode3d::Clone() {
+    auto clone = std::make_unique<PointLightNode3d>();
     clone->SetName(GetName());
     clone->SetLocalTransform(GetLocalMatrix());
     clone->SetLight(m_light);

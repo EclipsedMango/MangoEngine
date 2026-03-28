@@ -28,15 +28,15 @@ public:
     [[nodiscard]] static PackedScene LoadFromFile(const std::string& path);
     void SaveToFile(const std::string& path);
 
-    Node3d* Instantiate() const;
+    [[nodiscard]] std::unique_ptr<Node3d> Instantiate() const;
 
 private:
     PackedScene() = default;
 
-    static Node3d* InstantiateNode(const PackedNode& packedNode);
+    static std::unique_ptr<Node3d> InstantiateNode(const PackedNode& packedNode);
 
-    fkyaml::node FromPackedNode(const PackedNode& packedNode);
-    fkyaml::node SerializeProperty(PropertyValue property);
+    static fkyaml::node FromPackedNode(const PackedNode& packedNode);
+    static fkyaml::node SerializeProperty(PropertyValue property);
 
     std::optional<PackedNode> m_node;
 };

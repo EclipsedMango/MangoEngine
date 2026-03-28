@@ -122,20 +122,14 @@ PropertyValue PackedNode::DeserializePropertyValue(const fkyaml::node &val) {
 PackedScene::PackedScene(const Node3d *node) : m_node(PackedNode(node)) {}
 
 PackedScene PackedScene::LoadFromFile(const std::string &path) {
-    printf("Loading file now.\n");
     std::ifstream file(path);
     if (!file.is_open()) {
         throw std::runtime_error("PackedScene: Cannot open file: " + path);
     }
-    printf("Finished loading file now.\n");
 
-    printf("Starting deserializing now.\n");
     auto yaml = fkyaml::node::deserialize(file);
-    printf("Finished deserializing now.\n");
-
     PackedScene scene;
     scene.m_node = PackedNode(yaml);
-    printf("Print d.\n");
     return scene;
 }
 
@@ -144,7 +138,7 @@ void PackedScene::SaveToFile(const std::string &path) {
     file << fkyaml::node::serialize(FromPackedNode(*m_node));
 }
 
-Node3d* PackedScene::Instantiate() const {
+std::unique_ptr<Node3d> PackedScene::Instantiate() const {
     if (!m_node) {
         throw std::runtime_error("PackedScene: Cannot instantiate scene without a node");
     }
@@ -152,15 +146,15 @@ Node3d* PackedScene::Instantiate() const {
     return InstantiateNode(*m_node);
 }
 
-Node3d * PackedScene::InstantiateNode(const PackedNode &packedNode) {
-    Node3d* node = NodeRegistry::Create(packedNode.type);
+std::unique_ptr<Node3d> PackedScene::InstantiateNode(const PackedNode &packedNode) {
+    std::unique_ptr<Node3d> node(NodeRegistry::Create(packedNode.type));
 
     try {
         for (const auto& [key, val] : packedNode.properties) {
             node->Set(key, val);
         }
     } catch (const std::exception& e) {
-        std::cerr << "[PackedScene Warning] Node '" << packedNode.type  << "': " << e.what() << std::endl;
+        std::cerr << "[PackedScene Warning] Node '" << packedNode.type << "': " << e.what() << std::endl;
     }
 
     for (const auto& child : packedNode.children) {

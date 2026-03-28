@@ -16,10 +16,9 @@ class Core : public TreeListener {
 public:
     enum class CameraMode { Editor, Game };
 
-    explicit Core(Node3d* scene);
+    explicit Core() = default;
     ~Core() override;
-
-    Core(const Core&)            = delete;
+    Core(const Core&) = delete;
     Core& operator=(const Core&) = delete;
 
     void Init();
@@ -27,13 +26,14 @@ public:
     void Notification(Node3d* node, NodeNotification notification) override;
 
     bool PollEvents() const; // returns false when window should close
-    void SubmitFrameRenderables() const;
-    void RenderScene(const CameraNode3d* camera, const Framebuffer* targetFbo) const;
+    void RenderScene(Node3d* sceneRoot, const CameraNode3d* camera, const Framebuffer* targetFbo) const;
     void SwapBuffers() const;
     void StepFrame(float deltaTime);
     void Process();
 
-    void ChangeScene(Node3d* scene);
+    void RegisterScene(Node3d* scene);
+    static void UnregisterScene(Node3d* scene);
+    void ChangeScene(std::unique_ptr<Node3d> scene);
     void RebuildNodeCache();
 
     void SetEditorCamera(CameraNode3d* camera);
@@ -47,9 +47,9 @@ public:
     static void BeginImGuiFrame();
     static void EndImGuiFrame();
 
-    [[nodiscard]] Node3d* GetScene() const { return m_currentScene; }
+    [[nodiscard]] Node3d* GetScene() const { return m_currentScene.get(); }
     [[nodiscard]] RenderApi& GetRenderer() const { return *m_renderer; }
-    [[nodiscard]] Window* GetActiveWindow() const { return m_activeWindow; }
+    [[nodiscard]] Window* GetActiveWindow() const { return m_activeWindow.get(); }
     [[nodiscard]] CameraNode3d* GetActiveCamera() const { return m_activeCamera; }
     [[nodiscard]] CameraNode3d* GetEditorCamera() const { return m_editorCamera; }
     [[nodiscard]] CameraNode3d* GetGameCamera() const { return m_gameCamera; }
@@ -58,11 +58,12 @@ public:
     [[nodiscard]] ImFont* GetMainFont() const { return m_mainFont; }
     [[nodiscard]] ImFont* GetMonoFont() const { return m_monoFont; }
 
+    [[nodiscard]] static bool IsInScene(const Node3d* node, const Node3d* sceneRoot) ;
+
 private:
     void InitRenderer();
     void InitImGui() const;
 
-    void BuildNodeCache(Node3d* node);
     [[nodiscard]] bool IsNodeCached(const Node3d* node) const;
 
     void ApplyCameraMode();
@@ -73,26 +74,26 @@ private:
     float m_accumulator = 0.0f;
     static constexpr float FIXED_TIMESTEP = 1.0f / 60.0f;
 
-    std::unique_ptr<RenderApi> m_renderer;
-    Node3d* m_currentScene = nullptr;
-    Window* m_activeWindow = nullptr;
+    std::unique_ptr<RenderApi> m_renderer {};
+    std::unique_ptr<Node3d> m_currentScene {};
+    std::unique_ptr<Window> m_activeWindow {};
 
     std::shared_ptr<Shader> m_defaultShader;
 
-    ImFont* m_mainFont;
-    ImFont* m_monoFont;
+    ImFont* m_mainFont {};
+    ImFont* m_monoFont {};
 
     std::vector<Node3d*> m_nodeCache;
     std::vector<RenderableNode3d*> m_renderableCache;
     std::vector<LightNode3d*> m_lightNodeCache;
-    SkyboxNode3d* m_activeSkybox = nullptr;
+    std::vector<SkyboxNode3d*> m_skyboxCache;
 
     std::unique_ptr<Framebuffer> m_mainFramebuffer;
 
     CameraMode m_cameraMode = CameraMode::Editor;
-    CameraNode3d* m_editorCamera = nullptr;
-    CameraNode3d* m_gameCamera   = nullptr;
-    CameraNode3d* m_activeCamera = nullptr;
+    CameraNode3d* m_editorCamera {};
+    CameraNode3d* m_gameCamera {};
+    CameraNode3d* m_activeCamera {};
 };
 
 

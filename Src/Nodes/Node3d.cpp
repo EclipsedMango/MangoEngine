@@ -37,12 +37,13 @@ Node3d::~Node3d() {
     }
 }
 
-void Node3d::AddChild(Node3d* child) {
-    child->m_parent = this;
-    m_children.push_back(child);
+void Node3d::AddChild(std::unique_ptr<Node3d> child) {
+    Node3d* raw = child.release();
+    raw->m_parent = this;
+    m_children.push_back(raw);
 
     if (m_treeListener) {
-        child->PropagateEnterTree(m_treeListener);
+        raw->PropagateEnterTree(m_treeListener);
     }
 }
 
@@ -53,6 +54,22 @@ void Node3d::RemoveChild(Node3d* child) {
     if (child->m_treeListener) {
         child->PropagateExitTree();
     }
+}
+
+std::unique_ptr<Node3d> Node3d::DetachChild(Node3d *child) {
+    const auto it = std::ranges::find(m_children.begin(), m_children.end(), child);
+    if (it == m_children.end()) {
+        return nullptr;
+    }
+
+    if (child->m_treeListener) {
+        child->PropagateExitTree();
+    }
+
+    child->m_parent = nullptr;
+    m_children.erase(it);
+
+    return std::unique_ptr<Node3d>(child);
 }
 
 void Node3d::PhysicsProcess(float deltaTime) {
@@ -156,8 +173,8 @@ void Node3d::PropagateExitTree() {
     m_treeListener = nullptr;
 }
 
-Node3d * Node3d::Clone() {
-    Node3d* clone = new Node3d();
+[[nodiscard]] std::unique_ptr<Node3d> Node3d::Clone() {
+    auto clone = std::make_unique<Node3d>();
 
     clone->m_name = m_name;
     clone->m_visible = m_visible;
@@ -166,7 +183,7 @@ Node3d * Node3d::Clone() {
     clone->m_scale = m_scale;
     clone->m_localDirty = true;
 
-    for (Node3d* child : m_children) {
+    for (const auto& child : m_children) {
         clone->AddChild(child->Clone());
     }
 

@@ -13,9 +13,7 @@ public:
     explicit MeshNode3d(std::shared_ptr<Shader> shader);
     MeshNode3d(std::shared_ptr<Mesh> mesh, std::shared_ptr<Shader> shader);
 
-    [[nodiscard]] Node3d* Clone() override;
-
-    void SubmitToRenderer(RenderApi& renderer) override;
+    [[nodiscard]] std::unique_ptr<Node3d> Clone() override;
 
     void SetMesh(std::shared_ptr<Mesh> mesh) { m_mesh = std::move(mesh); }
     void SetMeshByName(const std::string& name);

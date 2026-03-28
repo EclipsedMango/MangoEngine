@@ -11,9 +11,10 @@
 
 int main() {
     // build scene
-    Node3d* scene = new Node3d();
+    auto scene = std::make_unique<Node3d>();
+    Editor editor(std::move(scene));
 
-    Editor editor(scene);
+    Node3d* liveScene = editor.GetActiveViewport()->GetScene();
 
     const auto cubeMesh = std::make_shared<CubeMesh>();
     const auto sphereMesh = std::make_shared<SphereMesh>();
@@ -24,9 +25,9 @@ int main() {
 
     // Node3d* teddy = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
     // teddy->SetPosition({0, 0, 5});
-    // scene->AddChild(teddy);
+    // liveScene->AddChild(teddy);
 
-    MeshNode3d* quad = new MeshNode3d(shader);
+    auto quad = std::make_unique<MeshNode3d>(shader);
     quad->SetMeshByName("Quad");
     quad->SetScale({4.0f, 4.0f, 4.0f});
     quad->GetActiveMaterial().SetDiffuse("../Assets/Textures/RedBrick/red_brick_03_diff_1k.png");
@@ -34,43 +35,44 @@ int main() {
     quad->GetActiveMaterial().SetDisplacement("../Assets/Textures/RedBrick/red_brick_03_disp_1k.png");
     quad->GetActiveMaterial().SetNormal("../Assets/Textures/RedBrick/red_brick_03_nor_gl_1k.png");
     quad->GetActiveMaterial().SetRoughness("../Assets/Textures/RedBrick/red_brick_03_rough_1k.png");
-    scene->AddChild(quad);
+    liveScene->AddChild(std::move(quad));
 
-    Node3d* house = GltfLoader::Load("../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb", shader);
+    auto house = std::unique_ptr<Node3d>(GltfLoader::Load("../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb", shader));
     house->SetScale({0.15f, 0.15f, 0.15f});
     house->SetPosition({0, -4, -15});
-    scene->AddChild(house);
+    liveScene->AddChild(std::move(house));
 
-    MeshNode3d* cube1 = new MeshNode3d(shader);
+    auto cube1 = std::make_unique<MeshNode3d>(shader);
     cube1->SetMeshByName("Cube");
     cube1->SetPosition({0, -4.9, 2});
     cube1->SetScale({0.2f, 0.2f, 0.2f});
     cube1->GetActiveMaterial().SetMetallicValue(1.0);
     cube1->GetActiveMaterial().SetRoughnessValue(0.5);
-    scene->AddChild(cube1);
+    liveScene->AddChild(std::move(cube1));
 
-    MeshNode3d* sphere = new MeshNode3d(shader);
+    auto sphere = std::make_unique<MeshNode3d>(shader);
     sphere->SetMeshByName("Sphere");
     sphere->GetActiveMaterial().SetMetallicValue(0.75);
     sphere->GetActiveMaterial().SetRoughnessValue(0.25);
     sphere->SetPosition({0, 4, -2});
-    scene->AddChild(sphere);
+    liveScene->AddChild(std::move(sphere));
 
-    DirectionalLightNode3d* sun = new DirectionalLightNode3d({0.5f, -0.6f, -0.5f}, {0.9f, 0.65f, 0.32f}, 2.5f);
-    scene->AddChild(sun);
+    auto sun = std::make_unique<DirectionalLightNode3d>(glm::vec3(0.5f, -0.6f, -0.5f), glm::vec3(0.9f, 0.65f, 0.32f), 2.5f);
+    liveScene->AddChild(std::move(sun));
 
-    PointLightNode3d* pointLight = new PointLightNode3d({2, 2, -2}, {0.6f, 0.7f, 0.9f}, 1.0f, 15.0f);
-    scene->AddChild(pointLight);
+    auto pointLight = std::make_unique<PointLightNode3d>(glm::vec3(2, 2, -2), glm::vec3(0.6f, 0.7f, 0.9f), 1.0f, 15.0f);
+    liveScene->AddChild(std::move(pointLight));
 
-    SkyboxNode3d* skybox = new SkyboxNode3d("../Assets/Textures/Cubemaps/kloppenheim_06_puresky_1k.hdr");
-    scene->AddChild(skybox);
+    auto skybox = std::make_unique<SkyboxNode3d>("../Assets/Textures/Cubemaps/kloppenheim_06_puresky_1k.hdr");
+    liveScene->AddChild(std::move(skybox));
 
-    CameraNode3d* camera = new CameraNode3d({0, 0, 3}, 75.0f, 500.0f / 500.0f);
-    editor.GetCore().SetGameCamera(camera);
-    scene->AddChild(camera);
+    auto camera = std::make_unique<CameraNode3d>(glm::vec3(0, 0, 3), 75.0f, 500.0f / 500.0f);
+    editor.GetCore().SetGameCamera(camera.get());
+    liveScene->AddChild(std::move(camera));
 
     editor.Run();
 
+    scene.reset();
     texture.reset();
     teddyTexture.reset();
 

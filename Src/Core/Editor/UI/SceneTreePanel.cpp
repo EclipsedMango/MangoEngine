@@ -32,9 +32,13 @@ std::vector<Node3d*> SceneTreePanel::GetSelectedNodes() {
         idsToDuplicate.push_back(static_cast<uint32_t>(selId));
     }
 
+    Node3d* activeScene = m_editor->GetState() == Editor::State::Playing ? m_editor->GetCore().GetScene() : m_editor->GetActiveViewport()->GetScene();
     std::vector<Node3d*> selectedNodes;
+
+    if (!activeScene) return selectedNodes;
+
     for (const auto id : idsToDuplicate) {
-        Node3d* selectedNode = FindNodeById(m_editor->GetCore().GetScene(), id);
+        Node3d* selectedNode = FindNodeById(activeScene, id);
         if (!selectedNode) continue;
         selectedNodes.push_back(selectedNode);
     }
@@ -44,6 +48,14 @@ std::vector<Node3d*> SceneTreePanel::GetSelectedNodes() {
 
 void SceneTreePanel::DrawSceneTree(Node3d *node) {
     ImGui::Begin("Scene Tree");
+
+    if (!node) {
+        ImGui::TextDisabled("No active scene.");
+        ImGui::End();
+        return;
+    }
+
+    ImGui::PushID(node);
 
     if (ImGui::Button("+ Add Node")) {
         ImGui::OpenPopup("AddNodePopup");
@@ -72,7 +84,6 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
 
         const char* lastCategory = nullptr;
         for (int i = 0; i < IM_ARRAYSIZE(entries); ++i) {
-            // category header
             if (!lastCategory || strcmp(entries[i].category, lastCategory) != 0) {
                 if (lastCategory) ImGui::Spacing();
                 ImGui::TextDisabled("%s", entries[i].category);
@@ -81,45 +92,54 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
             }
 
             if (ImGui::Selectable(entries[i].label)) {
-                Node3d* root = m_editor->GetCore().GetScene();
+                Node3d* root = m_editor->GetState() == Editor::State::Playing ? m_editor->GetCore().GetScene() : m_editor->GetActiveViewport()->GetScene();
                 Node3d* created = nullptr;
 
                 switch (i) {
                     case 0: {
-                        created = new Node3d();
-                        created->SetName("Node3d");
+                        auto n = std::make_unique<Node3d>();
+                        n->SetName("Node3d");
+                        created = n.get();
+                        root->AddChild(std::move(n));
                         break;
                     }
                     case 1: {
-                        created = new MeshNode3d(std::make_shared<CubeMesh>(), ResourceManager::Get().LoadShader("test", "../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag"));
-                        created->SetName("MeshNode3d");
+                        auto n = std::make_unique<MeshNode3d>(std::make_shared<CubeMesh>(),
+                        ResourceManager::Get().LoadShader("test", "../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag"));
+                        n->SetName("MeshNode3d");
+                        created = n.get();
+                        root->AddChild(std::move(n));
                         break;
                     }
                     case 2: {
                         const glm::vec2 ws = m_editor->GetCore().GetActiveWindow()->GetSize();
                         const float aspect = (ws.y != 0.0f) ? (ws.x / ws.y) : 1.0f;
-                        created = new CameraNode3d(glm::vec3(0, 0, 5), 75.0f, aspect);
-                        created->SetName("CameraNode3d");
+                        auto n = std::make_unique<CameraNode3d>(glm::vec3(0, 0, 5), 75.0f, aspect);
+                        n->SetName("CameraNode3d");
+                        created = n.get();
+                        root->AddChild(std::move(n));
                         break;
                     }
                     case 3: {
-                        created = new DirectionalLightNode3d({-64.0, 128.0, 0.0}, {1.0, 1.0, 1.0}, 0.25);
-                        created->SetName("DirectionalLight");
+                        auto n = std::make_unique<DirectionalLightNode3d>(glm::vec3(-64.0f, 128.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), 0.25f);
+                        n->SetName("DirectionalLight");
+                        created = n.get();
+                        root->AddChild(std::move(n));
                         break;
                     }
                     case 4: {
-                        created = new PointLightNode3d({0, 0, 0}, {1.0, 1.0, 1.0}, 1.0);
-                        created->SetName("PointLight");
+                        auto n = std::make_unique<PointLightNode3d>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+                        n->SetName("PointLight");
+                        created = n.get();
+                        root->AddChild(std::move(n));
                         break;
                     }
                     default: break;
                 }
 
                 if (created) {
-                    root->AddChild(created);
                     m_lastSelectedNode = created;
                     m_scrollToSelected = true;
-
                     m_selection.Clear();
                     m_selection.SetItemSelected(created->GetId(), true);
                 }
@@ -138,7 +158,6 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
     }
 
     const int totalNodes = CountNodesRecursive(node);
-
     constexpr ImGuiMultiSelectFlags msFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
 
     ImGuiMultiSelectIO* msIO = ImGui::BeginMultiSelect(msFlags, m_selection.Size, totalNodes);
@@ -170,7 +189,7 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
         ImGui::PopStyleVar();
         ImGui::PopID();
 
-        if (ImGui::BeginPopupContextItem("node_ctx")) {
+        if (ImGui::BeginPopupContextItem()) {
             if (ImGui::MenuItem("Duplicate")) DuplicateSelectedNodes();
             if (ImGui::MenuItem("Delete")) {
                 ImGuiID id = 0;
@@ -211,6 +230,8 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
     msIO = ImGui::EndMultiSelect();
     m_selection.ApplyRequests(msIO);
 
+    ImGui::PopID();
+
     if (!m_pendingDeletes.empty()) {
         DeleteSelectedNodes();
         m_pendingDeletes.clear();
@@ -220,7 +241,9 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
 }
 
 void SceneTreePanel::DeleteSelectedNodes() {
-    if (!m_lastSelectedNode || m_lastSelectedNode == m_editor->GetCore().GetScene()) {
+    Node3d* activeScene = m_editor->GetState() == Editor::State::Playing ? m_editor->GetCore().GetScene() : m_editor->GetActiveViewport()->GetScene();
+
+    if (!activeScene || !m_lastSelectedNode || m_lastSelectedNode == activeScene) {
         return;
     }
 
@@ -234,8 +257,8 @@ void SceneTreePanel::DeleteSelectedNodes() {
     }
 
     for (const uint32_t id : idsToDelete) {
-        Node3d* n = FindNodeById(m_editor->GetCore().GetScene(), id);
-        if (!n || n == m_editor->GetCore().GetScene() || n->GetNodeType() == std::string("SkyboxNode3d")) {
+        Node3d* n = FindNodeById(activeScene, id);
+        if (!n || n == activeScene || n->GetNodeType() == std::string("SkyboxNode3d")) {
             continue;
         }
 
@@ -243,11 +266,9 @@ void SceneTreePanel::DeleteSelectedNodes() {
             m_lastSelectedNode = nullptr;
         }
 
-        // TODO: add queue free
-        // n->QueueFree();
-
-        if (Node3d* p = n->GetParent()) p->RemoveChild(n);
-        delete n;
+        if (Node3d* p = n->GetParent()) {
+            p->RemoveChild(n);
+        }
     }
 
     m_selection.Clear();
@@ -257,6 +278,9 @@ void SceneTreePanel::DuplicateSelectedNodes() {
     if (!m_lastSelectedNode || m_selection.Size == 0) {
         return;
     }
+
+    Node3d* activeScene = m_editor->GetState() == Editor::State::Playing ? m_editor->GetCore().GetScene() : m_editor->GetActiveViewport()->GetScene();
+    if (!activeScene) return;
 
     std::vector<uint32_t> idsToDuplicate;
     idsToDuplicate.reserve(static_cast<size_t>(m_selection.Size));
@@ -273,52 +297,40 @@ void SceneTreePanel::DuplicateSelectedNodes() {
     newIds.reserve(idsToDuplicate.size());
 
     for (const uint32_t id : idsToDuplicate) {
-        Node3d* n = FindNodeById(m_editor->GetCore().GetScene(), id);
-        if (!n) {
-            continue;
-        }
+        Node3d* n = FindNodeById(activeScene, id);
+        if (!n) continue;
 
         Node3d* parent = n->GetParent();
-        if (!parent) {
-            continue;
-        }
+        if (!parent) continue;
 
-        Node3d* duplicate = n->Clone();
-        parent->AddChild(duplicate);
-        duplicate->UpdateWorldTransform(parent->GetWorldMatrix());
+        auto duplicate = n->Clone();
+        Node3d* duplicateRaw = duplicate.get();
+        parent->AddChild(std::move(duplicate));
+        duplicateRaw->UpdateWorldTransform(parent->GetWorldMatrix());
 
-        newIds.push_back(duplicate->GetId());
+        newIds.push_back(duplicateRaw->GetId());
     }
 
     for (const uint32_t newId : newIds) {
         m_selection.SetItemSelected(newId, true);
-        m_lastSelectedNode = FindNodeById(m_editor->GetCore().GetScene(), newId);
+        m_lastSelectedNode = FindNodeById(activeScene, newId);
         m_scrollToSelected = true;
     }
 }
 
 Node3d* SceneTreePanel::FindNodeById(Node3d *root, const uint32_t id) {
-    if (!root) {
-        return nullptr;
-    }
-
-    if (root->GetId() == id) {
-        return root;
-    }
+    if (!root) return nullptr;
+    if (root->GetId() == id) return root;
 
     for (Node3d* c : root->GetChildren()) {
-        if (Node3d* r = FindNodeById(c, id)) {
-            return r;
-        }
+        if (Node3d* r = FindNodeById(c, id)) return r;
     }
 
     return nullptr;
 }
 
 int SceneTreePanel::CountNodesRecursive(const Node3d *root) {
-    if (!root) {
-        return 0;
-    }
+    if (!root) return 0;
 
     int count = 1;
     for (const Node3d* c : root->GetChildren()) {
