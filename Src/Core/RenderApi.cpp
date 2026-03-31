@@ -111,6 +111,7 @@ RenderApi::~RenderApi() {
     m_lightManager.reset();
     m_shadowRenderer.reset();
     m_depthShader.reset();
+    m_gridShader.reset();
     m_cameraUbo.reset();
     m_ibl = {};
 

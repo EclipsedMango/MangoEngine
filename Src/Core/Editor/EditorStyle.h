@@ -3,7 +3,6 @@
 #define MANGORENDERING_EDITORSTYLE_H
 #include "imgui.h"
 
-
 class EditorStyle {
 public:
     static EditorStyle& Get() {
@@ -22,8 +21,11 @@ public:
     // ----------------------------------------------------------------
     // Fonts
     // ----------------------------------------------------------------
-    ImFont* mainFont = nullptr; // Lexend labels, menus, general UI
-    ImFont* monoFont = nullptr; // JetBrains Mono values, stats, debug
+    ImFont* mainFontSm   = nullptr;  // 16px - labels, secondary text
+    ImFont* mainFont     = nullptr;  // 18px - general UI
+    ImFont* mainFontLg   = nullptr;  // 22px - headers
+    ImFont* mainFontExLg = nullptr;  // 64px - giant things idk
+    ImFont* monoFont     = nullptr;  // 17px - values, stats, debug (Native Nerd Font)
 
     // ----------------------------------------------------------------
     // colors
@@ -39,23 +41,42 @@ public:
 
     // used for mono values: FPS, ms, positions, sizes
     void PushMono() const { ImGui::PushFont(monoFont); }
-    void PopMono() const { ImGui::PopFont(); }
+    static void PopMono() { ImGui::PopFont(); }
 
     // used for panel section headers (SeparatorText, TreeNode labels)
-    void PushHeader() const { ImGui::PushStyleColor(ImGuiCol_Text, colHeader); }
-    void PopHeader() const { ImGui::PopStyleColor(); }
+    void PushHeader() const { ImGui::PushFont(mainFontLg); ImGui::PushStyleColor(ImGuiCol_Text, colHeader); }
+    static void PopHeader() { ImGui::PopStyleColor(); ImGui::PopFont(); }
 
     // used for secondary / dimmed text
-    void PushLabel() const { ImGui::PushStyleColor(ImGuiCol_Text, colLabel); }
-    void PopLabel() const { ImGui::PopStyleColor(); }
+    void PushLabel() const { ImGui::PushFont(mainFontSm); ImGui::PushStyleColor(ImGuiCol_Text, colLabel); }
+    static void PopLabel() { ImGui::PopStyleColor(); ImGui::PopFont(); }
 
 private:
     EditorStyle() = default;
 
     void LoadFonts(ImGuiIO& io) {
-        // first font loaded becomes the ImGui default
-        mainFont = io.Fonts->AddFontFromFileTTF("../Assets/Editor/Fonts/Lexend/Lexend-VariableFont_wght.ttf", 14.0f);
-        monoFont = io.Fonts->AddFontFromFileTTF("../Assets/Editor/Fonts/JetBrains_Mono/JetBrainsMono-VariableFont_wght.ttf", 13.0f);
+        const char* lexend = "../Assets/Editor/Fonts/Lexend/Lexend-VariableFont_wght.ttf";
+        const char* nerdFontPath = "../Assets/Editor/Fonts/JetBrainsMonoNerdFont/JetBrainsMonoNerdFont-Regular.ttf";
+
+        static const ImWchar icon_ranges[] = { 0xe000, 0xf8ff, 0 };
+
+        ImFontConfig iconConfig;
+        iconConfig.MergeMode = true;
+        iconConfig.PixelSnapH = true;
+
+        mainFontSm = io.Fonts->AddFontFromFileTTF(lexend, 16.0f);
+        io.Fonts->AddFontFromFileTTF(nerdFontPath, 16.0f, &iconConfig, icon_ranges);
+
+        mainFont = io.Fonts->AddFontFromFileTTF(lexend, 18.0f);
+        io.Fonts->AddFontFromFileTTF(nerdFontPath, 18.0f, &iconConfig, icon_ranges);
+
+        mainFontLg = io.Fonts->AddFontFromFileTTF(lexend, 22.0f);
+        io.Fonts->AddFontFromFileTTF(nerdFontPath, 22.0f, &iconConfig, icon_ranges);
+
+        mainFontExLg = io.Fonts->AddFontFromFileTTF(lexend, 64.0f);
+        io.Fonts->AddFontFromFileTTF(nerdFontPath, 64.0f, &iconConfig, icon_ranges);
+
+        monoFont = io.Fonts->AddFontFromFileTTF(nerdFontPath, 17.0f);
     }
 
     void ApplyStyle() {

@@ -4,6 +4,7 @@
 
 #include "GizmoSystem.h"
 #include "../Core.h"
+#include "UI/ContentBrowserWindow.h"
 #include "UI/InspectorPanel.h"
 #include "UI/SceneTreePanel.h"
 #include "UI/ViewportWindow.h"
@@ -38,7 +39,6 @@ private:
     // panels
     void DrawViewportTabs();
     void DrawMenuBar();
-    void DrawContentBrowser();
     void DrawCameraSpeedIndication(float alpha) const;
 
     // helpers
@@ -59,6 +59,7 @@ private:
     Core m_core;
     InspectorPanel m_inspector;
     SceneTreePanel m_sceneTree;
+    ContentBrowserWindow m_contentBrowserWindow;
     GizmoSystem m_gizmoSystem;
 
     float m_speedIndicatorTimer = 0.0f;

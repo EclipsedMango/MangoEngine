@@ -9,7 +9,7 @@
 #include "glm/gtc/type_ptr.inl"
 #include "UI/ViewportWindow.h"
 
-Editor::Editor(std::unique_ptr<Node3d> scene) : m_inspector(this), m_sceneTree(this) {
+Editor::Editor(std::unique_ptr<Node3d> scene) : m_inspector(this), m_sceneTree(this), m_contentBrowserWindow(this) {
     m_core.Init();
 
     m_mainViewport = std::make_unique<ViewportWindow>(this, "Main Viewport");
@@ -112,7 +112,7 @@ void Editor::Run() {
         m_sceneTree.DrawSceneTree(sceneToDraw);
 
         m_inspector.DrawInspector(m_sceneTree.GetSelectedNode());
-        DrawContentBrowser();
+        m_contentBrowserWindow.DrawContentBrowser();
 
         if (Input::IsKeyJustPressed(SDL_SCANCODE_DELETE)) {
             m_sceneTree.DeleteSelectedNodes();
@@ -246,12 +246,6 @@ void Editor::DrawMenuBar() {
     if (isEditing) ImGui::EndDisabled();
 
     ImGui::EndMainMenuBar();
-}
-
-void Editor::DrawContentBrowser() {
-    ImGui::Begin("Content Browser");
-    ImGui::TextDisabled("Content browser coming soon");
-    ImGui::End();
 }
 
 void Editor::DrawCameraSpeedIndication(const float alpha) const {

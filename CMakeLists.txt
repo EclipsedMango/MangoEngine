@@ -163,10 +163,16 @@ add_custom_target(copy_assets ALL
         ${CMAKE_BINARY_DIR}/Assets
 )
 
+add_custom_target(copy_root ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/Root
+        ${CMAKE_BINARY_DIR}/Root
+)
+
 add_custom_command(TARGET MangoRendering POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:SDL3::SDL3>
         $<TARGET_FILE_DIR:MangoRendering>
 )
 
-add_dependencies(MangoRendering copy_assets)
+add_dependencies(MangoRendering copy_assets copy_root)
