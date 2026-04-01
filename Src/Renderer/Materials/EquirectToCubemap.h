@@ -7,7 +7,7 @@
 
 class EquirectToCubemap {
 public:
-    static Texture* Convert(const std::string& hdrPath, int faceSize = 512);
+    static std::shared_ptr<Texture> Convert(const std::string &hdrPath, int faceSize = 512);
 };
 
 

@@ -38,8 +38,8 @@ public:
     [[nodiscard]] ShaderStorageBuffer* GetGlobalCountSsbo() const { return m_globalCountSsbo.get(); }
 
 private:
-    std::unique_ptr<Shader> m_clusterShader;
-    std::unique_ptr<Shader> m_cullShader;
+    std::shared_ptr<Shader> m_clusterShader;
+    std::shared_ptr<Shader> m_cullShader;
 
     std::unique_ptr<ShaderStorageBuffer> m_clusterAabbSsbo;  // binding 4
     std::unique_ptr<ShaderStorageBuffer> m_lightIndexSsbo;   // binding 5

@@ -8,11 +8,12 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "../Lights/GpuLights.h"
 #include "Core/RenderApi.h"
+#include "Core/ResourceManager.h"
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
 
 ShadowRenderer::ShadowRenderer() {
-    m_shadowDepthShader = std::make_unique<Shader>("../Assets/Shaders/shadow_depth.vert", "../Assets/Shaders/shadow_depth.frag");
-    m_pointShadowDepthShader = std::make_unique<Shader>("../Assets/Shaders/point_shadow_depth.vert", "../Assets/Shaders/point_shadow_depth.frag", "../Assets/Shaders/point_shadow_depth.geom");
+    m_shadowDepthShader = ResourceManager::Get().LoadShader("ShadowDepth", "shadow_depth.vert", "shadow_depth.frag");
+    m_pointShadowDepthShader = ResourceManager::Get().LoadShaderWithGeom("PointShadowDepth", "point_shadow_depth.vert", "point_shadow_depth.frag", "point_shadow_depth.geom");
     m_pointShadowMap = std::make_unique<PointLightShadowMap>(POINT_SHADOW_RES, MAX_SHADOWED_POINT_LIGHTS);
 }
 

@@ -21,8 +21,8 @@ public:
     [[nodiscard]] Texture& GetTexture() const { return *m_texture; }
 
 private:
-    Texture* m_texture = nullptr;
-    Shader* m_shader = nullptr;
+    std::shared_ptr<Texture> m_texture;
+    std::shared_ptr<Shader> m_shader;
     VertexArray* m_vao = nullptr;
 };
 

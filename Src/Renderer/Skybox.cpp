@@ -1,24 +1,23 @@
 
 #include "Skybox.h"
 
+#include "Core/ResourceManager.h"
 #include "Materials/EquirectToCubemap.h"
 #include "Meshes/CubeGeometry.h"
 
 Skybox::Skybox(std::vector<std::string>& faces) {
-    m_texture = new Texture(faces);
-    m_shader = new Shader("../Assets/Shaders/skybox.vert", "../Assets/Shaders/skybox.frag");
+    m_texture = std::make_shared<Texture>(faces);
+    m_shader = ResourceManager::Get().LoadShader("SkyboxShader", "skybox.vert", "skybox.frag");
     m_vao = CubeGeometry::CreateVao();
 }
 
 Skybox::Skybox(const std::string &hdrPath, const int faceSize) {
     m_texture = EquirectToCubemap::Convert(hdrPath, faceSize);
-    m_shader = new Shader("../Assets/Shaders/skybox.vert", "../Assets/Shaders/skybox.frag");
+    m_shader = ResourceManager::Get().LoadShader("SkyboxShader", "skybox.vert", "skybox.frag");
     m_vao = CubeGeometry::CreateVao();
 }
 
 Skybox::~Skybox() {
-    delete m_texture;
-    delete m_shader;
     delete m_vao;
 }
 

@@ -2,6 +2,7 @@
 #ifndef MANGORENDERING_EDITORSTYLE_H
 #define MANGORENDERING_EDITORSTYLE_H
 #include "imgui.h"
+#include "Core/ResourceManager.h"
 
 class EditorStyle {
 public:
@@ -55,8 +56,8 @@ private:
     EditorStyle() = default;
 
     void LoadFonts(ImGuiIO& io) {
-        const char* lexend = "../Assets/Editor/Fonts/Lexend/Lexend-VariableFont_wght.ttf";
-        const char* nerdFontPath = "../Assets/Editor/Fonts/JetBrainsMonoNerdFont/JetBrainsMonoNerdFont-Regular.ttf";
+        std::string lexend = ResourceManager::Get().ResolveAssetPath("Lexend-VariableFont_wght.ttf");
+        std::string nerdFontPath = ResourceManager::Get().ResolveAssetPath("JetBrainsMonoNerdFont-Regular.ttf");
 
         static const ImWchar icon_ranges[] = { 0xe000, 0xf8ff, 0 };
 
@@ -64,19 +65,19 @@ private:
         iconConfig.MergeMode = true;
         iconConfig.PixelSnapH = true;
 
-        mainFontSm = io.Fonts->AddFontFromFileTTF(lexend, 16.0f);
-        io.Fonts->AddFontFromFileTTF(nerdFontPath, 16.0f, &iconConfig, icon_ranges);
+        mainFontSm = io.Fonts->AddFontFromFileTTF(lexend.c_str(), 16.0f);
+        io.Fonts->AddFontFromFileTTF(nerdFontPath.c_str(), 16.0f, &iconConfig, icon_ranges);
 
-        mainFont = io.Fonts->AddFontFromFileTTF(lexend, 18.0f);
-        io.Fonts->AddFontFromFileTTF(nerdFontPath, 18.0f, &iconConfig, icon_ranges);
+        mainFont = io.Fonts->AddFontFromFileTTF(lexend.c_str(), 18.0f);
+        io.Fonts->AddFontFromFileTTF(nerdFontPath.c_str(), 18.0f, &iconConfig, icon_ranges);
 
-        mainFontLg = io.Fonts->AddFontFromFileTTF(lexend, 22.0f);
-        io.Fonts->AddFontFromFileTTF(nerdFontPath, 22.0f, &iconConfig, icon_ranges);
+        mainFontLg = io.Fonts->AddFontFromFileTTF(lexend.c_str(), 22.0f);
+        io.Fonts->AddFontFromFileTTF(nerdFontPath.c_str(), 22.0f, &iconConfig, icon_ranges);
 
-        mainFontExLg = io.Fonts->AddFontFromFileTTF(lexend, 64.0f);
-        io.Fonts->AddFontFromFileTTF(nerdFontPath, 64.0f, &iconConfig, icon_ranges);
+        mainFontExLg = io.Fonts->AddFontFromFileTTF(lexend.c_str(), 64.0f);
+        io.Fonts->AddFontFromFileTTF(nerdFontPath.c_str(), 64.0f, &iconConfig, icon_ranges);
 
-        monoFont = io.Fonts->AddFontFromFileTTF(nerdFontPath, 17.0f);
+        monoFont = io.Fonts->AddFontFromFileTTF(nerdFontPath.c_str(), 17.0f);
     }
 
     void ApplyStyle() {

@@ -73,12 +73,12 @@ private:
     static void BuildPointShadowFaceMatrices(const glm::vec3& lightPos, float nearPlane, float farPlane, glm::mat4 outVP[6]);
 
     // directional shadow resources
-    std::unique_ptr<Shader> m_shadowDepthShader;
+    std::shared_ptr<Shader> m_shadowDepthShader;
     std::vector<DirectionalLight*> m_directionalLights;
     std::vector<CascadedShadowMap*> m_cascadedShadowMaps;   // parallel to m_directionalLights
 
     // point shadow resources
-    std::unique_ptr<Shader> m_pointShadowDepthShader;
+    std::shared_ptr<Shader> m_pointShadowDepthShader;
     std::unique_ptr<PointLightShadowMap> m_pointShadowMap;
     std::unique_ptr<ShaderStorageBuffer> m_pointShadowMetaSsbo;  // binding 8
 

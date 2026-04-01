@@ -17,7 +17,7 @@ public:
     explicit Texture(int width, int height, GLenum internalFormat);
     explicit Texture(int width, int height, GLenum internalFormat, int mipLevels);
     explicit Texture(const std::vector<std::string>& paths);
-    ~Texture();
+    ~Texture() override;
 
     Texture(const Texture&) = delete;
     Texture& operator=(const Texture&) = delete;

@@ -1,11 +1,15 @@
 
 #include "IBLPrecomputer.h"
 
+#include "Core/ResourceManager.h"
 #include "glad/gl.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "Renderer/Shader.h"
 #include "Renderer/Meshes/Mesh.h"
+
+std::shared_ptr<Shader> IBLPrecomputer::m_irradianceShader;
+std::shared_ptr<Shader> IBLPrecomputer::m_prefilterShader;
 
 // 6 view matrices for rendering into each cubemap face
 static const glm::mat4 captureViews[6] = {
@@ -54,12 +58,17 @@ IBLPrecomputer::Result IBLPrecomputer::Compute(const Texture &envCubemap) {
 
     const auto cube = CreateCaptureCube();
 
-    const Shader irradianceShader("../Assets/Shaders/ibl_capture.vert", "../Assets/Shaders/ibl_irradiance.frag");
-    const Shader prefilterShader("../Assets/Shaders/ibl_capture.vert", "../Assets/Shaders/ibl_prefilter.frag");
+    m_irradianceShader = ResourceManager::Get().LoadShader("IrradianceShader", "ibl_capture.vert", "ibl_irradiance.frag");
+    m_prefilterShader = ResourceManager::Get().LoadShader("IblPrefilterShader", "ibl_capture.vert", "ibl_prefilter.frag");
+
+    if (!m_irradianceShader || !m_prefilterShader) {
+        std::cerr << "[IBLPrecomputer] Failed to load shaders, aborting." << std::endl;
+        return {};
+    }
 
     Result result;
-    result.irradiance = ComputeIrradiance (envCubemap, captureFbo, captureRbo, irradianceShader, *cube);
-    result.prefiltered = ComputePrefiltered(envCubemap, captureFbo, captureRbo, prefilterShader, *cube);
+    result.irradiance = ComputeIrradiance(envCubemap, captureFbo, captureRbo, *cube);
+    result.prefiltered = ComputePrefiltered(envCubemap, captureFbo, captureRbo, *cube);
 
     glDeleteFramebuffers(1, &captureFbo);
     glDeleteRenderbuffers(1, &captureRbo);
@@ -70,16 +79,16 @@ IBLPrecomputer::Result IBLPrecomputer::Compute(const Texture &envCubemap) {
     return result;
 }
 
-std::unique_ptr<Texture> IBLPrecomputer::ComputeIrradiance(const Texture &env, const GLuint captureFbo, const GLuint captureRbo, const Shader &shader, const Mesh &cube) {
+std::unique_ptr<Texture> IBLPrecomputer::ComputeIrradiance(const Texture &env, const GLuint captureFbo, const GLuint captureRbo, const Mesh &cube) {
     auto irradiance = std::make_unique<Texture>(IRRADIANCE_SIZE, IRRADIANCE_SIZE, GL_RGB16F, 1);
 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFbo);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, IRRADIANCE_SIZE, IRRADIANCE_SIZE);
 
-    shader.Bind();
-    shader.SetInt("u_EnvMap", 0);
-    shader.SetMatrix4("u_Projection", captureProjection);
+    m_irradianceShader->Bind();
+    m_irradianceShader->SetInt("u_EnvMap", 0);
+    m_irradianceShader->SetMatrix4("u_Projection", captureProjection);
     env.Bind(0);
 
     glViewport(0, 0, IRRADIANCE_SIZE, IRRADIANCE_SIZE);
@@ -88,7 +97,7 @@ std::unique_ptr<Texture> IBLPrecomputer::ComputeIrradiance(const Texture &env, c
     glDisable(GL_DEPTH_TEST);
 
     for (int face = 0; face < 6; face++) {
-        shader.SetMatrix4("u_View", captureViews[face]);
+        m_irradianceShader->SetMatrix4("u_View", captureViews[face]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, irradiance->GetGLHandle(), 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         cube.GetBuffer()->Bind();
@@ -102,12 +111,12 @@ std::unique_ptr<Texture> IBLPrecomputer::ComputeIrradiance(const Texture &env, c
     return irradiance;
 }
 
-std::unique_ptr<Texture> IBLPrecomputer::ComputePrefiltered(const Texture &env, const GLuint captureFbo, const GLuint captureRbo, const Shader &shader, const Mesh &cube) {
+std::unique_ptr<Texture> IBLPrecomputer::ComputePrefiltered(const Texture &env, const GLuint captureFbo, const GLuint captureRbo, const Mesh &cube) {
     auto prefiltered = std::make_unique<Texture>(PREFILTER_SIZE, PREFILTER_SIZE, GL_RGB16F, PREFILTER_MIP_LEVELS);
 
-    shader.Bind();
-    shader.SetInt("u_EnvMap", 0);
-    shader.SetMatrix4("u_Projection", captureProjection);
+    m_prefilterShader->Bind();
+    m_prefilterShader->SetInt("u_EnvMap", 0);
+    m_prefilterShader->SetMatrix4("u_Projection", captureProjection);
     env.Bind(0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFbo);
@@ -121,13 +130,13 @@ std::unique_ptr<Texture> IBLPrecomputer::ComputePrefiltered(const Texture &env, 
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
         glViewport(0, 0, mipWidth, mipHeight);
 
-        shader.SetFloat("u_Roughness", roughness);
+        m_prefilterShader->SetFloat("u_Roughness", roughness);
 
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
 
         for (int face = 0; face < 6; face++) {
-            shader.SetMatrix4("u_View", captureViews[face]);
+            m_prefilterShader->SetMatrix4("u_View", captureViews[face]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, prefiltered->GetGLHandle(), mip);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             cube.GetBuffer()->Bind();

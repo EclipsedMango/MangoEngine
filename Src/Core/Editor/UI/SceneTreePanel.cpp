@@ -115,7 +115,7 @@ void SceneTreePanel::DrawSceneTree(Node3d *node) {
                     }
                     case 1: {
                         auto n = std::make_unique<MeshNode3d>(std::make_shared<CubeMesh>(),
-                        ResourceManager::Get().LoadShader("test", "../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag"));
+                        ResourceManager::Get().LoadShader("test", "test.vert", "test.frag"));
                         n->SetName("MeshNode3d");
                         created = n.get();
                         root->AddChild(std::move(n));

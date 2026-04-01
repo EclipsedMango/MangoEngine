@@ -12,6 +12,13 @@
 Editor::Editor(std::unique_ptr<Node3d> scene) : m_inspector(this), m_sceneTree(this), m_contentBrowserWindow(this) {
     m_core.Init();
 
+    // setup user project assets and engine assets
+    const std::filesystem::path engineAssets = ResourceManager::Get().GetEngineDirectory();
+    const std::filesystem::path userProjectRoot = engineAssets.parent_path() / "Root";
+    const std::filesystem::path userAssets = userProjectRoot / "Assets";
+
+    ResourceManager::Get().SetUserDirectory(userAssets);
+
     m_mainViewport = std::make_unique<ViewportWindow>(this, "Main Viewport");
     m_mainViewport->LoadScene(std::move(scene));
 
@@ -192,7 +199,7 @@ void Editor::DrawMenuBar() {
         if (ImGui::MenuItem("New Scene"))  { /* TODO */ }
         if (ImGui::MenuItem("Open Scene")) {
             try {
-                const auto packed = PackedScene::LoadFromFile("../Assets/john.yml");
+                const auto packed = PackedScene::LoadFromFile("john.yml");
                 auto loaded = packed.Instantiate();
                 m_activeViewport->LoadScene(std::move(loaded));
                 m_sceneTree.ClearSelection();
@@ -204,7 +211,7 @@ void Editor::DrawMenuBar() {
             const Node3d* activeScene = m_state == State::Playing ? m_core.GetScene() : m_activeViewport->GetScene();
             if (activeScene) {
                 PackedScene scene(activeScene);
-                scene.SaveToFile("../Assets/john.yml");
+                scene.SaveToFile("john.yml");
             }
         }
         ImGui::Separator();

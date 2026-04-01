@@ -19,27 +19,24 @@ int main() {
     const auto cubeMesh = std::make_shared<CubeMesh>();
     const auto sphereMesh = std::make_shared<SphereMesh>();
 
-    auto texture = std::make_shared<Texture>("../Assets/Textures/face.png");
-    auto teddyTexture = std::make_shared<Texture>("../Assets/Textures/Cubemaps/sky_16_2k/sky_16_2k.png");
-    const auto shader = ResourceManager::Get().LoadShader("default", "../Assets/Shaders/test.vert", "../Assets/Shaders/test.frag");
-    const auto portalShader = ResourceManager::Get().LoadShader("portal_mask", "../Assets/Shaders/portal_mask.vert", "../Assets/Shaders/portal_mask.frag");
-
-    // Node3d* teddy = GltfLoader::Load("../Assets/Models/teddy.glb", shader);
-    // teddy->SetPosition({0, 0, 5});
-    // liveScene->AddChild(teddy);
+    auto texture = ResourceManager::Get().LoadTexture("face.png");
+    auto teddyTexture = ResourceManager::Get().LoadTexture("sky_16_2k.png");
+    const auto shader = ResourceManager::Get().LoadShader("default", "test.vert", "test.frag");
+    const auto portalShader = ResourceManager::Get().LoadShader("portal_mask", "portal_mask.vert", "portal_mask.frag");
 
     auto quad = std::make_unique<MeshNode3d>(shader);
     quad->SetMeshByName("Quad");
     quad->SetScale({4.0f, 4.0f, 4.0f});
     quad->GetActiveMaterial().SetDoubleSided(true);
-    quad->GetActiveMaterial().SetDiffuse("../Assets/Textures/RedBrick/red_brick_03_diff_1k.png");
-    quad->GetActiveMaterial().SetAmbientOcclusion("../Assets/Textures/RedBrick/red_brick_03_ao_1k.png");
-    quad->GetActiveMaterial().SetDisplacement("../Assets/Textures/RedBrick/red_brick_03_disp_1k.png");
-    quad->GetActiveMaterial().SetNormal("../Assets/Textures/RedBrick/red_brick_03_nor_gl_1k.png");
-    quad->GetActiveMaterial().SetRoughness("../Assets/Textures/RedBrick/red_brick_03_rough_1k.png");
+    quad->GetActiveMaterial().SetDiffuse("red_brick_03_diff_1k.png");
+    quad->GetActiveMaterial().SetAmbientOcclusion("red_brick_03_ao_1k.png");
+    quad->GetActiveMaterial().SetDisplacement("red_brick_03_disp_1k.png");
+    quad->GetActiveMaterial().SetNormal("red_brick_03_nor_gl_1k.png");
+    quad->GetActiveMaterial().SetRoughness("red_brick_03_rough_1k.png");
     liveScene->AddChild(std::move(quad));
 
-    auto house = std::unique_ptr<Node3d>(GltfLoader::Load("../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb", shader));
+    const std::string housePath = ResourceManager::Get().ResolveAssetPath("stylised_sky_player_home_dioroma.glb");
+    auto house = std::unique_ptr(GltfLoader::Load(housePath, shader));
     house->SetScale({0.15f, 0.15f, 0.15f});
     house->SetPosition({0, -4, -15});
     liveScene->AddChild(std::move(house));
@@ -84,7 +81,7 @@ int main() {
     auto pointLight = std::make_unique<PointLightNode3d>(glm::vec3(2, 2, -2), glm::vec3(0.6f, 0.7f, 0.9f), 1.0f, 15.0f);
     liveScene->AddChild(std::move(pointLight));
 
-    auto skybox = std::make_unique<SkyboxNode3d>("../Assets/Textures/Cubemaps/kloppenheim_06_puresky_1k.hdr");
+    auto skybox = std::make_unique<SkyboxNode3d>(ResourceManager::Get().ResolveAssetPath("kloppenheim_06_puresky_1k.hdr"));
     editor.GetCore().SetGlobalSkybox(std::move(skybox));
 
     auto camera = std::make_unique<CameraNode3d>(glm::vec3(0.0f, 1.0f, 8.0f), 75.0f, 1280.0f / 720.0f);

@@ -1,5 +1,8 @@
 
 #include "ContentBrowserWindow.h"
+
+#include <fstream>
+
 #include "imgui.h"
 #include "Core/Editor/EditorStyle.h"
 
@@ -41,6 +44,16 @@ void ContentBrowserWindow::DrawContentBrowser() {
         ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
         ImGui::InvisibleButton("##window_drop_target", ImGui::GetWindowSize());
         AcceptDrop(m_currentPath);
+
+        if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+            ImGui::OpenPopup("##bg_context");
+        }
+    }
+
+    if (ImGui::BeginPopup("##bg_context")) {
+        if (ImGui::MenuItem("New Folder")) NewFolder(m_currentPath);
+        if (ImGui::MenuItem("New File")) NewFile(m_currentPath);
+        ImGui::EndPopup();
     }
 
     ImGui::End();
@@ -67,6 +80,7 @@ void ContentBrowserWindow::DisplayPath(const fs::path &path) {
 
         ImGui::PushID(filename.c_str());
         const bool clicked = ImGui::InvisibleButton("##item_hitbox", ImVec2(itemSize, itemSize));
+        const bool rightClick = ImGui::IsItemClicked(ImGuiMouseButton_Right);
         const bool hovered = ImGui::IsItemHovered();
         ImGui::PopID();
 
@@ -84,6 +98,12 @@ void ContentBrowserWindow::DisplayPath(const fs::path &path) {
             if (clicked) {
                 m_currentPath = entry.path();
             }
+
+            if (rightClick) {
+                ImGui::OpenPopup("##fol_context");
+                m_contextPayloadPath = relative(entry.path());
+            }
+
             icon = "\uf114";
             iconColor = IM_COL32(180, 180, 180, 255);
             iconOffset = ImVec2(-7.5, 0);
@@ -94,6 +114,7 @@ void ContentBrowserWindow::DisplayPath(const fs::path &path) {
             if (clicked) {
                 // TODO: handle file selection
             }
+
             icon = "\uf016";
             iconColor = IM_COL32(180, 180, 180, 255);
             iconOffset = ImVec2(-2.5, 0);
@@ -117,6 +138,80 @@ void ContentBrowserWindow::DisplayPath(const fs::path &path) {
 
         ImGui::EndGroup();
         i++;
+    }
+
+    if (ImGui::BeginPopup("##fol_context")) {
+        if (ImGui::MenuItem("Open Folder")) {
+            m_currentPath = m_contextPayloadPath;
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Copy Path")) {
+            const std::string pathStr = m_contextPayloadPath.string();
+            ImGui::SetClipboardText(pathStr.c_str());
+        }
+        if (ImGui::MenuItem("Copy Absolute Path")) {
+            const std::string absPathStr = fs::absolute(m_contextPayloadPath).string();
+            ImGui::SetClipboardText(absPathStr.c_str());
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Duplicate Folder")) {}
+        if (ImGui::MenuItem("Rename Folder")) {}
+        if (ImGui::MenuItem("Delete Folder")) {}
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Open in Terminal")) {}
+        if (ImGui::MenuItem("Open in File Manager")) {}
+
+        ImGui::EndPopup();
+    }
+}
+
+void ContentBrowserWindow::NewFolder(const fs::path &path) {
+    const std::string baseName = "NewFolder";
+    fs::path newFolderPath = path / baseName;
+
+    int counter = 1;
+    while (fs::exists(newFolderPath)) {
+        newFolderPath = path / (baseName + std::to_string(counter));
+        counter++;
+    }
+
+    try {
+        fs::create_directory(newFolderPath);
+    } catch (const fs::filesystem_error& e) {
+        // TODO: log to console or something idk
+        throw e;
+    }
+}
+
+void ContentBrowserWindow::NewFile(fs::path &path) {
+    const std::string baseName = "NewFile";
+    const std::string extension = ".txt";
+
+    fs::path newFilePath = path / (baseName + extension);
+
+    int counter = 1;
+    while (fs::exists(newFilePath)) {
+        newFilePath = path / (baseName + std::to_string(counter) + extension);
+        counter++;
+    }
+
+    try {
+        std::ofstream newFile(newFilePath);
+
+        if (!newFile.is_open()) {
+            throw std::runtime_error("Failed to create file at: " + newFilePath.string());
+        }
+
+        newFile.close();
+    } catch (const std::exception& e) {
+        // TODO: log to console or something idk
+        throw e;
     }
 }
 

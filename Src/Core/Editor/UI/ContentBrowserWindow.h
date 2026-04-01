@@ -17,12 +17,15 @@ public:
 
 private:
     void DisplayPath(const fs::path& path);
+    static void NewFolder(const fs::path& path);
+    static void NewFile(fs::path& path);
 
     static void StartDrag(const std::string& fullPath, const std::string& filename);
     static void AcceptDrop(const fs::path& destDir);
 
     Editor* m_editor = nullptr;
     fs::path m_currentPath;
+    fs::path m_contextPayloadPath;
 
     double m_backHoverStart = 0.0;
     const double m_backHoverDelay = 0.4;

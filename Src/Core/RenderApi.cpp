@@ -6,6 +6,7 @@
 #include <SDL3/SDL_video.h>
 #include <stdexcept>
 
+#include "ResourceManager.h"
 #include "Renderer/Lights/GpuLights.h"
 #include "Renderer/Buffers/UniformBuffer.h"
 #include "glad/gl.h"
@@ -94,7 +95,7 @@ void RenderApi::InitGLResources() {
     // camera UBO
     m_cameraUbo = std::make_unique<UniformBuffer>(2 * sizeof(glm::mat4), 0);
 
-    m_gridShader = std::make_unique<Shader>("../Assets/Shaders/grid.vert", "../Assets/Shaders/grid.frag");
+    m_gridShader = ResourceManager::Get().LoadShader("GridShader", "grid.vert", "grid.frag");
     glGenVertexArrays(1, &m_gridVao);
 
     m_clusterSystem = std::make_unique<ClusterSystem>();
@@ -103,7 +104,7 @@ void RenderApi::InitGLResources() {
 }
 
 void RenderApi::InitDepthPass() {
-    m_depthShader = std::make_unique<Shader>("../Assets/Shaders/depth_only.vert", "../Assets/Shaders/depth_only.frag");
+    m_depthShader = ResourceManager::Get().LoadShader("DepthOnly", "depth_only.vert", "depth_only.frag");
 }
 
 RenderApi::~RenderApi() {
@@ -366,7 +367,7 @@ void RenderApi::RenderMainPass(const CameraNode3d* camera, const Framebuffer* ta
     }
 }
 
-void RenderApi::RenderTransparentPass(const CameraNode3d* camera, const std::vector<MeshNode3d*>& transparentQueue, RenderStats& stats) const {
+void RenderApi::RenderTransparentPass(const CameraNode3d* camera, const std::vector<MeshNode3d*>& transparentQueue, RenderStats& stats) {
     if (transparentQueue.empty()) {
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LEQUAL);

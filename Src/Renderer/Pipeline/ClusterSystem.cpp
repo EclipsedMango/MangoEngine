@@ -3,12 +3,13 @@
 
 #include <iostream>
 
+#include "Core/ResourceManager.h"
 #include "glad/gl.h"
 #include "glm/gtc/matrix_transform.hpp"
 
 ClusterSystem::ClusterSystem() {
-    m_clusterShader = std::make_unique<Shader>("../Assets/Shaders/cluster_build.comp");
-    m_cullShader = std::make_unique<Shader>("../Assets/Shaders/light_cull.comp");
+    m_clusterShader = ResourceManager::Get().LoadComputeShader("ClusterBuild", "cluster_build.comp");
+    m_cullShader = ResourceManager::Get().LoadComputeShader("LightCull", "light_cull.comp");
 
     constexpr size_t aabbSize = NUM_CLUSTERS * 2 * sizeof(glm::vec4);
     constexpr size_t indexSize = NUM_CLUSTERS * MAX_LIGHTS_PER_CLUSTER * sizeof(uint32_t);

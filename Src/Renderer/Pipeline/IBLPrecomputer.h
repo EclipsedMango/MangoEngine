@@ -22,8 +22,11 @@ public:
     static constexpr int PREFILTER_SIZE = 128;
     static constexpr int PREFILTER_MIP_LEVELS = 5;
 private:
-    static std::unique_ptr<Texture> ComputeIrradiance(const Texture& env, GLuint captureFbo, GLuint captureRbo, const Shader& shader, const Mesh& cube);
-    static std::unique_ptr<Texture> ComputePrefiltered(const Texture& env, GLuint captureFbo, GLuint captureRbo, const Shader& shader, const Mesh& cube);
+    static std::unique_ptr<Texture> ComputeIrradiance(const Texture& env, GLuint captureFbo, GLuint captureRbo, const Mesh& cube);
+    static std::unique_ptr<Texture> ComputePrefiltered(const Texture& env, GLuint captureFbo, GLuint captureRbo, const Mesh& cube);
+
+    static std::shared_ptr<Shader> m_irradianceShader;
+    static std::shared_ptr<Shader> m_prefilterShader;
 };
 
 

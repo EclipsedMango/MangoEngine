@@ -159,8 +159,8 @@ target_include_directories(MangoRendering PRIVATE ${CMAKE_SOURCE_DIR}/Src includ
 
 add_custom_target(copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Assets
-        ${CMAKE_BINARY_DIR}/Assets
+        ${CMAKE_SOURCE_DIR}/EngineAssets
+        ${CMAKE_BINARY_DIR}/EngineAssets
 )
 
 add_custom_target(copy_root ALL

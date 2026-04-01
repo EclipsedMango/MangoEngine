@@ -103,7 +103,7 @@ private:
     RenderStats RenderView(const CameraNode3d* camera, const Framebuffer* targetFbo, bool clearFbo, const PortalNode3d* excludedPortal = nullptr, bool isMainPass = true) const;
 
     void RenderMainPass(const CameraNode3d* camera, const Framebuffer* targetFbo, const std::vector<MeshNode3d*>& opaqueQueue, RenderStats& stats) const;
-    void RenderTransparentPass(const CameraNode3d* camera, const std::vector<MeshNode3d*>& transparentQueue, RenderStats& stats) const;
+    static void RenderTransparentPass(const CameraNode3d* camera, const std::vector<MeshNode3d*>& transparentQueue, RenderStats& stats);
 
     void RenderPortalPasses(const CameraNode3d* camera, const Framebuffer* targetFbo, int remainingDepth, int currentStencil = 0) const;
     static glm::mat4 ComputePortalView(const CameraNode3d* mainCamera, const PortalNode3d* sourcePortal, const PortalNode3d* destPortal);
@@ -126,8 +126,8 @@ private:
     std::unique_ptr<ShadowRenderer> m_shadowRenderer;
 
     std::unique_ptr<UniformBuffer> m_cameraUbo;
-    std::unique_ptr<Shader> m_depthShader;
-    std::unique_ptr<Shader> m_gridShader;
+    std::shared_ptr<Shader> m_depthShader;
+    std::shared_ptr<Shader> m_gridShader;
     GLuint m_gridVao = 0;
 
     std::vector<MeshNode3d*> m_meshQueue;
