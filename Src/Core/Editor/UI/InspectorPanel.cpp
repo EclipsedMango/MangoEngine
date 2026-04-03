@@ -22,11 +22,16 @@ static void SectionHeader(const char* label) {
     ImGui::Spacing();
 }
 
-static void BeginPropertyTable() {
+static bool BeginPropertyTable() {
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4, 3));
-    ImGui::BeginTable("##props", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV, ImVec2(0, 0));
-    ImGui::TableSetupColumn("##label", ImGuiTableColumnFlags_WidthFixed, 130.0f);
-    ImGui::TableSetupColumn("##value", ImGuiTableColumnFlags_WidthStretch);
+    if (ImGui::BeginTable("##props", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV, ImVec2(0, 0))) {
+        ImGui::TableSetupColumn("##label", ImGuiTableColumnFlags_WidthFixed, 130.0f);
+        ImGui::TableSetupColumn("##value", ImGuiTableColumnFlags_WidthStretch);
+        return true;
+    }
+
+    ImGui::PopStyleVar();
+    return false;
 }
 
 static void EndPropertyTable() {
@@ -101,12 +106,12 @@ void InspectorPanel::DrawProperties(PropertyHolder* holder) {
     }
 
     if (!flatProps.empty()) {
-        BeginPropertyTable();
-        for (const auto& name : flatProps) {
-            DrawPropertyValue(name, holder);
+        if (BeginPropertyTable()) {
+            for (const auto& name : flatProps) {
+                DrawPropertyValue(name, holder);
+            }
+            EndPropertyTable();
         }
-
-        EndPropertyTable();
     }
 
     for (const auto& name : subProps) {
@@ -239,27 +244,26 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
             }
 
             if (name == "diffuse" || name == "normal" || name == "metallic" || name == "roughness" || name == "ambient_occlusion" || name == "emissive" || name == "displacement") {
-                ImGui::Spacing();
+                ImGui::TableNextRow();
+
+                ImGui::TableSetColumnIndex(0);
+                style.PushLabel();
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted(name.c_str());
+                EditorStyle::PopLabel();
+
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
 
                 if (val.empty()) {
-                    style.PushLabel();
-                    ImGui::TextUnformatted(name.c_str());
-                    ImGui::SameLine();
                     ImGui::TextDisabled("None");
-                    EditorStyle::PopLabel();
-                    ImGui::Spacing();
                     return;
                 }
 
                 // get the texture from resource manager for display
                 const auto tex = GetCachedTexture(val);
                 if (!tex) {
-                    style.PushLabel();
-                    ImGui::TextUnformatted(name.c_str());
-                    ImGui::SameLine();
                     ImGui::TextDisabled("Failed to load");
-                    EditorStyle::PopLabel();
-                    ImGui::Spacing();
                     return;
                 }
 
@@ -281,19 +285,31 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
 
                 ImGui::EndGroup();
 
+                ImGui::Spacing();
                 const std::string treeId = name + "_props";
-                style.PushLabel();
-                const bool open = ImGui::TreeNodeEx(treeId.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth, "Details");
-                EditorStyle::PopLabel();
+
+                const ImVec4 frameBg = ImGui::GetStyle().Colors[ImGuiCol_FrameBg];
+                const ImVec4 frameBgH = ImGui::GetStyle().Colors[ImGuiCol_FrameBgHovered];
+                const ImVec4 frameBgA = ImGui::GetStyle().Colors[ImGuiCol_FrameBgActive];
+
+                ImGui::PushStyleColor(ImGuiCol_Header, frameBg);
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, frameBgH);
+                ImGui::PushStyleColor(ImGuiCol_HeaderActive, frameBgA);
+
+                const bool open = ImGui::TreeNodeEx(treeId.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding, "Texture Details");
+                ImGui::PopStyleColor(3);
 
                 if (open) {
-                    ImGui::PushStyleColor(ImGuiCol_TableBorderLight, style.colSeparator);
+                    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
+
+                    ImGui::BeginChild((name + "_tex_panel").c_str(), ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar);
                     DrawProperties(tex.get());
-                    ImGui::PopStyleColor();
+
+                    ImGui::EndChild();
+                    ImGui::PopStyleVar();
                     ImGui::TreePop();
                 }
 
-                ImGui::Spacing();
                 return;
             }
 
@@ -341,14 +357,28 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
                 label[0] = static_cast<char>(toupper(label[0]));
             }
 
-            style.PushAccentText();
-            const bool open = ImGui::TreeNodeEx(name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding, "%s", label.c_str());
-            EditorStyle::PopAccentText();
+            const ImVec4 frameBg = ImGui::GetStyle().Colors[ImGuiCol_FrameBg];
+            const ImVec4 frameBgH = ImGui::GetStyle().Colors[ImGuiCol_FrameBgHovered];
+            const ImVec4 frameBgA = ImGui::GetStyle().Colors[ImGuiCol_FrameBgActive];
+
+            ImGui::PushStyleColor(ImGuiCol_Header, frameBg);
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, frameBgH);
+            ImGui::PushStyleColor(ImGuiCol_HeaderActive, frameBgA);
+
+            const bool open = ImGui::TreeNodeEx(name.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding, "%s", label.c_str());
+            ImGui::PopStyleColor(3);
 
             if (open) {
-                ImGui::PushStyleColor(ImGuiCol_TableBorderLight, style.colSeparator);
+                ImGui::Indent(8.0f);
+
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10, 10));
+
+                ImGui::BeginChild((name + "_child").c_str(), ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar);
                 DrawProperties(val.get());
-                ImGui::PopStyleColor();
+
+                ImGui::EndChild();
+                ImGui::PopStyleVar();
+                ImGui::Unindent(8.0f);
                 ImGui::TreePop();
             }
 
