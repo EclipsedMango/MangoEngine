@@ -80,3 +80,47 @@ PropertyValue PropertyHolder::DeserializePropertyValue(const fkyaml::node &val) 
 
     return 0;
 }
+
+fkyaml::node PropertyHolder::SerializeProperty(PropertyValue property) {
+    fkyaml::node ret;
+    std::visit([&]<typename T0>(T0&& val) {
+        using T = std::decay_t<T0>;
+
+        if constexpr (std::is_same_v<T, float>) {
+            ret = static_cast<float>(val);
+        }
+
+        if constexpr (std::is_same_v<T, int>) {
+            ret = static_cast<int>(val);
+        }
+
+        if constexpr (std::is_same_v<T, bool>) {
+            ret = static_cast<bool>(val);
+        }
+
+        if constexpr (std::is_same_v<T, std::string>) {
+            ret = static_cast<std::string>(val);
+        }
+
+        if constexpr (std::is_same_v<T, glm::vec2>) {
+            glm::vec2 v = val;
+            ret = fkyaml::node { {"x", v.x}, {"y", v.y} };
+        }
+
+        if constexpr (std::is_same_v<T, glm::vec3>) {
+            glm::vec3 v = val;
+            ret = fkyaml::node { {"x", v.x}, {"y", v.y}, {"z", v.z} };
+        }
+
+        if constexpr (std::is_same_v<T, std::shared_ptr<PropertyHolder>>) {
+            fkyaml::node properties = fkyaml::node::mapping();
+            properties["property_type"] = val->GetPropertyHolderType();
+            for (const auto& [key, prop] : val->GetProperties()) {
+                properties[key] = SerializeProperty(prop.getter());
+            }
+            ret = properties;
+        }
+    }, property);
+
+    return ret;
+}

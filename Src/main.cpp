@@ -4,7 +4,6 @@
 #include "Core/Editor/Editor.h"
 #include "Nodes/MeshNode3d.h"
 #include "Nodes/PortalNode3d.h"
-#include "Renderer/Shader.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
 #include "Nodes/Lights/PointLightNode3d.h"
 #include "Renderer/Meshes/GltfLoader.h"
@@ -24,7 +23,7 @@ int main() {
     auto shader = ResourceManager::Get().LoadShader("default", "test.vert", "test.frag");
     auto portalShader = ResourceManager::Get().LoadShader("portal_mask", "portal_mask.vert", "portal_mask.frag");
 
-    auto quad = std::make_unique<MeshNode3d>(shader);
+    auto quad = std::make_unique<MeshNode3d>();
     quad->SetMeshByName("Quad");
     quad->SetScale({4.0f, 4.0f, 4.0f});
     quad->GetActiveMaterial()->SetDoubleSided(true);
@@ -41,7 +40,7 @@ int main() {
     house->SetPosition({0, -4, -15});
     liveScene->AddChild(std::move(house));
 
-    auto cube1 = std::make_unique<MeshNode3d>(shader);
+    auto cube1 = std::make_unique<MeshNode3d>();
     cube1->SetMeshByName("Cube");
     cube1->SetPosition({0, -4.9, 2});
     cube1->SetScale({0.2f, 0.2f, 0.2f});
@@ -49,7 +48,7 @@ int main() {
     cube1->GetActiveMaterial()->SetRoughnessValue(0.5);
     liveScene->AddChild(std::move(cube1));
 
-    auto sphere = std::make_unique<MeshNode3d>(shader);
+    auto sphere = std::make_unique<MeshNode3d>();
     sphere->SetMeshByName("Sphere");
     sphere->GetActiveMaterial()->SetMetallicValue(0.75);
     sphere->GetActiveMaterial()->SetRoughnessValue(0.25);
@@ -60,7 +59,7 @@ int main() {
     portalA->SetMeshByName("Quad");
     portalA->SetPosition({0, 0, 0.1f});
     portalA->SetScale({1.5f, 2.5f, 1.0f});
-    portalA->SetShader(portalShader);
+    portalA->GetActiveMaterial()->SetShader(portalShader);
     PortalNode3d* portalAPtr = portalA.get();
     liveScene->AddChild(std::move(portalA));
 
@@ -69,7 +68,7 @@ int main() {
     portalB->SetPosition({3.5f, 6.25f, -5.5f});
     portalB->SetRotationEuler({180, -30, 180});
     portalB->SetScale({1.5f, 2.5f, 1.0f});
-    portalB->SetShader(portalShader);
+    portalB->GetActiveMaterial()->SetShader(portalShader);
     PortalNode3d* portalBPtr = portalB.get();
     liveScene->AddChild(std::move(portalB));
 

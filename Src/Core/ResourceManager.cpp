@@ -135,6 +135,29 @@ std::shared_ptr<Shader> ResourceManager::Load<Shader>(const std::string& filepat
     return shader;
 }
 
+template<>
+void ResourceManager::Save(const std::shared_ptr<Material> &mat, const std::string &filePath) {
+    if (!mat) return;
+
+    fkyaml::node yaml = fkyaml::node::mapping();
+
+    if (mat->GetShader()) {
+        yaml["shader_name"] = mat->GetShader()->GetName();
+    }
+
+    fkyaml::node properties = fkyaml::node::mapping();
+    for (const auto& [key, prop] : mat->GetProperties()) {
+        properties[key] = PropertyHolder::SerializeProperty(prop.getter());
+    }
+    yaml["properties"] = properties;
+
+    std::ofstream file(filePath);
+    file << fkyaml::node::serialize(yaml);
+
+    mat->SetFilePath(filePath);
+    Register<Material>(filePath, mat);
+}
+
 ResourceManager::ResourceManager() {
     const char* basePathStr = SDL_GetBasePath();
     fs::path searchPath = basePathStr ? fs::path(basePathStr) : fs::current_path();
@@ -235,6 +258,10 @@ void ResourceManager::EraseExpired(Cache<T>& cache) {
     for (auto it = cache.begin(); it != cache.end();) {
         it = it->second.expired() ? cache.erase(it) : ++it;
     }
+}
+
+void ResourceManager::InitializeDefaultResources() {
+    m_defaultShader = LoadShader("default", "test.vert", "test.frag");
 }
 
 std::shared_ptr<Texture> ResourceManager::LoadTextureFromMemory(const std::string& key, const unsigned char* data, int width, int height, int channels) {

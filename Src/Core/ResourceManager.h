@@ -29,6 +29,9 @@ public:
     ResourceManager(const ResourceManager&) = delete;
     ResourceManager& operator=(const ResourceManager&) = delete;
 
+    void InitializeDefaultResources();
+    [[nodiscard]] std::shared_ptr<Shader> GetDefaultShader() const { return m_defaultShader; }
+
     template<typename T> std::shared_ptr<T> Get(const std::string& name) {
         auto& cache = GetCache<T>();
         if (auto it = cache.find(name); it != cache.end()) {
@@ -64,6 +67,8 @@ private:
     ResourceManager();
     ~ResourceManager();
 
+    std::shared_ptr<Shader> m_defaultShader;
+
     void ScanDirectoryIntoRegistry(const fs::path& directory);
     std::string ManualSearch(const fs::path& directory, const std::string& filename);
     std::string SearchAssetFile(const std::string& filename);
@@ -84,6 +89,7 @@ private:
 
 public:
     template<typename T> std::shared_ptr<T> Load(const std::string& filepath, CacheMode mode = CacheMode::Reuse);
+    template<typename T> void Save(const std::shared_ptr<T>& resource, const std::string& filePath);
 };
 
 template<> ResourceManager::Cache<Texture>& ResourceManager::GetCache<Texture>();

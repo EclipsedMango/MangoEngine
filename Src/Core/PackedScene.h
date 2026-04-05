@@ -31,11 +31,8 @@ private:
     PackedScene() = default;
 
     static std::unique_ptr<Node3d> InstantiateNode(const PackedNode& packedNode);
-
     static void RelinkPortals(Node3d* root);
-
     static fkyaml::node FromPackedNode(const PackedNode& packedNode);
-    static fkyaml::node SerializeProperty(PropertyValue property);
 
     std::optional<PackedNode> m_node;
 };

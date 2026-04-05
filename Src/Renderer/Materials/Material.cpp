@@ -291,6 +291,19 @@ void Material::SetUVOffset(const glm::vec2 &offset) {
     m_dirty = true;
 }
 
+void Material::SetShader(const std::shared_ptr<Shader> &shader) {
+    m_shader = shader;
+    m_dirty = true;
+}
+
+std::shared_ptr<Shader> Material::GetShader() const {
+    if (m_shader != nullptr) {
+        return m_shader;
+    }
+
+    return ResourceManager::Get().GetDefaultShader();
+}
+
 void Material::SetDiffuse(const std::string &path) {
     m_diffuse = ResourceManager::Get().Load<Texture>(path);
     m_dirty = true;

@@ -12,16 +12,12 @@ MeshNode3d::MeshNode3d() : m_material(std::make_shared<Material>()) {
     MeshNode3d::Init();
 }
 
-MeshNode3d::MeshNode3d(std::shared_ptr<Shader> shader) : m_shader(std::move(shader)), m_material(std::make_shared<Material>()) {
-    MeshNode3d::Init();
-}
-
-MeshNode3d::MeshNode3d(std::shared_ptr<Mesh> mesh, std::shared_ptr<Shader> shader) : m_shader(std::move(shader)), m_mesh(std::move(mesh)), m_material(std::make_shared<Material>()) {
+MeshNode3d::MeshNode3d(std::shared_ptr<Mesh> mesh) : m_mesh(std::move(mesh)), m_material(std::make_shared<Material>()) {
     MeshNode3d::Init();
 }
 
 std::unique_ptr<Node3d> MeshNode3d::Clone() {
-    auto clone = std::make_unique<MeshNode3d>(m_mesh, m_shader);
+    auto clone = std::make_unique<MeshNode3d>(m_mesh);
 
     clone->SetName(GetName());
     clone->SetVisible(IsVisible());
@@ -31,6 +27,7 @@ std::unique_ptr<Node3d> MeshNode3d::Clone() {
         const auto materialCopy = std::make_shared<Material>(*m_material);
         clone->SetMaterial(materialCopy);
     }
+
     if (m_materialOverride) {
         const auto overrideCopy = std::make_shared<Material>(*m_materialOverride);
         clone->SetMaterialOverride(overrideCopy);
@@ -44,40 +41,23 @@ std::unique_ptr<Node3d> MeshNode3d::Clone() {
 }
 
 void MeshNode3d::SetMeshByName(const std::string &name) {
-    m_meshName = name;
     m_mesh = ResourceManager::Get().Load<Mesh>(name);
+    if (m_meshSlot) {
+        m_meshSlot->Set("mesh_type", name);
+    }
 }
 
 void MeshNode3d::Init() {
     SetName("MeshNode3d");
     m_meshSlot = std::make_shared<PropertyHolder>();
 
-    AddProperty("shader_path",
-        [this]() -> PropertyValue { return m_shaderPath; },
-        [this](const PropertyValue& v) {
-            m_shaderPath = std::get<std::string>(v);
-            m_shader = ResourceManager::Get().Load<Shader>(m_shaderPath);
-            if (!m_shader) {
-                std::cerr << "[MeshNode3d] WARNING: Shader '" << m_shaderPath << "' is null! Did you preload it?\n";
-            }
-        }
-    );
-
-    AddProperty("material_path",
-       [this]() -> PropertyValue { return m_materialPath; },
-       [this](const PropertyValue& v) {
-           m_materialPath = std::get<std::string>(v);
-           if (!m_materialPath.empty()) {
-               m_material = ResourceManager::Get().Load<Material>(m_materialPath);
-           }
-       }
-   );
-
     m_meshSlot->AddProperty("mesh_type",
-        [this]() -> PropertyValue { return m_meshName; },
+        [this]() -> PropertyValue {
+            return m_mesh ? "LoadedMesh" : "None";
+        },
         [this](const PropertyValue& v) {
-            m_meshName = std::get<std::string>(v);
-            m_mesh = ResourceManager::Get().Load<Mesh>(m_meshName);
+            const std::string name = std::get<std::string>(v);
+            m_mesh = ResourceManager::Get().Load<Mesh>(name);
         }
     );
 
@@ -90,7 +70,6 @@ void MeshNode3d::Init() {
             const auto& holder = std::get<std::shared_ptr<PropertyHolder>>(v);
             if (!holder) {
                 m_mesh = nullptr;
-                m_meshName = "None";
             }
         }
     );
@@ -101,7 +80,6 @@ void MeshNode3d::Init() {
             const auto& holder = std::get<std::shared_ptr<PropertyHolder>>(v);
             if (!holder) {
                 m_mesh = nullptr;
-                m_meshName = "None";
                 return;
             }
 

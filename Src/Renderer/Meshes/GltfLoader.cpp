@@ -299,7 +299,8 @@ std::unique_ptr<Node3d> GltfLoader::Load(const std::string& path, std::shared_pt
 
                 ResourceManager::Get().Register<Mesh>(meshID, sharedMesh);
 
-                auto meshNode = std::make_unique<MeshNode3d>(sharedMesh, shader);
+                auto meshNode = std::make_unique<MeshNode3d>(sharedMesh);
+                meshNode->GetActiveMaterial()->SetShader(shader);
                 meshNode->SetMeshByName(meshID);
                 meshNode->SetMaterial(BuildMaterial(model, primitive.material, path));
                 sceneNode->AddChild(std::move(meshNode));

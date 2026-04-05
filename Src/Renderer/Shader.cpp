@@ -10,61 +10,57 @@
 
 #include "glad/gl.h"
 
+REGISTER_PROPERTY_TYPE(Shader)
+
 Shader::Shader(const char *vertexPath, const char *fragmentPath) {
-    const std::string vertexCode = ReadFile(vertexPath);
-    const std::string fragmentCode = ReadFile(fragmentPath);
-
-    const unsigned int vertex = CompileShader(GL_VERTEX_SHADER, vertexCode);
-    const unsigned int fragment = CompileShader(GL_FRAGMENT_SHADER, fragmentCode);
-
-    m_id = glCreateProgram();
-    glAttachShader(m_id, vertex);
-    glAttachShader(m_id, fragment);
-    glLinkProgram(m_id);
-
-    CheckCompileErrors(m_id, "PROGRAM");
-
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
+    m_vertexPath = vertexPath;
+    m_fragmentPath = fragmentPath;
+    Recompile();
 }
 
 Shader::Shader(const char *vertexPath, const char *fragmentPath, const char *geometryPath) {
-    const std::string vertexCode = ReadFile(vertexPath);
-    const std::string fragmentCode = ReadFile(fragmentPath);
-    const std::string geometryCode = ReadFile(geometryPath);
-
-    const unsigned int vertex = CompileShader(GL_VERTEX_SHADER,   vertexCode);
-    const unsigned int fragment = CompileShader(GL_FRAGMENT_SHADER, fragmentCode);
-    const unsigned int geometry = CompileShader(GL_GEOMETRY_SHADER, geometryCode);
-
-    m_id = glCreateProgram();
-    glAttachShader(m_id, vertex);
-    glAttachShader(m_id, fragment);
-    glAttachShader(m_id, geometry);
-    glLinkProgram(m_id);
-
-    CheckCompileErrors(m_id, "PROGRAM");
-
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-    glDeleteShader(geometry);
+    m_vertexPath = vertexPath;
+    m_fragmentPath = fragmentPath;
+    m_geometryPath = geometryPath;
+    Recompile();
 }
 
 Shader::Shader(const char* computePath) {
-    const std::string computeCode = ReadFile(computePath);
-    const unsigned int compute = CompileShader(GL_COMPUTE_SHADER, computeCode);
+    m_computePath = computePath;
+    Recompile();
+}
 
-    m_id = glCreateProgram();
-    glAttachShader(m_id, compute);
-    glLinkProgram(m_id);
+Shader::Shader() {
+    AddProperty("name",
+        [this]() -> PropertyValue { return GetName(); },
+        [this](const PropertyValue& v) { SetName(std::get<std::string>(v)); }
+    );
 
-    CheckCompileErrors(m_id, "PROGRAM");
+    AddProperty("vertex_path",
+        [this]() -> PropertyValue { return GetVertexPath(); },
+        [this](const PropertyValue& v) { SetVertexPath(std::get<std::string>(v)); }
+    );
 
-    glDeleteShader(compute);
+    AddProperty("fragment_path",
+        [this]() -> PropertyValue { return GetFragmentPath(); },
+        [this](const PropertyValue& v) { SetFragmentPath(std::get<std::string>(v)); }
+    );
+
+    AddProperty("geometry_path",
+        [this]() -> PropertyValue { return GetGeometryPath(); },
+        [this](const PropertyValue& v) { SetGeometryPath(std::get<std::string>(v)); }
+    );
+
+    AddProperty("compute_path",
+        [this]() -> PropertyValue { return GetComputePath(); },
+        [this](const PropertyValue& v) { SetComputePath(std::get<std::string>(v)); }
+    );
 }
 
 Shader::~Shader() {
-    glDeleteProgram(m_id);
+    if (m_id != 0) {
+        glDeleteProgram(m_id);
+    }
 }
 
 void Shader::Bind() const {
@@ -134,6 +130,55 @@ void Shader::SetVector4(const std::string &name, const glm::vec4 &value) const {
 void Shader::SetMatrix4(const std::string &name, const glm::mat4 &value) const {
     if (const int loc = GetUniformLocation(name); loc != -1) {
         glUniformMatrix4fv(loc, 1, GL_FALSE, &value[0][0]);
+    }
+}
+
+void Shader::Recompile() {
+    if (m_id != 0) {
+        glDeleteProgram(m_id);
+        m_uniformCache.clear();
+        m_id = 0;
+    }
+
+    if (!m_computePath.empty()) {
+        const std::string computeCode = ReadFile(m_computePath.c_str());
+        const unsigned int compute = CompileShader(GL_COMPUTE_SHADER, computeCode);
+
+        m_id = glCreateProgram();
+        glAttachShader(m_id, compute);
+        glLinkProgram(m_id);
+
+        CheckCompileErrors(m_id, "PROGRAM");
+        glDeleteShader(compute);
+        return;
+    }
+
+    if (!m_vertexPath.empty() && !m_fragmentPath.empty()) {
+        const std::string vertexCode = ReadFile(m_vertexPath.c_str());
+        const std::string fragmentCode = ReadFile(m_fragmentPath.c_str());
+
+        const unsigned int vertex = CompileShader(GL_VERTEX_SHADER, vertexCode);
+        const unsigned int fragment = CompileShader(GL_FRAGMENT_SHADER, fragmentCode);
+        unsigned int geometry = 0;
+
+        m_id = glCreateProgram();
+        glAttachShader(m_id, vertex);
+        glAttachShader(m_id, fragment);
+
+        if (!m_geometryPath.empty()) {
+            const std::string geometryCode = ReadFile(m_geometryPath.c_str());
+            geometry = CompileShader(GL_GEOMETRY_SHADER, geometryCode);
+            glAttachShader(m_id, geometry);
+        }
+
+        glLinkProgram(m_id);
+        CheckCompileErrors(m_id, "PROGRAM");
+
+        glDeleteShader(vertex);
+        glDeleteShader(fragment);
+        if (geometry != 0) {
+            glDeleteShader(geometry);
+        }
     }
 }
 

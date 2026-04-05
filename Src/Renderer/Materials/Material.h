@@ -35,8 +35,10 @@ public:
     void SetAlphaScissorThreshold(float value);
     void SetUVScale(const glm::vec2& scale);
     void SetUVOffset(const glm::vec2& offset);
+    void SetShader(const std::shared_ptr<Shader>& shader);
 
     [[nodiscard]] std::string GetPropertyHolderType() const override { return "Material"; }
+    [[nodiscard]] std::shared_ptr<Shader> GetShader() const;
 
     [[nodiscard]] std::string GetName() const { return m_name; }
     [[nodiscard]] std::string GetFilePath() const { return m_filePath; }
@@ -97,6 +99,8 @@ private:
 
     glm::vec2 m_uvScale = glm::vec2(1.0f);
     glm::vec2 m_uvOffset = glm::vec2(0.0f);
+
+    std::shared_ptr<Shader> m_shader {};
 
     std::shared_ptr<Texture> m_diffuse {};
     std::shared_ptr<Texture> m_ambientOcclusion {};

@@ -17,7 +17,7 @@ std::unique_ptr<Node3d> PortalNode3d::Clone() {
     }
 
     clone->SetMesh(GetMeshPtr());
-    clone->SetShader(GetShader());
+    clone->GetActiveMaterial()->SetShader(GetActiveMaterial()->GetShader());
 
     for (Node3d* child : GetChildren()) {
         clone->AddChild(child->Clone());

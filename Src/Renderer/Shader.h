@@ -5,26 +5,19 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "glm/vec3.hpp"
-#include "glm/mat3x3.hpp"
+#include "Core/PropertyHolder.h"
 
-class Shader {
+class Shader : public PropertyHolder {
 public:
-    unsigned int m_id;
+    unsigned int m_id {};
 
-    // graphics pipeline
     Shader(const char* vertexPath, const char* fragmentPath);
-
-    // graphics pipeline with geometry shader
     Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
-
-    // compute pipeline
     explicit Shader(const char* computePath);
-
-    ~Shader();
+    Shader();
+    ~Shader() override;
 
     void Bind() const;
-
     static void Unbind();
 
     void Dispatch(unsigned int x, unsigned int y, unsigned int z) const;
@@ -38,7 +31,29 @@ public:
     void SetVector4(const std::string& name, const glm::vec4& value) const;
     void SetMatrix4(const std::string& name, const glm::mat4& value) const;
 
+    [[nodiscard]] std::string GetPropertyHolderType() const override { return "Shader"; }
+    [[nodiscard]] std::string GetName() const { return m_name; }
+    [[nodiscard]] std::string GetVertexPath() const { return m_vertexPath; }
+    [[nodiscard]] std::string GetFragmentPath() const { return m_fragmentPath; }
+    [[nodiscard]] std::string GetGeometryPath() const { return m_geometryPath; }
+    [[nodiscard]] std::string GetComputePath() const { return m_computePath; }
+    [[nodiscard]] bool IsCompute() const { return !m_computePath.empty(); }
+
+    void SetName(const std::string& name) { m_name = name; }
+    void SetVertexPath(const std::string& path) { m_vertexPath = path; }
+    void SetFragmentPath(const std::string& path) { m_fragmentPath = path; }
+    void SetGeometryPath(const std::string& path) { m_geometryPath = path; }
+    void SetComputePath(const std::string& path) { m_computePath = path; }
+
+    void Recompile();
 private:
+    std::string m_name = "New Shader";
+    std::string m_vertexPath;
+    std::string m_fragmentPath;
+    std::string m_geometryPath;
+    std::string m_computePath;
+    bool m_isCompute = false;
+
     bool IsBound() const;
 
     mutable std::unordered_map<std::string, int> m_uniformCache;

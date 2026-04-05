@@ -85,6 +85,7 @@ public:
     }
 
     static PropertyValue DeserializePropertyValue(const fkyaml::node& val);
+    static fkyaml::node SerializeProperty(PropertyValue property);
 
 private:
     std::map<std::string, Property> m_properties;

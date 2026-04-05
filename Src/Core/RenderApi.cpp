@@ -311,8 +311,8 @@ void RenderApi::RenderMainPass(const CameraNode3d* camera, const Framebuffer* ta
 
     auto sortedQueue = opaqueQueue;
     std::ranges::sort(sortedQueue, [](const MeshNode3d* a, const MeshNode3d* b) {
-        if (a->GetShader() != b->GetShader())
-            return a->GetShader() < b->GetShader();
+        if (a->GetActiveMaterial()->GetShader() != b->GetActiveMaterial()->GetShader())
+            return a->GetActiveMaterial()->GetShader() < b->GetActiveMaterial()->GetShader();
         return a->GetActiveMaterial() < b->GetActiveMaterial();
     });
 
@@ -322,7 +322,7 @@ void RenderApi::RenderMainPass(const CameraNode3d* camera, const Framebuffer* ta
     for (const MeshNode3d* node : sortedQueue) {
         if (IsVisible(node, cameraFrustum, stats)) continue;
 
-        const Shader* currentShader = node->GetShader().get();
+        const Shader* currentShader = node->GetActiveMaterial()->GetShader().get();
         const Material* currentMat = node->GetActiveMaterial();
 
         if (currentShader != lastShader) {
@@ -394,7 +394,7 @@ void RenderApi::RenderTransparentPass(const CameraNode3d* camera, const std::vec
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
 
-        const Shader* currentShader = node->GetShader().get();
+        const Shader* currentShader = node->GetActiveMaterial()->GetShader().get();
         const Material* currentMat = node->GetActiveMaterial();
 
         if (currentShader != lastShader) {
@@ -428,7 +428,7 @@ void RenderApi::RenderPortalPasses(const CameraNode3d *camera, const Framebuffer
     targetFbo->Bind();
 
     for (const PortalNode3d* portal : m_portalQueue) {
-        if (!portal || !portal->IsLinked() || !portal->GetMesh() || !portal->GetShader()) continue;
+        if (!portal || !portal->IsLinked() || !portal->GetMesh() || !portal->GetActiveMaterial()->GetShader()) continue;
         const PortalNode3d* linked = portal->GetLinkedPortal();
         if (!linked || !linked->GetMesh()) continue;
 
@@ -512,11 +512,11 @@ glm::mat4 RenderApi::ObliqueProjection(const glm::mat4 &projMat, const glm::mat4
 }
 
 void RenderApi::DrawPortalMask(const PortalNode3d *portal, const int currentStencil, const CameraNode3d *camera) const {
-    if (!portal || !camera || !portal->GetMesh() || !portal->GetShader()) return;
+    if (!portal || !camera || !portal->GetMesh() || !portal->GetActiveMaterial()->GetShader()) return;
 
     UploadCameraData(camera);
 
-    const Shader* shader = portal->GetShader().get();
+    const Shader* shader = portal->GetActiveMaterial()->GetShader().get();
     shader->Bind();
     shader->SetMatrix4("u_Model", portal->GetWorldMatrix());
 
@@ -551,11 +551,11 @@ void RenderApi::DrawPortalMask(const PortalNode3d *portal, const int currentSten
 }
 
 void RenderApi::RestorePortalMask(const PortalNode3d *portal, const int nextStencil, const CameraNode3d *camera) const {
-    if (!portal || !camera || !portal->GetMesh() || !portal->GetShader()) return;
+    if (!portal || !camera || !portal->GetMesh() || !portal->GetActiveMaterial()->GetShader()) return;
 
     UploadCameraData(camera);
 
-    const Shader* shader = portal->GetShader().get();
+    const Shader* shader = portal->GetActiveMaterial()->GetShader().get();
     shader->Bind();
     shader->SetMatrix4("u_Model", portal->GetWorldMatrix());
 
