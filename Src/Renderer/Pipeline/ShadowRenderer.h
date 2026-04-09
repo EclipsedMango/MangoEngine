@@ -25,7 +25,7 @@ struct ShadowedPointLightDebug {
 class ShadowRenderer {
 public:
     static constexpr uint32_t MAX_SHADOWED_POINT_LIGHTS = 8;
-    static constexpr uint32_t POINT_SHADOW_RES = 1024;
+    static constexpr uint32_t POINT_SHADOW_RES = 512;
     static constexpr uint32_t MAX_DIR_LIGHTS = 1;
 
     // texture slots 7, 8, 9, 10 are reserved for CSM, point light cube maps start at 15.

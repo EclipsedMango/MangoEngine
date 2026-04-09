@@ -21,9 +21,9 @@ void PointLightShadowMap::BeginLight(const uint32_t lightSlot) const {
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
+    glClear(GL_DEPTH_BUFFER_BIT);
     for (uint32_t face = 0; face < 6; face++) {
         glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_fb->GetDepthAttachment(), 0, lightSlot * 6 + face);
-        glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_fb->GetDepthAttachment(), 0);
