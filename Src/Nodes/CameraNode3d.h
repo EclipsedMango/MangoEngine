@@ -63,7 +63,7 @@ private:
     float m_fov;
     float m_aspectRatio;
     float m_nearPlane = 0.1;
-    float m_farPlane = 200.0;
+    float m_farPlane = 300.0;
 };
 
 

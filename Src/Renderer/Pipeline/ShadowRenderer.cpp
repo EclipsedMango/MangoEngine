@@ -68,7 +68,6 @@ void ShadowRenderer::RenderDirectionalShadows(const CameraNode3d& camera, const 
 
         for (int c = 0; c < CascadedShadowMap::NUM_CASCADES; c++) {
             csm->BeginRender(c);
-            glClear(GL_DEPTH_BUFFER_BIT);
             m_shadowDepthShader->SetMatrix4("u_LightSpaceMatrix", csm->GetLightSpaceMatrix(c));
 
             for (const MeshNode3d* node : renderQueue) {
@@ -213,8 +212,8 @@ void ShadowRenderer::BindShadowUniforms(const Shader& shader) const {
         for (int c = 0; c < CascadedShadowMap::NUM_CASCADES; c++) {
             const std::string idx = std::to_string(c);
             shader.SetMatrix4("u_LightSpaceMatrix[" + idx + "]", csm->GetLightSpaceMatrix(c));
-            shader.SetFloat("u_CascadeSplits["      + idx + "]", splits[c]);
-            shader.SetFloat("u_CascadeWorldUnits["  + idx + "]", csm->GetWorldUnitsPerTexel(c));
+            shader.SetFloat("u_CascadeSplits[" + idx + "]", splits[c]);
+            shader.SetFloat("u_CascadeWorldUnits[" + idx + "]", csm->GetWorldUnitsPerTexel(c));
 
             const int slot = CSM_TEXTURE_SLOT_BASE + c;
             glActiveTexture(GL_TEXTURE0 + slot);

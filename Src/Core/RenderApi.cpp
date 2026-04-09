@@ -672,7 +672,7 @@ RenderStats RenderApi::RenderView(const CameraNode3d *camera, const Framebuffer 
 
     if (isMainPass) {
         glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(2.5f, 3.0f);
+        glPolygonOffset(1.5f, 4.0f);
         m_shadowRenderer->RenderDirectionalShadows(*camera, opaqueQueue, targetSize);
         m_shadowRenderer->RenderPointLightShadows(*camera, m_lightManager->GetPointLights(), opaqueQueue, targetSize);
         glDisable(GL_POLYGON_OFFSET_FILL);

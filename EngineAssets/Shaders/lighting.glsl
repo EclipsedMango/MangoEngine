@@ -87,12 +87,7 @@ float SampleShadowMap(int cascade, vec2 uv) {
 }
 
 float TexelSize(int cascade) {
-    switch (cascade) {
-        case 0: return 1.0 / 4096.0;
-        case 1: return 1.0 / 2048.0;
-        case 2: return 1.0 / 1024.0;
-        default: return 1.0 / 512.0;
-    }
+    return 1.0 / 1024.0;
 }
 
 vec3 Heatmap(float t) {
@@ -195,7 +190,7 @@ float ShadowCalculation(vec3 fragPos, int cascade, vec3 normal, vec3 lightDirWS)
     float texelWU = u_CascadeWorldUnits[cascade];
     float NdotL = clamp(dot(normal, lightDirWS), 0.0, 1.0);
 
-    float normalOffsetScale = texelWU * max(2.5 * (1.0 - NdotL), 0.5);
+    float normalOffsetScale = texelWU * clamp(0.5 * (1.0 - NdotL), 0.05, 0.3);
     vec3 biasedFragPos = fragPos + normal * normalOffsetScale;
 
     vec4 fragPosLightSpace = u_LightSpaceMatrix[cascade] * vec4(biasedFragPos, 1.0);
@@ -209,11 +204,11 @@ float ShadowCalculation(vec3 fragPos, int cascade, vec3 normal, vec3 lightDirWS)
     float currentDepth = clamp(projCoords.z, 0.0, 1.0);
     float texel = TexelSize(cascade);
 
-    float zBias = 0.0001;
+    float zBias = 0.0005;
 
-    float filterRadiusWU = 0.01; // 2 cm
+    float filterRadiusWU = 0.05;
     float diskRadius = (filterRadiusWU / texelWU) * texel;
-    diskRadius = clamp(diskRadius, 0.25 * texel, 2.0 * texel);
+    diskRadius = clamp(diskRadius, 0.1 * texel, 1.0 * texel);
 
     float angle = Hash12(gl_FragCoord.xy) * 6.28318530718;
     mat2 R = Rotate2D(angle);
@@ -233,8 +228,8 @@ float ShadowWithBlend(vec3 fragPos, float fragDepthVS, vec3 normal, vec3 lightDi
     float shadow = ShadowCalculation(fragPos, cascade, normal, lightDirWS);
 
     if (cascade + 1 < u_CascadeCount) {
-        float splitDist   = u_CascadeSplits[cascade];
-        float blendRange  = splitDist * 0.25;
+        float splitDist = u_CascadeSplits[cascade];
+        float blendRange = splitDist * 0.15;
         float blendFactor = smoothstep(splitDist - blendRange, splitDist, fragDepthVS);
 
         if (blendFactor > 0.0) {

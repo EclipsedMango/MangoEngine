@@ -33,6 +33,19 @@ int main() {
     quad->GetActiveMaterial()->SetRoughness("red_brick_03_rough_1k.png");
     liveScene->AddChild(std::move(quad));
 
+    auto plane = std::make_unique<MeshNode3d>();
+    plane->SetMeshByName("Plane");
+    plane->SetRotationEuler({0, 0, 0});
+    plane->SetScale({100.0f, 1.0f, 100.0f});
+    plane->SetPosition({0, -5, 0});
+    liveScene->AddChild(std::move(plane));
+
+    auto cube2 = std::make_unique<MeshNode3d>();
+    cube2->SetMeshByName("Cube");
+    cube2->SetPosition({-20.0, -4.0, 0});
+    cube2->SetScale({1.0f, 2.0f, 100.0f});
+    liveScene->AddChild(std::move(cube2));
+
     const std::string housePath = ResourceManager::Get().ResolveAssetPath("stylised_sky_player_home_dioroma.glb");
     auto house = std::unique_ptr(GltfLoader::Load(housePath, shader));
     house->SetScale({0.15f, 0.15f, 0.15f});
