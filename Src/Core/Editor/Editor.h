@@ -39,6 +39,7 @@ private:
     // panels
     void DrawViewportTabs();
     void DrawMenuBar();
+    void DrawStatsPopup();
     void DrawCameraSpeedIndication(float alpha) const;
 
     // helpers
@@ -71,6 +72,8 @@ private:
     int m_activeTab = 0;
 
     float m_cpuTime = 0.0f;
+    bool m_showStatsPopup = false;
+    bool m_showAdvancedTimingStats = true;
 };
 
 #endif //MANGORENDERING_EDITOR_H

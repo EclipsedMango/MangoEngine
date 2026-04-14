@@ -197,9 +197,9 @@ bool Core::IsInScene(const Node3d* node, const Node3d* sceneRoot) {
     return false;
 }
 
-void Core::RenderScene(Node3d* sceneRoot, const CameraNode3d* camera, const Framebuffer* targetFbo) const {
+RenderStats Core::RenderScene(Node3d* sceneRoot, const CameraNode3d* camera, const Framebuffer* targetFbo) const {
     if (!camera || !targetFbo || !sceneRoot) {
-        return;
+        return {};
     }
 
     sceneRoot->UpdateWorldTransform();
@@ -234,11 +234,13 @@ void Core::RenderScene(Node3d* sceneRoot, const CameraNode3d* camera, const Fram
         }
     }
 
-    m_renderer->RenderSceneWithPortals(camera, targetFbo, 6);
+    const RenderStats stats = m_renderer->RenderSceneWithPortals(camera, targetFbo, 6);
 
     if (m_cameraMode == CameraMode::Editor) {
         m_renderer->DrawGrid(camera, targetFbo);
     }
+
+    return stats;
 }
 
 void Core::StepFrame(const float deltaTime) {

@@ -5,6 +5,7 @@
 #include <string>
 
 #include "imgui.h"
+#include "Core/RenderApi.h"
 #include "Nodes/Node3d.h"
 
 class Framebuffer;
@@ -36,6 +37,7 @@ public:
     [[nodiscard]] ImVec2 GetViewportPos() const { return m_viewportPos; }
 
     [[nodiscard]] Node3d* GetScene() const;
+    [[nodiscard]] const RenderStats& GetLastRenderStats() const { return m_lastRenderStats; }
 
 private:
     Editor* m_editor {};
@@ -52,6 +54,7 @@ private:
     std::unique_ptr<CameraNode3d> m_camera;
     std::unique_ptr<EditorCameraController> m_cameraController;
     std::unique_ptr<Framebuffer> m_framebuffer;
+    RenderStats m_lastRenderStats {};
 };
 
 

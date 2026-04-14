@@ -25,8 +25,8 @@ public:
 
     void Notification(Node3d* node, NodeNotification notification) override;
 
-    bool PollEvents() const; // returns false when window should close
-    void RenderScene(Node3d* sceneRoot, const CameraNode3d* camera, const Framebuffer* targetFbo) const;
+    [[nodiscard]] bool PollEvents() const; // returns false when window should close
+    RenderStats RenderScene(Node3d* sceneRoot, const CameraNode3d* camera, const Framebuffer* targetFbo) const;
     void SwapBuffers() const;
     void StepFrame(float deltaTime);
     void Process();

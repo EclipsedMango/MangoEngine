@@ -106,6 +106,7 @@ void Editor::Run() {
 
         DrawMenuBar();
         DrawViewportTabs();
+        DrawStatsPopup();
 
         if (m_activeViewport->GetCameraController()->GetMoveSpeedLastFrame() != m_activeViewport->GetCameraController()->GetMoveSpeed()) {
             m_activeViewport->GetCameraController()->SetMoveSpeedLastFrame(m_activeViewport->GetCameraController()->GetMoveSpeed());
@@ -193,9 +194,7 @@ void Editor::DrawViewportTabs() {
 
 void Editor::DrawMenuBar() {
     if (!ImGui::BeginMainMenuBar()) return;
-
-    const float fps = ImGui::GetIO().Framerate;
-    ImGui::Text("FPS: %.0f (%.2f ms) | CPU: %.2f ms", fps, 1000.0f / fps, m_cpuTime);
+    ImGui::TextUnformatted("Mango Editor");
 
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("New Scene"))  { /* TODO */ }
@@ -215,6 +214,12 @@ void Editor::DrawMenuBar() {
                 const PackedScene scene(activeScene);
                 scene.SaveToFile("john.yml");
             }
+        }
+        ImGui::Separator();
+        if (ImGui::BeginMenu("Settings")) {
+            ImGui::MenuItem("Show Stats Popup", nullptr, &m_showStatsPopup);
+            ImGui::MenuItem("Show Advanced Profiling Stats", nullptr, &m_showAdvancedTimingStats);
+            ImGui::EndMenu();
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Exit")) m_core.GetActiveWindow()->Close();
@@ -255,6 +260,43 @@ void Editor::DrawMenuBar() {
     if (isEditing) ImGui::EndDisabled();
 
     ImGui::EndMainMenuBar();
+}
+
+void Editor::DrawStatsPopup() {
+    if (!m_showStatsPopup) {
+        return;
+    }
+
+    RenderStats stats {};
+    if (m_activeViewport) {
+        stats = m_activeViewport->GetLastRenderStats();
+    }
+
+    ImGui::SetNextWindowSize(ImVec2(320, 220), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin("Stats", &m_showStatsPopup, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::End();
+        return;
+    }
+
+    const float fps = ImGui::GetIO().Framerate;
+    ImGui::Text("FPS: %.0f", fps);
+    ImGui::Text("Frame: %.2f ms", fps > 0.0f ? (1000.0f / fps) : 0.0f);
+    ImGui::Text("CPU: %.2f ms", m_cpuTime);
+    ImGui::Separator();
+    ImGui::Text("Submitted: %u", stats.submitted);
+    ImGui::Text("Draw Calls: %u", stats.drawCalls);
+    ImGui::Text("Shadow Draws: %u", stats.shadowDrawCalls);
+    ImGui::Text("Triangles: %u", stats.triangles);
+    ImGui::Text("Culled: %u", stats.culled);
+
+    if (m_showAdvancedTimingStats) {
+        ImGui::Separator();
+        ImGui::Text("Animator Update: %.3f ms", stats.animatorUpdateMs);
+        ImGui::Text("Skin Upload: %.3f ms", stats.skinUploadMs);
+        ImGui::Text("Draw Submit: %.3f ms", stats.drawSubmitMs);
+    }
+
+    ImGui::End();
 }
 
 void Editor::DrawCameraSpeedIndication(const float alpha) const {

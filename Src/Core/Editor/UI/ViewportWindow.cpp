@@ -104,7 +104,7 @@ void ViewportWindow::Draw() {
                 }
             }
 
-            m_editor->GetCore().RenderScene(activeScene, renderCam, m_framebuffer.get());
+            m_lastRenderStats = m_editor->GetCore().RenderScene(activeScene, renderCam, m_framebuffer.get());
             m_timeSinceLastRender = 0.0f;
         }
 
@@ -191,7 +191,7 @@ void ViewportWindow::DrawContent() {
                 }
             }
 
-            m_editor->GetCore().RenderScene(activeScene, renderCam, m_framebuffer.get());
+            m_lastRenderStats = m_editor->GetCore().RenderScene(activeScene, renderCam, m_framebuffer.get());
             m_timeSinceLastRender = 0.0f;
         }
 
