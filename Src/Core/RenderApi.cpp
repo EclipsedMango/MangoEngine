@@ -20,6 +20,13 @@
 #include "sol/types.hpp"
 
 namespace {
+    float ComputeMaxWorldScale(const glm::mat4& worldMatrix) {
+        const float sx = glm::length(glm::vec3(worldMatrix[0]));
+        const float sy = glm::length(glm::vec3(worldMatrix[1]));
+        const float sz = glm::length(glm::vec3(worldMatrix[2]));
+        return std::max({sx, sy, sz});
+    }
+
     CameraNode3d BuildPortalRenderCamera(const CameraNode3d* sourceCamera, const Framebuffer* targetFbo, const glm::mat4& virtualView) {
         const float aspect = static_cast<float>(targetFbo->GetWidth()) / static_cast<float>(targetFbo->GetHeight());
 
@@ -156,8 +163,9 @@ void RenderApi::HandleResizeEvent(const SDL_Event &event) const {
 
 bool RenderApi::IsCulled(const MeshNode3d *node, const Frustum &frustum, RenderStats& stats) {
     const Mesh* mesh = node->GetMesh();
-    const glm::vec3 worldCenter = glm::vec3(node->GetWorldMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
-    const float worldRadius = mesh->GetBoundsRadius() * std::max({ node->GetScale().x, node->GetScale().y, node->GetScale().z });
+    const glm::mat4 world = node->GetWorldMatrix();
+    const glm::vec3 worldCenter = glm::vec3(world * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
+    const float worldRadius = mesh->GetBoundsRadius() * ComputeMaxWorldScale(world);
 
     if (!frustum.IntersectsSphere(worldCenter, worldRadius)) {
         stats.culled++;
@@ -424,9 +432,9 @@ void RenderApi::RenderPortalPasses(const CameraNode3d *camera, const Framebuffer
         if (!linked || !linked->GetMesh()) continue;
 
         const Mesh* mesh = portal->GetMesh();
-        const glm::vec3 worldCenter = glm::vec3(portal->GetWorldMatrix() * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
-        const float maxScale = std::max({ portal->GetScale().x, portal->GetScale().y, portal->GetScale().z });
-        const float worldRadius = mesh->GetBoundsRadius() * maxScale;
+        const glm::mat4 world = portal->GetWorldMatrix();
+        const glm::vec3 worldCenter = glm::vec3(world * glm::vec4(mesh->GetBoundsCenter(), 1.0f));
+        const float worldRadius = mesh->GetBoundsRadius() * ComputeMaxWorldScale(world);
 
         if (!cameraFrustum.IntersectsSphere(worldCenter, worldRadius)) {
             continue;
@@ -632,14 +640,39 @@ RenderStats RenderApi::RenderView(const CameraNode3d *camera, const Framebuffer 
         }
     }
 
-    std::ranges::sort(culledOpaque, [](const MeshNode3d* a, const MeshNode3d* b) {
-        if (a->GetActiveMaterial()->GetShader() != b->GetActiveMaterial()->GetShader())
-            return a->GetActiveMaterial()->GetShader() < b->GetActiveMaterial()->GetShader();
-        return a->GetActiveMaterial() < b->GetActiveMaterial();
-    });
-
     const glm::vec3 camPos = camera->GetPosition();
     const glm::vec3 forward = camera->GetFront();
+
+    struct OpaqueSortEntry {
+        MeshNode3d* node = nullptr;
+        float depth = 0.0f;
+    };
+
+    std::vector<OpaqueSortEntry> opaqueSortEntries;
+    opaqueSortEntries.reserve(culledOpaque.size());
+    for (MeshNode3d* node : culledOpaque) {
+        const float depth = glm::dot(glm::vec3(node->GetWorldMatrix()[3]) - camPos, forward);
+        opaqueSortEntries.push_back({node, depth});
+    }
+
+    std::ranges::sort(opaqueSortEntries, [](const OpaqueSortEntry& a, const OpaqueSortEntry& b) {
+        if (a.depth != b.depth) {
+            return a.depth < b.depth;
+        }
+
+        const auto shaderA = a.node->GetActiveMaterial()->GetShader();
+        const auto shaderB = b.node->GetActiveMaterial()->GetShader();
+        if (shaderA != shaderB) {
+            return shaderA < shaderB;
+        }
+        return a.node->GetActiveMaterial() < b.node->GetActiveMaterial();
+    });
+
+    culledOpaque.clear();
+    culledOpaque.reserve(opaqueSortEntries.size());
+    for (const auto& entry : opaqueSortEntries) {
+        culledOpaque.push_back(entry.node);
+    }
 
     std::ranges::sort(transparentQueue, [&](const MeshNode3d* a, const MeshNode3d* b) {
         const float depthA = glm::dot(glm::vec3(a->GetWorldMatrix()[3]) - camPos, forward);
