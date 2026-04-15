@@ -79,7 +79,7 @@ std::unique_ptr<Node3d> AnimationControllerNode3d::Clone() {
 void AnimationControllerNode3d::Process(const float deltaTime) {
     Node3d::Process(deltaTime);
 
-    RefreshTargets();
+    EnsureTargets();
     ApplyClipIfNeeded();
 
     if (m_autoPlay && !m_autoPlayed) {
@@ -103,7 +103,7 @@ void AnimationControllerNode3d::Process(const float deltaTime) {
 
 void AnimationControllerNode3d::Play() {
     m_playing = true;
-    RefreshTargets();
+    EnsureTargets();
     for (const MeshNode3d* meshNode : m_targets) {
         if (!meshNode) continue;
         const auto animator = meshNode->GetAnimator();
@@ -115,7 +115,7 @@ void AnimationControllerNode3d::Play() {
 
 void AnimationControllerNode3d::Pause() {
     m_playing = false;
-    RefreshTargets();
+    EnsureTargets();
     for (const MeshNode3d* meshNode : m_targets) {
         if (!meshNode) continue;
         const auto animator = meshNode->GetAnimator();
@@ -127,7 +127,7 @@ void AnimationControllerNode3d::Pause() {
 
 void AnimationControllerNode3d::Stop() {
     m_playing = false;
-    RefreshTargets();
+    EnsureTargets();
     for (const MeshNode3d* meshNode : m_targets) {
         if (!meshNode) continue;
         const auto animator = meshNode->GetAnimator();
@@ -162,19 +162,38 @@ void AnimationControllerNode3d::SetAutoPlay(const bool autoPlay) {
 
 void AnimationControllerNode3d::SetTargetMode(const TargetMode mode) {
     if (m_targetMode != mode) {
-        ReleaseTargets();
+        MarkTargetsDirty();
     }
     m_targetMode = mode;
 }
 
 void AnimationControllerNode3d::SetTargetMeshName(const std::string& meshName) {
     if (m_targetMeshName != meshName) {
-        ReleaseTargets();
+        MarkTargetsDirty();
     }
     m_targetMeshName = meshName;
 }
 
+void AnimationControllerNode3d::MarkTargetsDirty() {
+    if (m_targetsDirty) {
+        return;
+    }
+
+    ReleaseTargets();
+    m_targetsDirty = true;
+}
+
+void AnimationControllerNode3d::EnsureTargets() {
+    if (m_targetsDirty) {
+        RefreshTargets();
+    }
+}
+
 void AnimationControllerNode3d::RefreshTargets() {
+    if (!m_targetsDirty) {
+        return;
+    }
+
     ReleaseTargets();
 
     Node3d* root = this;
@@ -192,9 +211,10 @@ void AnimationControllerNode3d::RefreshTargets() {
             meshNode->SetAnimatorAutoUpdate(false);
         }
     }
+    m_targetsDirty = false;
 }
 
-void AnimationControllerNode3d::ReleaseTargets() const {
+void AnimationControllerNode3d::ReleaseTargets() {
     for (MeshNode3d* meshNode : m_targets) {
         if (meshNode) {
             meshNode->SetAnimatorAutoUpdate(true);
@@ -217,7 +237,7 @@ void AnimationControllerNode3d::CollectMeshes(Node3d* root, std::vector<MeshNode
     }
 }
 
-void AnimationControllerNode3d::ApplyClipIfNeeded() const {
+void AnimationControllerNode3d::ApplyClipIfNeeded() {
     if (m_clipName.empty() || m_clipName == m_lastAppliedClip) {
         return;
     }

@@ -41,10 +41,12 @@ public:
     [[nodiscard]] std::string GetNodeType() const override { return "AnimationControllerNode3d"; }
 
 private:
+    void MarkTargetsDirty();
+    void EnsureTargets();
     void RefreshTargets();
-    void ReleaseTargets() const;
+    void ReleaseTargets();
     void CollectMeshes(Node3d* root, std::vector<MeshNode3d*>& out) const;
-    void ApplyClipIfNeeded() const;
+    void ApplyClipIfNeeded();
 
     bool m_playing = true;
     bool m_autoPlay = true;
@@ -54,9 +56,10 @@ private:
     std::string m_clipName;
     TargetMode m_targetMode = TargetMode::Subtree;
     std::string m_targetMeshName;
+    bool m_targetsDirty = true;
 
-    mutable std::vector<MeshNode3d*> m_targets;
-    mutable std::string m_lastAppliedClip;
+    std::vector<MeshNode3d*> m_targets;
+    std::string m_lastAppliedClip;
 };
 
 #endif //MANGORENDERING_ANIMATIONCONTROLLERNODE3D_H

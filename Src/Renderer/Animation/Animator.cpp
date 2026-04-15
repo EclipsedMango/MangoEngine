@@ -9,6 +9,11 @@
 
 namespace {
     float s_frameAnimatorUpdateMs = 0.0f;
+#if !defined(NDEBUG)
+    constexpr bool kEnableAnimatorTimers = true;
+#else
+    constexpr bool kEnableAnimatorTimers = false;
+#endif
 }
 
 Animator::Animator(std::shared_ptr<Skeleton> skeleton) {
@@ -18,7 +23,9 @@ Animator::Animator(std::shared_ptr<Skeleton> skeleton) {
 void Animator::SetSkeleton(std::shared_ptr<Skeleton> skeleton) {
     m_skeleton = std::move(skeleton);
     m_poseDirty = true;
+    RebuildSkeletonCaches();
     ResetPoseFromSkeleton();
+    RebuildChannelJointMap();
     EvaluateGlobalAndSkinMatrices();
     m_poseVersion++;
     m_poseDirty = false;
@@ -28,6 +35,7 @@ void Animator::SetClip(const GltfLoader::AnimationClipData& clip) {
     m_clip = clip;
     m_hasClip = true;
     m_currentTime = m_clip.startTime;
+    RebuildChannelJointMap();
     m_poseDirty = true;
     EvaluateAt(m_currentTime);
 }
@@ -96,12 +104,17 @@ void Animator::Update(const float deltaTime) {
         m_isPlaying = false;
     }
 
-    const auto t0 = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point t0;
+    if constexpr (kEnableAnimatorTimers) {
+        t0 = std::chrono::high_resolution_clock::now();
+    }
     const uint64_t prevVersion = m_poseVersion;
     EvaluateAt(nextTime);
-    const auto t1 = std::chrono::high_resolution_clock::now();
-    if (m_poseVersion != prevVersion) {
-        s_frameAnimatorUpdateMs += std::chrono::duration<float, std::milli>(t1 - t0).count();
+    if constexpr (kEnableAnimatorTimers) {
+        const auto t1 = std::chrono::high_resolution_clock::now();
+        if (m_poseVersion != prevVersion) {
+            s_frameAnimatorUpdateMs += std::chrono::duration<float, std::milli>(t1 - t0).count();
+        }
     }
 }
 
@@ -123,12 +136,13 @@ void Animator::EvaluateAt(const float timeSeconds) {
         return;
     }
 
-    for (const auto& channel : m_clip.channels) {
+    for (size_t channelIndex = 0; channelIndex < m_clip.channels.size(); ++channelIndex) {
+        const auto& channel = m_clip.channels[channelIndex];
         if (channel.samplerIndex < 0 || channel.samplerIndex >= static_cast<int>(m_clip.samplers.size())) {
             continue;
         }
 
-        const int jointIndex = m_skeleton->FindJointByNodeIndex(channel.targetNode);
+        const int jointIndex = channelIndex < m_channelJointIndices.size() ? m_channelJointIndices[channelIndex] : -1;
         if (jointIndex < 0 || jointIndex >= static_cast<int>(m_localPose.size())) {
             continue;
         }
@@ -255,22 +269,50 @@ Animator::SampleResult Animator::SampleChannel(const GltfLoader::AnimationSample
     return out;
 }
 
-void Animator::ResetPoseFromSkeleton() {
-    m_localPose.clear();
-    m_globalJointMatrices.clear();
-    m_skinMatrices.clear();
-
+void Animator::RebuildSkeletonCaches() {
     if (!m_skeleton) {
+        m_restPose.clear();
+        m_localPose.clear();
+        m_localJointMatrices.clear();
+        m_globalJointMatrices.clear();
+        m_skinMatrices.clear();
+        m_parentJointIndices.clear();
+        m_jointComputed.clear();
         return;
     }
 
     const auto& joints = m_skeleton->GetJoints();
-    m_localPose.resize(joints.size());
-    m_globalJointMatrices.resize(joints.size(), glm::mat4(1.0f));
-    m_skinMatrices.resize(joints.size(), glm::mat4(1.0f));
+    const size_t jointCount = joints.size();
+    m_restPose.resize(jointCount);
+    m_localPose.resize(jointCount);
+    m_localJointMatrices.resize(jointCount, glm::mat4(1.0f));
+    m_globalJointMatrices.resize(jointCount, glm::mat4(1.0f));
+    m_skinMatrices.resize(jointCount, glm::mat4(1.0f));
+    m_parentJointIndices.resize(jointCount, -1);
+    m_jointComputed.resize(jointCount, 0);
 
-    for (size_t i = 0; i < joints.size(); ++i) {
-        m_localPose[i] = PoseFromMatrix(joints[i].restLocalTransform);
+    for (size_t i = 0; i < jointCount; ++i) {
+        m_restPose[i] = PoseFromMatrix(joints[i].restLocalTransform);
+        m_parentJointIndices[i] = joints[i].parentJointIndex;
+    }
+}
+
+void Animator::ResetPoseFromSkeleton() {
+    if (!m_skeleton || m_localPose.size() != m_restPose.size()) {
+        return;
+    }
+    std::copy(m_restPose.begin(), m_restPose.end(), m_localPose.begin());
+}
+
+void Animator::RebuildChannelJointMap() {
+    m_channelJointIndices.clear();
+    if (!m_skeleton || !m_hasClip) {
+        return;
+    }
+
+    m_channelJointIndices.resize(m_clip.channels.size(), -1);
+    for (size_t i = 0; i < m_clip.channels.size(); ++i) {
+        m_channelJointIndices[i] = m_skeleton->FindJointByNodeIndex(m_clip.channels[i].targetNode);
     }
 }
 
@@ -284,33 +326,53 @@ void Animator::EvaluateGlobalAndSkinMatrices() {
         return;
     }
 
-    std::vector<char> computed(joints.size(), 0);
     for (size_t i = 0; i < joints.size(); ++i) {
-        ComputeJointGlobalMatrix(static_cast<int>(i), computed);
+        m_localJointMatrices[i] = PoseToMatrix(m_localPose[i]);
+    }
+
+    std::ranges::fill(m_jointComputed, 0);
+    size_t remaining = joints.size();
+
+    while (remaining > 0) {
+        bool progressed = false;
+        for (size_t i = 0; i < joints.size(); ++i) {
+            if (m_jointComputed[i]) {
+                continue;
+            }
+
+            const int parentIndex = m_parentJointIndices[i];
+            if (parentIndex >= 0 && (parentIndex >= static_cast<int>(joints.size()) || !m_jointComputed[static_cast<size_t>(parentIndex)])) {
+                continue;
+            }
+
+            if (parentIndex >= 0) {
+                m_globalJointMatrices[i] = m_globalJointMatrices[static_cast<size_t>(parentIndex)] * m_localJointMatrices[i];
+            } else {
+                m_globalJointMatrices[i] = m_localJointMatrices[i];
+            }
+
+            m_jointComputed[i] = 1;
+            --remaining;
+            progressed = true;
+        }
+
+        if (progressed) {
+            continue;
+        }
+
+        for (size_t i = 0; i < joints.size(); ++i) {
+            if (m_jointComputed[i]) {
+                continue;
+            }
+            m_globalJointMatrices[i] = m_localJointMatrices[i];
+            m_jointComputed[i] = 1;
+            --remaining;
+        }
     }
 
     for (size_t i = 0; i < joints.size(); ++i) {
         m_skinMatrices[i] = m_globalJointMatrices[i] * joints[i].inverseBindMatrix;
     }
-}
-
-glm::mat4 Animator::ComputeJointGlobalMatrix(const int jointIndex, std::vector<char>& computed) {
-    if (computed[jointIndex]) {
-        return m_globalJointMatrices[static_cast<size_t>(jointIndex)];
-    }
-
-    const auto& joints = m_skeleton->GetJoints();
-    const auto& joint = joints[static_cast<size_t>(jointIndex)];
-    const glm::mat4 local = PoseToMatrix(m_localPose[static_cast<size_t>(jointIndex)]);
-
-    if (joint.parentJointIndex >= 0) {
-        m_globalJointMatrices[static_cast<size_t>(jointIndex)] = ComputeJointGlobalMatrix(joint.parentJointIndex, computed) * local;
-    } else {
-        m_globalJointMatrices[static_cast<size_t>(jointIndex)] = local;
-    }
-
-    computed[jointIndex] = 1;
-    return m_globalJointMatrices[static_cast<size_t>(jointIndex)];
 }
 
 float Animator::ConsumeFrameUpdateMs() {

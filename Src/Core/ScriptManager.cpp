@@ -163,6 +163,8 @@ void ScriptManager::Init() {
     keys["D"] = SDL_SCANCODE_D;
     keys["Q"] = SDL_SCANCODE_Q;
     keys["E"] = SDL_SCANCODE_E;
+    keys["SPACE"] = SDL_SCANCODE_SPACE;
+    keys["LCTRL"] = SDL_SCANCODE_LCTRL;
 
     inputModule["Key"] = keys;
 }

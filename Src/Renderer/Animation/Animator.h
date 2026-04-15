@@ -58,10 +58,10 @@ private:
     static glm::mat4 PoseToMatrix(const JointPose& pose);
     static SampleResult SampleChannel(const GltfLoader::AnimationSamplerData& sampler, float timeSeconds, GltfLoader::AnimationPath path);
 
+    void RebuildSkeletonCaches();
     void ResetPoseFromSkeleton();
+    void RebuildChannelJointMap();
     void EvaluateGlobalAndSkinMatrices();
-
-    glm::mat4 ComputeJointGlobalMatrix(int jointIndex, std::vector<char>& computed);
 
     std::shared_ptr<Skeleton> m_skeleton;
     GltfLoader::AnimationClipData m_clip;
@@ -73,9 +73,14 @@ private:
     uint64_t m_poseVersion = 0;
     bool m_poseDirty = true;
 
+    std::vector<JointPose> m_restPose;
     std::vector<JointPose> m_localPose;
+    std::vector<glm::mat4> m_localJointMatrices;
     std::vector<glm::mat4> m_globalJointMatrices;
     std::vector<glm::mat4> m_skinMatrices;
+    std::vector<int> m_channelJointIndices;
+    std::vector<int> m_parentJointIndices;
+    std::vector<char> m_jointComputed;
 };
 
 #endif //MANGORENDERING_ANIMATOR_H

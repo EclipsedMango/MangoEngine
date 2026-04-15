@@ -53,6 +53,14 @@ return {
 			pos.x = pos.x + self.speed * delta
 			moved = true
 		end
+		if Input.IsKeyHeld(Input.Key.SPACE) then
+			pos.y = pos.y + self.speed * delta
+			moved = true
+		end
+		if Input.IsKeyHeld(Input.Key.LCTRL) then
+			pos.y = pos.y - self.speed * delta
+			moved = true
+		end
 
 		if moved then
 			self.node:SetPosition(pos)
