@@ -27,6 +27,7 @@ public:
     [[nodiscard]] glm::mat4 GetLightSpaceMatrix(const int index) const { return m_lightSpaceMatrices[index]; }
     [[nodiscard]] uint32_t GetCascadeTexture(const int index) const { return m_cascadeFbs[index]->GetDepthAttachment(); }
     [[nodiscard]] const std::array<float, NUM_CASCADES>& GetSplitDistances() const { return m_splitDistances; }
+    [[nodiscard]] const std::array<float, NUM_CASCADES>& GetSplitNearDistances() const { return m_splitNearDistances; }
     [[nodiscard]] float GetWorldUnitsPerTexel(const int i) const { return m_worldUnitsPerTexel[i]; }
 
 private:
@@ -37,6 +38,7 @@ private:
 
     std::array<glm::mat4, NUM_CASCADES> m_lightSpaceMatrices{};
     std::array<float, NUM_CASCADES> m_splitDistances{};
+    std::array<float, NUM_CASCADES> m_splitNearDistances{};
     std::array<float, NUM_CASCADES> m_worldUnitsPerTexel{};
 };
 

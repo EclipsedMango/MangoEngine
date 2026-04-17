@@ -25,6 +25,7 @@ void CascadedShadowMap::Update(const CameraNode3d& camera) {
     splits[NUM_CASCADES] = far;
 
     for (int i = 0; i < NUM_CASCADES; i++) {
+        m_splitNearDistances[i] = splits[i];
         m_splitDistances[i] = splits[i + 1];
     }
 

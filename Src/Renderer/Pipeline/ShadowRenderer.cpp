@@ -211,11 +211,13 @@ void ShadowRenderer::BindShadowUniforms(const Shader& shader) const {
     for (size_t i = 0; i < m_cascadedShadowMaps.size(); i++) {
         const CascadedShadowMap* csm = m_cascadedShadowMaps[i];
         const auto& splits = csm->GetSplitDistances();
+        const auto& nearSplits = csm->GetSplitNearDistances();
 
         for (int c = 0; c < CascadedShadowMap::NUM_CASCADES; c++) {
             const std::string idx = std::to_string(c);
             shader.SetMatrix4("u_LightSpaceMatrix[" + idx + "]", csm->GetLightSpaceMatrix(c));
             shader.SetFloat("u_CascadeSplits[" + idx + "]", splits[c]);
+            shader.SetFloat("u_CascadeNearSplits[" + idx + "]", nearSplits[c]);
             shader.SetFloat("u_CascadeWorldUnits[" + idx + "]", csm->GetWorldUnitsPerTexel(c));
 
             const int slot = CSM_TEXTURE_SLOT_BASE + c;

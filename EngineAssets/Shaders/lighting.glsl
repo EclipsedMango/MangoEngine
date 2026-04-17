@@ -8,6 +8,7 @@ uniform sampler2D u_ShadowMap2;
 uniform sampler2D u_ShadowMap3;
 uniform mat4 u_LightSpaceMatrix[4];
 uniform float u_CascadeSplits[4];
+uniform float u_CascadeNearSplits[4];
 uniform float u_CascadeWorldUnits[4];
 uniform int u_CascadeCount;
 uniform samplerCubeArray u_PointShadowMap;
@@ -111,7 +112,7 @@ vec3 ACESFilmic(vec3 x) {
 int SelectCascade(float depthVS) {
     for (int i = 0; i < u_CascadeCount; ++i) {
         if (depthVS < u_CascadeSplits[i])
-        return i;
+            return i;
     }
     return u_CascadeCount - 1;
 }
@@ -233,9 +234,12 @@ float ShadowWithBlend(vec3 fragPos, float fragDepthVS, vec3 normal, vec3 lightDi
     float shadow = ShadowCalculation(fragPos, cascade, normal, lightDirWS);
 
     if (cascade + 1 < u_CascadeCount) {
-        float splitDist = u_CascadeSplits[cascade];
-        float blendRange = splitDist * 0.15;
-        float blendFactor = smoothstep(splitDist - blendRange, splitDist, fragDepthVS);
+        float cascadeNear = u_CascadeNearSplits[cascade + 1];
+        float cascadeFar = u_CascadeSplits[cascade];
+        float cascadeRange = cascadeFar - cascadeNear;
+        float blendRange = cascadeRange * 0.15;
+        float blendStart = cascadeFar - blendRange;
+        float blendFactor = smoothstep(blendStart, cascadeFar, fragDepthVS);
 
         if (blendFactor > 0.0) {
             float nextShadow = ShadowCalculation(fragPos, cascade + 1, normal, lightDirWS);
