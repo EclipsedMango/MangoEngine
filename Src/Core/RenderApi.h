@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "Renderer/Pipeline/ClusterSystem.h"
 #include "Renderer/Pipeline/LightManager.h"
@@ -38,6 +39,14 @@ struct RenderStats {
 
 class RenderApi {
 public:
+    enum class ToneMapOperator : int {
+        Linear = 0,
+        Reinhard = 1,
+        Filmic = 2,
+        Aces = 3,
+        Stylized = 4,
+    };
+
     // initializes SDL and sets GL attributes, MUST be called before constructing RenderApi
     static void InitSDL();
 
@@ -77,6 +86,9 @@ public:
     static void ApplyMaterialCull(const Material* mat);
     RenderStats RenderScene(const CameraNode3d* camera, const Framebuffer* targetFbo, bool clearFbo);
     RenderStats RenderSceneWithPortals(const CameraNode3d* camera, const Framebuffer* targetFbo, int maxPortalDepth);
+    void FinalizePostProcess(const Framebuffer* targetFbo) const;
+    void SetExposure(float exposure);
+    void SetToneMapOperator(ToneMapOperator op);
     void DrawGrid(const CameraNode3d* camera, const Framebuffer* targetFbo) const;
     static void DrawMesh(const Mesh& mesh, const Shader& shader);
 
@@ -102,6 +114,8 @@ private:
 
     void RebuildClusters(const CameraNode3d* camera, const Framebuffer* targetFbo) const;
     void RunLightCulling() const;
+    void EnsurePostProcessResources(const Framebuffer* targetFbo);
+    void RunPostProcess(const Framebuffer* targetFbo) const;
 
     RenderStats RenderView(const CameraNode3d* camera, const Framebuffer* targetFbo, bool clearFbo, const PortalNode3d* excludedPortal = nullptr, bool isMainPass = true);
 
@@ -131,7 +145,12 @@ private:
     std::unique_ptr<UniformBuffer> m_cameraUbo;
     std::shared_ptr<Shader> m_depthShader;
     std::shared_ptr<Shader> m_gridShader;
+    std::shared_ptr<Shader> m_postProcessShader;
     GLuint m_gridVao = 0;
+    GLuint m_postProcessVao = 0;
+    std::unique_ptr<Framebuffer> m_postProcessFramebuffer;
+    float m_exposure = 1.0f;
+    ToneMapOperator m_toneMapOperator = ToneMapOperator::Aces;
 
     std::vector<MeshNode3d*> m_meshQueue;
     std::vector<PortalNode3d*> m_portalQueue;

@@ -240,6 +240,8 @@ RenderStats Core::RenderScene(Node3d* sceneRoot, const CameraNode3d* camera, con
         m_renderer->DrawGrid(camera, targetFbo);
     }
 
+    m_renderer->FinalizePostProcess(targetFbo);
+
     return stats;
 }
 

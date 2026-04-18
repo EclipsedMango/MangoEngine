@@ -107,6 +107,8 @@ void RenderApi::InitGLResources() {
 
     m_gridShader = ResourceManager::Get().LoadShader("GridShader", "grid.vert", "grid.frag");
     glGenVertexArrays(1, &m_gridVao);
+    m_postProcessShader = ResourceManager::Get().LoadShader("PostProcessShader", "post_process.vert", "post_process.frag");
+    glGenVertexArrays(1, &m_postProcessVao);
 
     m_clusterSystem = std::make_unique<ClusterSystem>();
     m_shadowRenderer = std::make_unique<ShadowRenderer>();
@@ -123,8 +125,18 @@ RenderApi::~RenderApi() {
     m_shadowRenderer.reset();
     m_depthShader.reset();
     m_gridShader.reset();
+    m_postProcessShader.reset();
+    m_postProcessFramebuffer.reset();
     m_cameraUbo.reset();
     m_ibl = {};
+    if (m_gridVao != 0) {
+        glDeleteVertexArrays(1, &m_gridVao);
+        m_gridVao = 0;
+    }
+    if (m_postProcessVao != 0) {
+        glDeleteVertexArrays(1, &m_postProcessVao);
+        m_postProcessVao = 0;
+    }
 
     m_windows.clear();
 
@@ -256,14 +268,26 @@ void RenderApi::SetSkybox(SkyboxNode3d* skybox) {
 }
 
 RenderStats RenderApi::RenderScene(const CameraNode3d* camera, const Framebuffer* targetFbo, bool clearFbo) {
-    return RenderView(camera, targetFbo, clearFbo, nullptr);
+    if (!camera || !targetFbo) {
+        return {};
+    }
+
+    EnsurePostProcessResources(targetFbo);
+    const RenderStats stats = RenderView(camera, m_postProcessFramebuffer.get(), clearFbo, nullptr);
+    RunPostProcess(targetFbo);
+    return stats;
 }
 
 RenderStats RenderApi::RenderSceneWithPortals(const CameraNode3d *camera, const Framebuffer *targetFbo, const int maxPortalDepth) {
-    const RenderStats stats = RenderView(camera, targetFbo, true, nullptr, true);
+    if (!camera || !targetFbo) {
+        return {};
+    }
+
+    EnsurePostProcessResources(targetFbo);
+    const RenderStats stats = RenderView(camera, m_postProcessFramebuffer.get(), true, nullptr, true);
 
     if (maxPortalDepth > 0) {
-        RenderPortalPasses(camera, targetFbo, maxPortalDepth, 0);
+        RenderPortalPasses(camera, m_postProcessFramebuffer.get(), maxPortalDepth, 0);
     }
 
     Framebuffer::Unbind();
@@ -285,11 +309,30 @@ RenderStats RenderApi::RenderSceneWithPortals(const CameraNode3d *camera, const 
     return stats;
 }
 
+void RenderApi::FinalizePostProcess(const Framebuffer* targetFbo) const {
+    RunPostProcess(targetFbo);
+}
+
+void RenderApi::SetExposure(const float exposure) {
+    m_exposure = std::max(exposure, 0.0f);
+}
+
+void RenderApi::SetToneMapOperator(const ToneMapOperator op) {
+    m_toneMapOperator = op;
+}
+
 void RenderApi::DrawGrid(const CameraNode3d *camera, const Framebuffer *targetFbo) const {
     if (!camera || !targetFbo || !m_gridShader) return;
 
-    targetFbo->Bind();
-    glViewport(0, 0, targetFbo->GetWidth(), targetFbo->GetHeight());
+    const Framebuffer* drawTarget = targetFbo;
+    if (m_postProcessFramebuffer &&
+        m_postProcessFramebuffer->GetWidth() == targetFbo->GetWidth() &&
+        m_postProcessFramebuffer->GetHeight() == targetFbo->GetHeight()) {
+        drawTarget = m_postProcessFramebuffer.get();
+    }
+
+    drawTarget->Bind();
+    glViewport(0, 0, drawTarget->GetWidth(), drawTarget->GetHeight());
 
     glDisable(GL_STENCIL_TEST);
 
@@ -302,7 +345,7 @@ void RenderApi::DrawGrid(const CameraNode3d *camera, const Framebuffer *targetFb
 
     m_gridShader->Bind();
     m_gridShader->SetVector3("u_CameraPos", camera->GetPosition());
-    m_gridShader->SetVector2("u_ScreenSize", glm::vec2(targetFbo->GetWidth(), targetFbo->GetHeight()));
+    m_gridShader->SetVector2("u_ScreenSize", glm::vec2(drawTarget->GetWidth(), drawTarget->GetHeight()));
     m_gridShader->SetFloat("u_GridSpacing", 1.0f);
     m_gridShader->SetFloat("u_FadeDistance", 80.0f);
 
@@ -601,6 +644,61 @@ void RenderApi::RunLightCulling() const {
 
     m_clusterSystem->Cull(m_lightManager->GetPointLightSsbo(), m_lightManager->GetSpotLightSsbo());
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void RenderApi::EnsurePostProcessResources(const Framebuffer* targetFbo) {
+    if (!targetFbo) {
+        return;
+    }
+
+    if (!m_postProcessFramebuffer) {
+        m_postProcessFramebuffer = std::make_unique<Framebuffer>(
+            targetFbo->GetWidth(),
+            targetFbo->GetHeight(),
+            FramebufferType::ColorDepthHdr
+        );
+        return;
+    }
+
+    if (m_postProcessFramebuffer->GetWidth() != targetFbo->GetWidth() ||
+        m_postProcessFramebuffer->GetHeight() != targetFbo->GetHeight()) {
+        m_postProcessFramebuffer->Resize(targetFbo->GetWidth(), targetFbo->GetHeight());
+    }
+}
+
+void RenderApi::RunPostProcess(const Framebuffer* targetFbo) const {
+    if (!targetFbo || !m_postProcessFramebuffer || !m_postProcessShader) {
+        return;
+    }
+
+    targetFbo->Bind();
+    glViewport(0, 0, targetFbo->GetWidth(), targetFbo->GetHeight());
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+
+    m_postProcessShader->Bind();
+    glBindTextureUnit(0, m_postProcessFramebuffer->GetColorAttachment());
+    m_postProcessShader->SetInt("u_SceneColor", 0);
+    m_postProcessShader->SetFloat("u_Exposure", m_exposure);
+    m_postProcessShader->SetInt("u_TonemapMode", static_cast<int>(m_toneMapOperator));
+
+    glBindVertexArray(m_postProcessVao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glBlitNamedFramebuffer(
+        m_postProcessFramebuffer->GetFbo(),
+        targetFbo->GetFbo(),
+        0, 0, static_cast<GLint>(targetFbo->GetWidth()), static_cast<GLint>(targetFbo->GetHeight()),
+        0, 0, static_cast<GLint>(targetFbo->GetWidth()), static_cast<GLint>(targetFbo->GetHeight()),
+        GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
+        GL_NEAREST
+    );
+
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+
+    Framebuffer::Unbind();
 }
 
 RenderStats RenderApi::RenderView(const CameraNode3d *camera, const Framebuffer *targetFbo, bool clearFbo, const PortalNode3d *excludedPortal, bool isMainPass) {

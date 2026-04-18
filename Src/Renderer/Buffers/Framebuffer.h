@@ -4,6 +4,7 @@
 
 enum class FramebufferType {
     ColorDepth,      // color + depth, for post-processing etc
+    ColorDepthHdr,   // hdr color + depth
     DepthOnly,       // shadow maps
     DepthArray,      // depth texture for csm
     DepthCubeArray,  // array for point light shadows

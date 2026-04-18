@@ -47,9 +47,10 @@ void Framebuffer::Create() {
         glNamedFramebufferDrawBuffer(m_fbo, GL_NONE);
         glNamedFramebufferReadBuffer(m_fbo, GL_NONE);
 
-    } else if (m_type == FramebufferType::ColorDepth) {
+    } else if (m_type == FramebufferType::ColorDepth || m_type == FramebufferType::ColorDepthHdr) {
+        const GLenum colorFormat = m_type == FramebufferType::ColorDepthHdr ? GL_RGBA16F : GL_RGBA8;
         glCreateTextures(GL_TEXTURE_2D, 1, &m_colorAttachment);
-        glTextureStorage2D(m_colorAttachment, 1, GL_RGBA8, m_width, m_height);
+        glTextureStorage2D(m_colorAttachment, 1, colorFormat, m_width, m_height);
         glTextureParameteri(m_colorAttachment, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTextureParameteri(m_colorAttachment, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glNamedFramebufferTexture(m_fbo, GL_COLOR_ATTACHMENT0, m_colorAttachment, 0);

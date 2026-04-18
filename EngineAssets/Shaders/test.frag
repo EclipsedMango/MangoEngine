@@ -99,7 +99,10 @@ void main() {
     uint clusterIndex = x + y * GRID_SIZE_X + z * GRID_SIZE_X * GRID_SIZE_Y;
     LightGrid grid = lightGrid[clusterIndex];
 
-    vec4  albedo = u_HasDiffuse ? texture(u_Diffuse, uv) * u_AlbedoColor : u_AlbedoColor;
+    vec4 albedoSample = u_HasDiffuse ? texture(u_Diffuse, uv) : vec4(1.0);
+    // diffuse/albedo maps are authored in sRGB, decode to linear for lighting
+    albedoSample.rgb = pow(albedoSample.rgb, vec3(2.2));
+    vec4 albedo = albedoSample * u_AlbedoColor;
     if (u_AlphaScissor && albedo.a < u_AlphaScissorThreshold) {
         discard;
     }
@@ -123,11 +126,9 @@ void main() {
 
     vec3 totalLighting = CalculateLighting(norm, v_FragPos, viewDepth, grid, V, albedo.rgb, metallic, roughness, ao);
 
-    vec3 emission = u_HasEmissive ? texture(u_Emissive, uv).rgb * u_EmissionColor * u_EmissionStrength : u_EmissionColor * u_EmissionStrength;
+    vec3 emissiveTex = u_HasEmissive ? pow(texture(u_Emissive, uv).rgb, vec3(2.2)) : vec3(1.0);
+    vec3 emission = emissiveTex * u_EmissionColor * u_EmissionStrength;
     totalLighting += emission;
-
-    float exposure = 0.5;
-    totalLighting = ACESFilmic(totalLighting * exposure);
 
     FragColor = vec4(totalLighting, albedo.a);
 }
