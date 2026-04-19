@@ -1,5 +1,7 @@
 
 #include "Input.h"
+#include <iostream>
+#include <string>
 
 std::array<bool, SDL_SCANCODE_COUNT> Input::m_current = {};
 std::array<bool, SDL_SCANCODE_COUNT> Input::m_previous = {};
@@ -14,6 +16,8 @@ float Input::m_mouseWheelX = 0.0f;
 float Input::m_mouseWheelY = 0.0f;
 
 bool Input::m_mouseDeltaEnabled = true;
+bool Input::m_mouseCaptureEnabled = false;
+SDL_Window* Input::m_captureWindow = nullptr;
 
 void Input::BeginFrame() {
     m_previous = m_current;
@@ -87,6 +91,44 @@ void Input::EndFrame() {
 
 void Input::SetMouseDeltaEnabled(const bool enabled) {
     m_mouseDeltaEnabled = enabled;
+    if (!enabled) {
+        m_mouseDelta = {};
+    }
+}
+
+void Input::SetCaptureWindow(SDL_Window* window) {
+    m_captureWindow = window;
+}
+
+void Input::SetMouseCaptureEnabled(const bool enabled) {
+    if (m_mouseCaptureEnabled == enabled) {
+        return;
+    }
+
+    SDL_Window* targetWindow = m_captureWindow ? m_captureWindow : SDL_GetMouseFocus();
+    if (!targetWindow) {
+        targetWindow = SDL_GetKeyboardFocus();
+    }
+
+    if (!targetWindow) {
+        std::cerr << "[Input Error] Cannot change mouse capture state: no focused window." << std::endl;
+        return;
+    }
+
+    if (!SDL_SetWindowRelativeMouseMode(targetWindow, enabled)) {
+        std::cerr << "[Input Error] Failed to set relative mouse mode: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+    if (!SDL_CaptureMouse(enabled)) {
+        const char* error = SDL_GetError();
+        const std::string errorText = error ? error : "";
+        if (errorText.find("not supported") == std::string::npos) {
+            std::cerr << "[Input Warning] Failed to set mouse capture: " << errorText << std::endl;
+        }
+    }
+
+    m_mouseCaptureEnabled = enabled;
     if (!enabled) {
         m_mouseDelta = {};
     }

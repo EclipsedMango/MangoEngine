@@ -103,7 +103,8 @@ void Core::InitRenderer() {
     std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
 
     SDL_GL_SetSwapInterval(0);
-    SDL_SetWindowRelativeMouseMode(m_activeWindow->GetSDLWindow(), true);
+    Input::SetCaptureWindow(m_activeWindow->GetSDLWindow());
+    SDL_SetWindowRelativeMouseMode(m_activeWindow->GetSDLWindow(), false);
 
     m_defaultShader = ResourceManager::Get().LoadShader("default", "test.vert", "test.frag");
 }

@@ -14,6 +14,10 @@ return {
 		print("Movement script initialized for node:", self.node:GetName())
 	end,
 
+	_ready = function(self)
+		Input.SetMouseCaptureEnabled(true)
+	end,
+
 	_process = function(self, delta)
 		local pos = self.node:GetPosition()
 		local moved = false

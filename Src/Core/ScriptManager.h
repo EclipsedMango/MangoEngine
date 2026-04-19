@@ -18,8 +18,10 @@ public:
 
     void SetScript(Node3d* node, const std::string& path) const;
     void ClearScript(Node3d* node) const;
+    void SetRuntimeEnabled(bool enabled) const;
+    [[nodiscard]] bool IsRuntimeEnabled() const;
 
-    void CallReady(Node3d* node) const;
+    void CallReady(const Node3d* node) const;
     void CallProcess(Node3d* node, float deltaTime) const;
     void CallPhysicsProcess(Node3d* node, float deltaTime) const;
 

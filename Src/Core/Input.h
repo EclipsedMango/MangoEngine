@@ -15,6 +15,9 @@ public:
     static void EndFrame();
 
     static void SetMouseDeltaEnabled(bool enabled);
+    static void SetCaptureWindow(SDL_Window* window);
+    static void SetMouseCaptureEnabled(bool enabled);
+    [[nodiscard]] static bool IsMouseCaptureEnabled() { return m_mouseCaptureEnabled; }
 
     [[nodiscard]] static bool IsKeyHeld(SDL_Scancode key);
     [[nodiscard]] static bool IsKeyJustPressed(SDL_Scancode key);
@@ -42,6 +45,8 @@ private:
     static float m_mouseWheelY;
 
     static bool m_mouseDeltaEnabled;
+    static bool m_mouseCaptureEnabled;
+    static SDL_Window* m_captureWindow;
 
     static Uint32 m_mouseButtonsCurrent;
     static Uint32 m_mouseButtonsPrevious;

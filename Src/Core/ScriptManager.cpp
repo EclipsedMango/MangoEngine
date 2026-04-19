@@ -14,13 +14,16 @@
 struct ScriptManager::Impl {
     struct ScriptInstance {
         sol::table table;
+        sol::protected_function init;
         sol::protected_function ready;
         sol::protected_function process;
         sol::protected_function physicsProcess;
+        bool initialized = false;
     };
 
     sol::state lua;
     std::unordered_map<Node3d*, ScriptInstance> scripts;
+    bool runtimeEnabled = true;
 };
 
 ScriptManager::ScriptManager() : m_impl(std::make_unique<Impl>()) {}
@@ -155,6 +158,8 @@ void ScriptManager::Init() {
     inputModule.set_function("IsMouseButtonPressed", &Input::IsMouseButtonJustPressed);
     inputModule.set_function("GetMouseDelta", &Input::GetMouseDelta);
     inputModule.set_function("SetMouseDeltaEnabled", &Input::SetMouseDeltaEnabled);
+    inputModule.set_function("SetMouseCaptureEnabled", &Input::SetMouseCaptureEnabled);
+    inputModule.set_function("IsMouseCaptureEnabled", &Input::IsMouseCaptureEnabled);
 
     sol::table keys = lua.create_table();
     keys["W"] = SDL_SCANCODE_W;
@@ -216,18 +221,10 @@ void ScriptManager::SetScript(Node3d *node, const std::string &path) const {
     instance.table["script_path"] = resolvedPath;
     instance.table["script_name"] = path;
 
+    instance.init = scriptClass["_init"];
     instance.ready = scriptClass["_ready"];
     instance.process = scriptClass["_process"];
     instance.physicsProcess = scriptClass["_physics_process"];
-
-    const sol::protected_function initFunc = scriptClass["_init"];
-    if (initFunc.valid()) {
-        const sol::protected_function_result initResult = initFunc(instance.table);
-        if (!initResult.valid()) {
-            ReportProtectedFunctionError(initResult, "Script _init for " + path);
-            return;
-        }
-    }
 
     m_impl->scripts[node] = std::move(instance);
 }
@@ -240,9 +237,35 @@ void ScriptManager::ClearScript(Node3d *node) const {
     m_impl->scripts.erase(node);
 }
 
-void ScriptManager::CallReady(Node3d *node) const {
+void ScriptManager::SetRuntimeEnabled(const bool enabled) const {
+    m_impl->runtimeEnabled = enabled;
+}
+
+bool ScriptManager::IsRuntimeEnabled() const {
+    return m_impl->runtimeEnabled;
+}
+
+void ScriptManager::CallReady(const Node3d *node) const {
+    if (!m_impl->runtimeEnabled) {
+        return;
+    }
+
     const auto it = m_impl->scripts.find(node);
-    if (it == m_impl->scripts.end() || !it->second.ready.valid()) {
+    if (it == m_impl->scripts.end()) {
+        return;
+    }
+
+    if (!it->second.initialized && it->second.init.valid()) {
+        const auto initResult = it->second.init(it->second.table);
+        ReportProtectedFunctionError(initResult, "_init");
+        if (!initResult.valid()) {
+            return;
+        }
+
+        it->second.initialized = true;
+    }
+
+    if (!it->second.ready.valid()) {
         return;
     }
 
@@ -251,6 +274,10 @@ void ScriptManager::CallReady(Node3d *node) const {
 }
 
 void ScriptManager::CallProcess(Node3d *node, float deltaTime) const {
+    if (!m_impl->runtimeEnabled) {
+        return;
+    }
+
     const auto it = m_impl->scripts.find(node);
     if (it == m_impl->scripts.end() || !it->second.process.valid()) {
         return;
@@ -261,6 +288,10 @@ void ScriptManager::CallProcess(Node3d *node, float deltaTime) const {
 }
 
 void ScriptManager::CallPhysicsProcess(Node3d *node, float deltaTime) const {
+    if (!m_impl->runtimeEnabled) {
+        return;
+    }
+
     const auto it = m_impl->scripts.find(node);
     if (it == m_impl->scripts.end() || !it->second.physicsProcess.valid()) {
         return;

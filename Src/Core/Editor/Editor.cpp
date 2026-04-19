@@ -8,11 +8,13 @@
 #include "../Input.h"
 #include "Core/PackedScene.h"
 #include "Core/ResourceManager.h"
+#include "Core/ScriptManager.h"
 #include "glm/gtc/type_ptr.inl"
 #include "UI/ViewportWindow.h"
 
 Editor::Editor(std::unique_ptr<Node3d> scene) : m_inspector(this), m_sceneTree(this), m_contentBrowserWindow(this) {
     m_core.Init();
+    ScriptManager::Get().SetRuntimeEnabled(false);
 
     // setup user project assets and engine assets
     const std::filesystem::path engineAssets = ResourceManager::Get().GetEngineDirectory();
@@ -107,6 +109,25 @@ void Editor::Run() {
         DrawMenuBar();
         DrawViewportTabs();
         DrawStatsPopup();
+
+        if (m_state == State::Playing && Input::IsMouseCaptureEnabled() && m_activeViewport) {
+            const ImVec2 viewportPos = m_activeViewport->GetViewportPos();
+            const ImVec2 viewportSize = m_activeViewport->GetViewportSize();
+
+            if (viewportSize.x > 1.0f && viewportSize.y > 1.0f) {
+                SDL_Rect mouseRect{
+                    static_cast<int>(viewportPos.x),
+                    static_cast<int>(viewportPos.y),
+                    static_cast<int>(viewportSize.x),
+                    static_cast<int>(viewportSize.y)
+                };
+                SDL_SetWindowMouseRect(m_core.GetActiveWindow()->GetSDLWindow(), &mouseRect);
+            } else {
+                SDL_SetWindowMouseRect(m_core.GetActiveWindow()->GetSDLWindow(), nullptr);
+            }
+        } else {
+            SDL_SetWindowMouseRect(m_core.GetActiveWindow()->GetSDLWindow(), nullptr);
+        }
 
         if (m_activeViewport->GetCameraController()->GetMoveSpeedLastFrame() != m_activeViewport->GetCameraController()->GetMoveSpeed()) {
             m_activeViewport->GetCameraController()->SetMoveSpeedLastFrame(m_activeViewport->GetCameraController()->GetMoveSpeed());
@@ -336,6 +357,7 @@ void Editor::DrawCameraSpeedIndication(const float alpha) const {
 
 void Editor::OnPlay() {
     m_sceneTree.ClearSelection();
+    ScriptManager::Get().SetRuntimeEnabled(true);
 
     for (const auto& vp : m_viewports) {
         if (Node3d* scene = vp->GetScene()) {
@@ -368,9 +390,6 @@ void Editor::OnPlay() {
     for (const auto& vp : m_viewports) {
         vp->GetCameraController()->CancelLook();
     }
-
-    SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
-    Input::SetMouseDeltaEnabled(false);
 }
 
 void Editor::OnPause() {
@@ -385,6 +404,7 @@ void Editor::OnPause() {
 
 void Editor::OnStop() {
     m_sceneTree.ClearSelection();
+    ScriptManager::Get().SetRuntimeEnabled(false);
     m_core.ChangeScene(nullptr);
 
     for (const auto& vp : m_viewports) {
@@ -400,6 +420,7 @@ void Editor::OnStop() {
         vp->GetCameraController()->CancelLook();
     }
 
+    SDL_SetWindowMouseRect(m_core.GetActiveWindow()->GetSDLWindow(), nullptr);
     SDL_SetWindowRelativeMouseMode(m_core.GetActiveWindow()->GetSDLWindow(), false);
     Input::SetMouseDeltaEnabled(false);
 }
