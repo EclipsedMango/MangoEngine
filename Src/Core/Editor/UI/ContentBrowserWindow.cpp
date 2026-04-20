@@ -27,6 +27,10 @@ void ContentBrowserWindow::DrawContentBrowser() {
         }
     }
 
+    // ImGui::SameLine();
+    // char* m_pathInputBuffer;
+    // ImGui::InputText("##path_input", m_pathInputBuffer, sizeof(m_pathInputBuffer), ImGuiInputTextFlags_EnterReturnsTrue);
+
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && ImGui::GetDragDropPayload() != nullptr) {
         if (m_backHoverStart == 0.0) {
             m_backHoverStart = ImGui::GetTime();
@@ -52,8 +56,7 @@ void ContentBrowserWindow::DrawContentBrowser() {
         m_selection.Clear();
     }
 
-    if (ImGui::BeginPopupContextWindow("##bg_context",
-        ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
+    if (ImGui::BeginPopupContextWindow("##bg_context", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
         if (ImGui::MenuItem("New Folder")) {
             NewFolder(m_currentPath);
             RefreshDirectory();

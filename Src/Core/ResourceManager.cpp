@@ -277,6 +277,21 @@ std::shared_ptr<Texture> ResourceManager::LoadTextureFromMemory(const std::strin
     return tex;
 }
 
+std::shared_ptr<Texture> ResourceManager::LoadTexture(const std::string &filepath, bool isSRGB, bool flipVertically) {
+    const std::string cacheKey = filepath + (isSRGB ? "|srgb" : "|linear");
+    if (auto cached = Get<Texture>(cacheKey)) return cached;
+
+    const std::string fullPath = SearchAssetFile(filepath);
+    if (fullPath.empty()) {
+        std::cerr << "[ResourceManager] Failed to load Texture: " << filepath << std::endl;
+        return nullptr;
+    }
+
+    auto tex = std::make_shared<Texture>(fullPath, flipVertically, isSRGB);
+    Register<Texture>(cacheKey, tex);
+    return tex;
+}
+
 std::shared_ptr<Material> ResourceManager::DuplicateMaterial(const std::string& sourceName, const std::string& newName) {
     if (const auto source = Get<Material>(sourceName)) {
         auto mat = std::make_shared<Material>(*source);

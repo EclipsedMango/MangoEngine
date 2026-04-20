@@ -1,0 +1,2747 @@
+children:
+  -
+    children: []
+    node_type: MeshNode3d
+    properties:
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: ../Assets/Textures/RedBrick/red_brick_03_ao_1k.png
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: ../Assets/Textures/RedBrick/red_brick_03_diff_1k.png
+        displacement: ../Assets/Textures/RedBrick/red_brick_03_disp_1k.png
+        displacement_scale_value: 0.01
+        double_sided: true
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: ../Assets/Textures/RedBrick/red_brick_03_nor_gl_1k.png
+        normal_strength: 1.0
+        property_type: Material
+        roughness: ../Assets/Textures/RedBrick/red_brick_03_rough_1k.png
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: MeshNode3d
+      position:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 4.0
+        y: 4.0
+        z: 4.0
+      shader_path: default
+      visible: true
+  -
+    children:
+      -
+        children:
+          -
+            children:
+              -
+                children:
+                  -
+                    children:
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.5
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: Opaque
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex0.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: 
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: wall
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: 0.350003
+                                        y: -0.0422457
+                                        z: 35.9339
+                                      bounds_radius: 52.5092
+                                      index_count: 2646
+                                      property_type: Mesh
+                                      vertex_count: 1110
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#0_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: base tower_wall_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: base tower
+                          position:
+                            x: 0.0
+                            y: 0.0
+                            z: 0.0
+                          rotation:
+                            x: -90.0
+                            y: -0.0
+                            z: 0.0
+                          scale:
+                            x: 1.0
+                            y: 1.0
+                            z: 1.0
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex0.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: wall
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -8.58071
+                                            y: 2.09547
+                                            z: 76.6064
+                                          bounds_radius: 66.4639
+                                          index_count: 1884
+                                          property_type: Mesh
+                                          vertex_count: 599
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#1_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: tower base_wall_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex1.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: planks
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -5.38957
+                                            y: 1.10626
+                                            z: 34.4491
+                                          bounds_radius: 64.275
+                                          index_count: 108
+                                          property_type: Mesh
+                                          vertex_count: 73
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#2_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: tower base_planks_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_7
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: -34.8138
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: tower base
+                          position:
+                            x: -44.5162
+                            y: 45.4604
+                            z: 10.2845
+                          rotation:
+                            x: -90.0
+                            y: -0.0
+                            z: 0.0
+                          scale:
+                            x: 1.0
+                            y: 1.0
+                            z: 1.0
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.5
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: Opaque
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex2.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex2.png
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: bark
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: 8.01438
+                                        y: -25.1573
+                                        z: -7.86671
+                                      bounds_radius: 43.1684
+                                      index_count: 2946
+                                      property_type: Mesh
+                                      vertex_count: 645
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#3_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: tree trunk_bark_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: tree trunk
+                          position:
+                            x: 47.8873
+                            y: 83.8028
+                            z: 3.66314e-06
+                          rotation:
+                            x: 9.33467e-06
+                            y: -0.0
+                            z: 0.0
+                          scale:
+                            x: 1.0
+                            y: 1.0
+                            z: 1.0
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex0.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: wall
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: 7.59702
+                                            y: -17.4104
+                                            z: 29.3246
+                                          bounds_radius: 63.5439
+                                          index_count: 288
+                                          property_type: Mesh
+                                          vertex_count: 145
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#4_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: house base_wall_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_13
+                              position:
+                                x: -4.24426
+                                y: 3.91396e-06
+                                z: -22.8051
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: house base
+                          position:
+                            x: -22.3413
+                            y: 70.7457
+                            z: -26.3468
+                          rotation:
+                            x: 9.33467e-06
+                            y: 38.2145
+                            z: 2.59075e-13
+                          scale:
+                            x: 1.0
+                            y: 1.0
+                            z: 1.0
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.5
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: Opaque
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex3.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: 
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: roof
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: -14.6731
+                                        y: 99.5478
+                                        z: -52.3383
+                                      bounds_radius: 131.664
+                                      index_count: 6915
+                                      property_type: Mesh
+                                      vertex_count: 2999
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#5_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: roof_roof_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.5
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: Opaque
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex4.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: 
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: wooden_skel_no_op
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: -1.44202
+                                        y: 77.2857
+                                        z: -50.1073
+                                      bounds_radius: 115.634
+                                      index_count: 1371
+                                      property_type: Mesh
+                                      vertex_count: 635
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#6_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: roof_wooden skel no op_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: roof
+                          position:
+                            x: -19.5723
+                            y: 3.06683
+                            z: 56.7137
+                          rotation:
+                            x: 9.33467e-06
+                            y: -0.0
+                            z: 0.0
+                          scale:
+                            x: 1.0
+                            y: 1.0
+                            z: 1.0
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex0.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: wall
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -33.9039
+                                            y: -36.1434
+                                            z: -74.1276
+                                          bounds_radius: 129.422
+                                          index_count: 11340
+                                          property_type: Mesh
+                                          vertex_count: 2352
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#7_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: stone details_wall_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_19
+                              position:
+                                x: 0.0
+                                y: -1.58983e-06
+                                z: -9.75831
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: stone details
+                          position:
+                            x: -62.0135
+                            y: 69.6417
+                            z: 4.80637
+                          rotation:
+                            x: -176.55
+                            y: -73.0108
+                            z: 173.675
+                          scale:
+                            x: 0.557333
+                            y: 0.557333
+                            z: 0.557333
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.5
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: Opaque
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex5.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: 
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: grass
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: -7.68238e-07
+                                        y: 4.87434e-06
+                                        z: 39.6279
+                                      bounds_radius: 36.5132
+                                      index_count: 318
+                                      property_type: Mesh
+                                      vertex_count: 72
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#8_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: grass floor_grass_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: grass floor
+                          position:
+                            x: 0.0
+                            y: 0.0
+                            z: 0.0
+                          rotation:
+                            x: -90.0
+                            y: 76.1026
+                            z: 1.42187e-05
+                          scale:
+                            x: 1.0
+                            y: 1.0
+                            z: 1.0
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex4.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: wooden_skel_no_op
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -155.721
+                                            y: -206.246
+                                            z: -101.064
+                                          bounds_radius: 306.929
+                                          index_count: 2832
+                                          property_type: Mesh
+                                          vertex_count: 1376
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#9_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: wood loose planks_wooden skel no op_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_24
+                              position:
+                                x: 167.603
+                                y: 70.9068
+                                z: -5.19413
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: wood loose planks
+                          position:
+                            x: -60.6215
+                            y: 71.6801
+                            z: -29.6586
+                          rotation:
+                            x: -166.41
+                            y: -55.1777
+                            z: -176.772
+                          scale:
+                            x: 0.295455
+                            y: 0.295455
+                            z: 0.295455
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.47
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: AlphaScissor
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex6.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: op_branches
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -32.2707
+                                            y: 5.46608
+                                            z: -17.3433
+                                          bounds_radius: 170.943
+                                          index_count: 2517
+                                          property_type: Mesh
+                                          vertex_count: 811
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#10_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: leaves_op branches_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_27
+                              position:
+                                x: -2.49125
+                                y: -18.5536
+                                z: -1.98172
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: leaves
+                          position:
+                            x: 65.2231
+                            y: 90.3869
+                            z: -43.0671
+                          rotation:
+                            x: -119.354
+                            y: 60.9127
+                            z: -60.9961
+                          scale:
+                            x: 0.611488
+                            y: 0.611488
+                            z: 0.611488
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.47
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: AlphaScissor
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex6.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: op_branches
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: 51.5667
+                                            y: -104.361
+                                            z: -173.453
+                                          bounds_radius: 563.887
+                                          index_count: 28512
+                                          property_type: Mesh
+                                          vertex_count: 8910
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#11_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: grass_op branches_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_30
+                              position:
+                                x: -0.561996
+                                y: 11.0929
+                                z: -1.76249e-06
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: grass
+                          position:
+                            x: 45.4517
+                            y: 50.7632
+                            z: -23.4477
+                          rotation:
+                            x: -164.774
+                            y: 42.0559
+                            z: 171.749
+                          scale:
+                            x: 0.232602
+                            y: 0.232602
+                            z: 0.232602
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex7.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: Material_413
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: 104.907
+                                            y: 19.3294
+                                            z: -12.4083
+                                          bounds_radius: 87.8121
+                                          index_count: 7548
+                                          property_type: Mesh
+                                          vertex_count: 2911
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#12_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: rocks_Material #413_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_33
+                              position:
+                                x: -100.304
+                                y: -21.2795
+                                z: -15.8105
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: rocks
+                          position:
+                            x: 36.6616
+                            y: 0.659225
+                            z: 17.2256
+                          rotation:
+                            x: -1.55515
+                            y: 60.1186
+                            z: -5.34178
+                          scale:
+                            x: 1.2209
+                            y: 1.20788
+                            z: 1.0
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.88
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: AlphaScissor
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex8.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: Material_650
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -19.8565
+                                            y: -28.6824
+                                            z: -27.4758
+                                          bounds_radius: 103.029
+                                          index_count: 6624
+                                          property_type: Mesh
+                                          vertex_count: 2070
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#13_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: ferns_Material #650_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_36
+                              position:
+                                x: -13.2835
+                                y: 9.0485
+                                z: -1.09192e-06
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: ferns
+                          position:
+                            x: 46.8779
+                            y: 46.6284
+                            z: 8.39666
+                          rotation:
+                            x: -1.90503
+                            y: 19.0493
+                            z: -5.49526
+                          scale:
+                            x: 0.799009
+                            y: 0.799009
+                            z: 0.799009
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex4.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: wooden_skel_no_op
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -97.8411
+                                            y: 60.7384
+                                            z: 37.4649
+                                          bounds_radius: 164.634
+                                          index_count: 18237
+                                          property_type: Mesh
+                                          vertex_count: 9337
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#14_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: wood structure_wooden skel no op_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_39
+                              position:
+                                x: 77.1422
+                                y: -2.5114
+                                z: -9.58418
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: wood structure
+                          position:
+                            x: -8.33627
+                            y: 32.7028
+                            z: -8.65744
+                          rotation:
+                            x: 0.741527
+                            y: -54.6458
+                            z: -2.52593
+                          scale:
+                            x: 0.736391
+                            y: 0.736391
+                            z: 0.736391
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.5
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: Opaque
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex9.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: 
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: door__barrels
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: -0.254054
+                                        y: -7.33454
+                                        z: 0.172893
+                                      bounds_radius: 14.9202
+                                      index_count: 207
+                                      property_type: Mesh
+                                      vertex_count: 139
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#15_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: door_door + barrels_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: door
+                          position:
+                            x: -11.4271
+                            y: 60.9178
+                            z: -3.19421
+                          rotation:
+                            x: 9.33467e-06
+                            y: 44.2729
+                            z: 5.68573e-13
+                          scale:
+                            x: 0.840004
+                            y: 1.0
+                            z: 1.0
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.5
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: Opaque
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex9.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: 
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: door__barrels
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: -386.855
+                                        y: 679.721
+                                        z: -124.236
+                                      bounds_radius: 1060.78
+                                      index_count: 6480
+                                      property_type: Mesh
+                                      vertex_count: 2596
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#16_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: barrels_door + barrels_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.5
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: Opaque
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex1.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: 
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: planks
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: -373.077
+                                        y: 619.575
+                                        z: -101.7
+                                      bounds_radius: 1085.86
+                                      index_count: 324
+                                      property_type: Mesh
+                                      vertex_count: 239
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#17_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: barrels_planks_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: barrels
+                          position:
+                            x: 15.0049
+                            y: 38.2229
+                            z: -26.3527
+                          rotation:
+                            x: 90.0
+                            y: 70.9159
+                            z: 180.0
+                          scale:
+                            x: 0.0489521
+                            y: 0.0489521
+                            z: 0.159411
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex4.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: wooden_skel_no_op
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -21.8869
+                                            y: 264.355
+                                            z: 79.204
+                                          bounds_radius: 312.72
+                                          index_count: 7308
+                                          property_type: Mesh
+                                          vertex_count: 3852
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#18_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: windows_wooden skel no op_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex9.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: door__barrels
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: -22.1706
+                                            y: 264.518
+                                            z: 79.2983
+                                          bounds_radius: 296.008
+                                          index_count: 36
+                                          property_type: Mesh
+                                          vertex_count: 24
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#19_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: windows_door + barrels_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_47
+                              position:
+                                x: 77.1422
+                                y: -2.5114
+                                z: -9.58418
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: windows
+                          position:
+                            x: -1.0629
+                            y: 56.9168
+                            z: -47.8811
+                          rotation:
+                            x: 9.33466e-06
+                            y: -73.3966
+                            z: 5.69891e-12
+                          scale:
+                            x: 0.397951
+                            y: 0.155276
+                            z: 0.603173
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children:
+                                  -
+                                    children: []
+                                    node_type: MeshNode3d
+                                    properties:
+                                      material:
+                                        albedo_color:
+                                          x: 1.0
+                                          y: 1.0
+                                          z: 1.0
+                                        alpha_scissor_threshold: 0.5
+                                        ambient_occlusion: 
+                                        ao_strength_value: 1.0
+                                        blend_mode: Opaque
+                                        cast_shadows: true
+                                        diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex4.png
+                                        displacement: 
+                                        displacement_scale_value: 0.01
+                                        double_sided: true
+                                        emission_strength: 1.0
+                                        emissive: 
+                                        metallic: 
+                                        metallic_value: 0.0
+                                        name: wooden_skel_no_op
+                                        normal: 
+                                        normal_strength: 1.0
+                                        property_type: Material
+                                        roughness: 
+                                        roughness_value: 0.6
+                                        uv_offset:
+                                          x: 0.0
+                                          y: 0.0
+                                        uv_scale:
+                                          x: 1.0
+                                          y: 1.0
+                                      mesh:
+                                        mesh:
+                                          bounds_center:
+                                            x: 120.383
+                                            y: -123.956
+                                            z: -52.2062
+                                          bounds_radius: 187.98
+                                          index_count: 7440
+                                          property_type: Mesh
+                                          vertex_count: 7388
+                                        mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#20_0
+                                        property_type: PropertyHolder
+                                      name: MeshNode3d
+                                      position:
+                                        x: 0.0
+                                        y: 0.0
+                                        z: 0.0
+                                      rotation:
+                                        x: 0.0
+                                        y: -0.0
+                                        z: 0.0
+                                      scale:
+                                        x: 1.0
+                                        y: 1.0
+                                        z: 1.0
+                                      shader_path: default
+                                      visible: true
+                                node_type: Node3d
+                                properties:
+                                  name: wood beams_wooden skel no op_0
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: Object_51
+                              position:
+                                x: -186.901
+                                y: 79.6868
+                                z: -8.77704
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: wood beams
+                          position:
+                            x: 18.8052
+                            y: -42.0196
+                            z: 19.5227
+                          rotation:
+                            x: 89.2569
+                            y: 20.1257
+                            z: 0.178047
+                          scale:
+                            x: 0.473601
+                            y: 0.473601
+                            z: 0.473601
+                          visible: true
+                      -
+                        children:
+                          -
+                            children:
+                              -
+                                children: []
+                                node_type: MeshNode3d
+                                properties:
+                                  material:
+                                    albedo_color:
+                                      x: 1.0
+                                      y: 1.0
+                                      z: 1.0
+                                    alpha_scissor_threshold: 0.88
+                                    ambient_occlusion: 
+                                    ao_strength_value: 1.0
+                                    blend_mode: AlphaScissor
+                                    cast_shadows: true
+                                    diffuse: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb_tex8.png
+                                    displacement: 
+                                    displacement_scale_value: 0.01
+                                    double_sided: true
+                                    emission_strength: 1.0
+                                    emissive: 
+                                    metallic: 
+                                    metallic_value: 0.0
+                                    name: Material_650
+                                    normal: 
+                                    normal_strength: 1.0
+                                    property_type: Material
+                                    roughness: 
+                                    roughness_value: 0.6
+                                    uv_offset:
+                                      x: 0.0
+                                      y: 0.0
+                                    uv_scale:
+                                      x: 1.0
+                                      y: 1.0
+                                  mesh:
+                                    mesh:
+                                      bounds_center:
+                                        x: 32.9977
+                                        y: -16.1858
+                                        z: 4.07878
+                                      bounds_radius: 110.62
+                                      index_count: 1680
+                                      property_type: Mesh
+                                      vertex_count: 525
+                                    mesh_type: ../Assets/Models/PlayerHome/stylised_sky_player_home_dioroma.glb#21_0
+                                    property_type: PropertyHolder
+                                  name: MeshNode3d
+                                  position:
+                                    x: 0.0
+                                    y: 0.0
+                                    z: 0.0
+                                  rotation:
+                                    x: 0.0
+                                    y: -0.0
+                                    z: 0.0
+                                  scale:
+                                    x: 1.0
+                                    y: 1.0
+                                    z: 1.0
+                                  shader_path: default
+                                  visible: true
+                            node_type: Node3d
+                            properties:
+                              name: klimop_Material #650_0
+                              position:
+                                x: 0.0
+                                y: 0.0
+                                z: 0.0
+                              rotation:
+                                x: 0.0
+                                y: -0.0
+                                z: 0.0
+                              scale:
+                                x: 1.0
+                                y: 1.0
+                                z: 1.0
+                              visible: true
+                        node_type: Node3d
+                        properties:
+                          name: klimop
+                          position:
+                            x: -54.4579
+                            y: 38.7695
+                            z: -13.4381
+                          rotation:
+                            x: -90.0
+                            y: 5.00896e-06
+                            z: 5.00896e-06
+                          scale:
+                            x: 1.0
+                            y: 1.0
+                            z: 1.0
+                          visible: true
+                    node_type: Node3d
+                    properties:
+                      name: RootNode
+                      position:
+                        x: 0.0
+                        y: 0.0
+                        z: 0.0
+                      rotation:
+                        x: 0.0
+                        y: -0.0
+                        z: 0.0
+                      scale:
+                        x: 1.0
+                        y: 1.0
+                        z: 1.0
+                      visible: true
+                node_type: Node3d
+                properties:
+                  name: Object_2
+                  position:
+                    x: 0.0
+                    y: 0.0
+                    z: 0.0
+                  rotation:
+                    x: 0.0
+                    y: -0.0
+                    z: 0.0
+                  scale:
+                    x: 1.0
+                    y: 1.0
+                    z: 1.0
+                  visible: true
+            node_type: Node3d
+            properties:
+              name: eb5bca572b2b423cb9f941019ca4f64b.fbx
+              position:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              rotation:
+                x: 90.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              visible: true
+        node_type: Node3d
+        properties:
+          name: Sketchfab_model
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          rotation:
+            x: -90.0
+            y: 0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          visible: true
+    node_type: Node3d
+    properties:
+      name: Node3d
+      position:
+        x: 0.0
+        y: -4.0
+        z: -15.0
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 0.15
+        y: 0.15
+        z: 0.15
+      visible: true
+  -
+    children: []
+    node_type: MeshNode3d
+    properties:
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 1.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 0.5
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.866025
+          index_count: 36
+          property_type: Mesh
+          vertex_count: 24
+        mesh_type: Cube
+        property_type: PropertyHolder
+      name: MeshNode3d
+      position:
+        x: 0.0
+        y: -4.9
+        z: 2.0
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 0.2
+        y: 0.2
+        z: 0.2
+      shader_path: default
+      visible: true
+  -
+    children: []
+    node_type: MeshNode3d
+    properties:
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.75
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 0.25
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0175661
+            y: -1.12197e-07
+            z: -1.98791e-10
+          bounds_radius: 0.517566
+          index_count: 1536
+          property_type: Mesh
+          vertex_count: 289
+        mesh_type: Sphere
+        property_type: PropertyHolder
+      name: MeshNode3d
+      position:
+        x: 0.0
+        y: 4.0
+        z: -2.0
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      shader_path: default
+      visible: true
+  -
+    children: []
+    node_type: PortalNode3d
+    properties:
+      is_linked: true
+      linked_portal_name: PortalNode
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: PortalNode
+      position:
+        x: 0.0
+        y: 0.0
+        z: 0.1
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.5
+        y: 2.5
+        z: 1.0
+      shader_path: default
+      visible: true
+  -
+    children: []
+    node_type: PortalNode3d
+    properties:
+      is_linked: true
+      linked_portal_name: PortalNode
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: PortalNode
+      position:
+        x: 3.5
+        y: 6.25
+        z: -5.5
+      rotation:
+        x: -180.0
+        y: -30.0
+        z: -180.0
+      scale:
+        x: 1.5
+        y: 2.5
+        z: 1.0
+      shader_path: default
+      visible: true
+  -
+    children: []
+    node_type: DirectionalLightNode3d
+    properties:
+      color:
+        x: 0.9
+        y: 0.65
+        z: 0.32
+      intensity: 2.5
+      name: DirectionalLightNode3d
+      position:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      rotation:
+        x: -40.3155
+        y: -45.0
+        z: 1.20742e-06
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      visible: true
+  -
+    children: []
+    node_type: PointLightNode3d
+    properties:
+      color:
+        x: 0.6
+        y: 0.7
+        z: 0.9
+      intensity: 1.0
+      name: PointLightNode3d
+      position:
+        x: 2.0
+        y: 2.0
+        z: -2.0
+      radius: 15.0
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      visible: true
+  -
+    children: []
+    node_type: CameraNode3d
+    properties:
+      far_plane: 200.0
+      fov: 75.0
+      is_main_camera: false
+      name: CameraNode3d
+      near_plane: 0.1
+      pitch: 0.0
+      position:
+        x: 0.0
+        y: 1.0
+        z: 8.0
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      visible: true
+      yaw: -90.0
+node_type: Node3d
+properties:
+  name: Node3d
+  position:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  rotation:
+    x: 0.0
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  visible: true

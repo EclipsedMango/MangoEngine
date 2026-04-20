@@ -13,9 +13,3 @@ void SpotLight::SetCutOffs(const float cutOffAngle, const float outerCutOffAngle
     m_cutOff = glm::cos(glm::radians(cutOffAngle));
     m_outerCutOff = glm::cos(glm::radians(outerCutOffAngle));
 }
-
-void SpotLight::SetAttenuation(const float constant, const float linear, const float quadratic) {
-    m_constant = constant;
-    m_linear = linear;
-    m_quadratic = quadratic;
-}

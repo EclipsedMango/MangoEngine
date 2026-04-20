@@ -14,7 +14,6 @@ public:
     std::unique_ptr<Node3d> Clone() override;
 
     void SetRadius(const float radius) { m_light.SetRadius(radius); }
-    void SetAttenuation(const float c, const float l, const float q) { m_light.SetAttenuation(c, l, q); }
 
     [[nodiscard]] std::string GetNodeType() const override { return "PointLightNode3d"; }
     [[nodiscard]] PointLight* GetLight() { return &m_light; }

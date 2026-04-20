@@ -50,6 +50,7 @@ public:
     }
 
     std::shared_ptr<Texture> LoadTextureFromMemory(const std::string& key, const unsigned char* data, int width, int height, int channels);
+    std::shared_ptr<Texture> LoadTexture(const std::string& filepath, bool isSRGB = false, bool flipVertically = true);
     std::shared_ptr<Material> DuplicateMaterial(const std::string& sourceName, const std::string& newName);
     std::shared_ptr<Shader> LoadShader(const std::string& name, const std::string& vertFilename, const std::string& fragFilename);
     std::shared_ptr<Shader> LoadShaderWithGeom(const std::string& name, const std::string& vertFilename, const std::string& fragFilename, const std::string& geomFileName);

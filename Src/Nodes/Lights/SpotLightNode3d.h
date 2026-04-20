@@ -14,7 +14,6 @@ public:
     std::unique_ptr<Node3d> Clone() override;
 
     void SetCutOffs(const float inner, const float outer) { m_light.SetCutOffs(inner, outer); }
-    void SetAttenuation(const float c, const float l, const float q) { m_light.SetAttenuation(c, l, q); }
 
     [[nodiscard]] std::string GetNodeType() const override { return "SpotLightNode3d"; }
     [[nodiscard]] SpotLight* GetLight() { return &m_light; }

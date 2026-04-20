@@ -69,7 +69,6 @@ void LightManager::Upload() {
             GPUPointLight gl{};
             gl.position = glm::vec4(l->GetPosition(), l->GetRadius());
             gl.color = glm::vec4(l->GetColor(), l->GetIntensity());
-            gl.attenuation = glm::vec4(l->GetConstant(), l->GetLinear(), l->GetQuadratic(), 0.0f);
             pointData.push_back(gl);
         }
 
@@ -88,11 +87,10 @@ void LightManager::Upload() {
 
         for (const auto* l : m_spotLights) {
             GPUSpotLight gl{};
-            const float radius = CalculateLightRadius(l->GetColor(), l->GetIntensity(), 1.0f, l->GetLinear(), l->GetQuadratic());
-            gl.position  = glm::vec4(l->GetPosition(), radius);
+            gl.position = glm::vec4(l->GetPosition(), l->GetRadius());
             gl.direction = glm::vec4(l->GetDirection(), 0.0f);
             gl.color = glm::vec4(l->GetColor(), l->GetIntensity());
-            gl.params = glm::vec4(l->GetCutOff(), l->GetOuterCutOff(), l->GetLinear(), l->GetQuadratic());
+            gl.params = glm::vec4(l->GetCutOff(), l->GetOuterCutOff(), 0.0f, 0.0f);
             spotData.push_back(gl);
         }
 
@@ -103,32 +101,4 @@ void LightManager::Upload() {
 
         m_spotLightSsbo->SetData(spotData.data(), size, 0);
     }
-}
-
-float LightManager::CalculateLightRadius(const glm::vec3& color, const float intensity, const float constant, const float linear, const float quadratic) {
-    constexpr float threshold = 0.05f;
-
-    const float maxBrightness = std::max({ color.r, color.g, color.b }) * intensity;
-    if (maxBrightness <= 0.0f) {
-        return 0.0f;
-    }
-
-    const float a = quadratic;
-    const float b = linear;
-    const float c = constant - maxBrightness / threshold;
-
-    if (std::abs(a) < 1e-6f) {
-        if (std::abs(b) < 1e-6f) {
-            return 1000.0f;
-        }
-
-        return std::max(0.0f, -c / b);
-    }
-
-    const float disc = b * b - 4.0f * a * c;
-    if (disc < 0.0f) {
-        return 0.0f;
-    }
-
-    return std::max(0.0f, (-b + std::sqrt(disc)) / (2.0f * a));
 }

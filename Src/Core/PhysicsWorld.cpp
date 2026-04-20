@@ -26,7 +26,7 @@ namespace {
 
     class BroadPhaseLayerInterfaceImpl final : public JPH::BroadPhaseLayerInterface {
     public:
-        [[nodiscard]] uint GetNumBroadPhaseLayers() const override {
+        [[nodiscard]] JPH::uint GetNumBroadPhaseLayers() const override {
             return BroadPhaseLayers::NUM_LAYERS;
         }
 
@@ -79,7 +79,7 @@ namespace {
     }
 
 #if defined(JPH_ENABLE_ASSERTS)
-    bool AssertFailedImpl(const char* inExpression, const char* inMessage, const char* inFile, uint inLine) {
+    bool AssertFailedImpl(const char* inExpression, const char* inMessage, const char* inFile, JPH::uint inLine) {
         std::fprintf(stderr, "Jolt assert failed: %s (%s) in %s:%u\n", inExpression, inMessage ? inMessage : "", inFile, inLine);
         return true;
     }
@@ -124,10 +124,10 @@ void PhysicsWorld::Initialize() {
     m_objectVsBroadPhaseLayerFilter = std::make_unique<ObjectVsBroadPhaseLayerFilterImpl>();
     m_objectLayerPairFilter = std::make_unique<ObjectLayerPairFilterImpl>();
 
-    constexpr uint cMaxBodies = 8192;
-    constexpr uint cNumBodyMutexes = 0;
-    constexpr uint cMaxBodyPairs = 8192;
-    constexpr uint cMaxContactConstraints = 8192;
+    constexpr JPH::uint cMaxBodies = 8192;
+    constexpr JPH::uint cNumBodyMutexes = 0;
+    constexpr JPH::uint cMaxBodyPairs = 8192;
+    constexpr JPH::uint cMaxContactConstraints = 8192;
 
     m_physicsSystem.Init(
         cMaxBodies,

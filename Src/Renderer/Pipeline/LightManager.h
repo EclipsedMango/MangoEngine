@@ -49,8 +49,6 @@ public:
     [[nodiscard]] ShaderStorageBuffer* GetSpotLightSsbo() const { return m_spotLightSsbo.get(); }
 
 private:
-    static float CalculateLightRadius(const glm::vec3& color, float intensity, float constant, float linear, float quadratic);
-
     std::vector<DirectionalLight*> m_directionalLights;
     std::vector<PointLight*> m_pointLights;
     std::vector<SpotLight*> m_spotLights;

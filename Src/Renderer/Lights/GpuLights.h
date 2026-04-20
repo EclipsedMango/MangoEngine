@@ -12,9 +12,8 @@ struct GPUDirectionalLight {
 
 // align with std430 layout in shaders
 struct GPUPointLight {
-    glm::vec4 position;     // w = unused
+    glm::vec4 position;     // w = radius
     glm::vec4 color;        // w = intensity
-    glm::vec4 attenuation;  // x=constant, y=linear, z=quadratic
 };
 
 struct GPUPointShadowMeta {

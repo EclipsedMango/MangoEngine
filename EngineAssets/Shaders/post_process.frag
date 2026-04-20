@@ -55,9 +55,9 @@ vec3 FilmicTonemap(vec3 color) {
 vec3 StylizedTonemap(vec3 color) {
     vec3 mapped = ACESFitted(color);
     float luma = dot(mapped, vec3(0.2126, 0.7152, 0.0722));
-    mapped = mix(vec3(luma), mapped, 1.16);
-    mapped = mix(mapped, pow(mapped, vec3(0.95)), 0.25);
-    mapped += (1.0 - mapped) * 0.01;
+    mapped = mix(vec3(luma), mapped, 1.6);
+    mapped = mapped / (mapped + 0.15) * 1.15;
+    mapped = smoothstep(vec3(0.02), vec3(1.0), mapped);
     return clamp(mapped, 0.0, 1.0);
 }
 

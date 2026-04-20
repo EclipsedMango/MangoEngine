@@ -12,7 +12,7 @@ public:
     // ONLY for internal use and serializing, use other constructors instead
     Texture() = default;
 
-    explicit Texture(const std::string& path, bool flipVertically = true);
+    explicit Texture(const std::string& path, bool flipVertically = true, bool isSRGB = false);
     explicit Texture(const unsigned char* data, int width, int height, int channels, std::string key);
     explicit Texture(int width, int height, GLenum internalFormat);
     explicit Texture(int width, int height, GLenum internalFormat, int mipLevels);

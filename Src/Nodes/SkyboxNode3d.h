@@ -27,8 +27,8 @@ public:
 private:
     void RegisterProperties();
 
-    float m_intensity = 0.25;
-    float m_specularIntensity = 0.25;
+    float m_intensity = 0.4;
+    float m_specularIntensity = 0.75;
 
     std::string m_hdrPath;
     std::unique_ptr<Skybox> m_skybox;

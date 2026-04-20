@@ -305,36 +305,36 @@ std::shared_ptr<Shader> Material::GetShader() const {
 }
 
 void Material::SetDiffuse(const std::string &path) {
-    m_diffuse = ResourceManager::Get().Load<Texture>(path);
+    m_diffuse = ResourceManager::Get().LoadTexture(path, true);
     m_dirty = true;
 }
 
 void Material::SetAmbientOcclusion(const std::string &path) {
-    m_ambientOcclusion = ResourceManager::Get().Load<Texture>(path);
+    m_ambientOcclusion = ResourceManager::Get().LoadTexture(path, false);
     m_dirty = true;
 }
 
 void Material::SetNormal(const std::string &path) {
-    m_normal = ResourceManager::Get().Load<Texture>(path);
+    m_normal = ResourceManager::Get().LoadTexture(path, false);
     m_dirty = true;
 }
 
 void Material::SetRoughness(const std::string &path) {
-    m_roughness = ResourceManager::Get().Load<Texture>(path);
+    m_roughness = ResourceManager::Get().LoadTexture(path, false);
     m_dirty = true;
 }
 
 void Material::SetMetallic(const std::string &path) {
-    m_metallic = ResourceManager::Get().Load<Texture>(path);
+    m_metallic = ResourceManager::Get().LoadTexture(path, false);
     m_dirty = true;
 }
 
 void Material::SetDisplacement(const std::string &path) {
-    m_displacement = ResourceManager::Get().Load<Texture>(path);
+    m_displacement = ResourceManager::Get().LoadTexture(path, false);
     m_dirty = true;
 }
 
 void Material::SetEmissive(const std::string &path) {
-    m_emissive = ResourceManager::Get().Load<Texture>(path);
+    m_emissive = ResourceManager::Get().LoadTexture(path, false);
     m_dirty = true;
 }

@@ -10,17 +10,17 @@
 
 REGISTER_PROPERTY_TYPE(Texture)
 
-static void GetFormats(const int channels, const std::string& label, GLenum& internalFormat, GLenum& format) {
+static void GetFormats(const int channels, const std::string& label, GLenum& internalFormat, GLenum& format, const bool isSRGB = false) {
     switch (channels) {
         case 1: internalFormat = GL_R8; format = GL_RED; break;
         case 2: internalFormat = GL_RG8; format = GL_RG; break;
-        case 3: internalFormat = GL_RGB8; format = GL_RGB; break;
-        case 4: internalFormat = GL_RGBA8; format = GL_RGBA; break;
+        case 3: internalFormat = isSRGB ? GL_SRGB8 : GL_RGB8; format = GL_RGB; break;
+        case 4: internalFormat = isSRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8; format = GL_RGBA; break;
         default: throw std::runtime_error("Unsupported channel count in texture: " + label);
     }
 }
 
-Texture::Texture(const std::string& path, const bool flipVertically) : m_path(path) {
+Texture::Texture(const std::string& path, const bool flipVertically, const bool isSRGB) : m_path(path) {
     if (path.empty()) {
         throw std::runtime_error("Texture: Cannot load an empty file path.");
     }
@@ -33,7 +33,7 @@ Texture::Texture(const std::string& path, const bool flipVertically) : m_path(pa
     }
 
     GLenum internalFormat, format;
-    GetFormats(m_channels, path, internalFormat, format);
+    GetFormats(m_channels, path, internalFormat, format, isSRGB);
 
     glGenTextures(1, &m_id);
     glBindTexture(GL_TEXTURE_2D, m_id);

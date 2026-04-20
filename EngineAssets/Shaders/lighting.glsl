@@ -34,7 +34,6 @@ layout (std140, binding = 1) uniform GlobalLightData {
 struct PointLight {
     vec4 position;
     vec4 color;
-    vec4 attenuation;
 };
 
 layout (std430, binding = 2) readonly buffer PointLightBuffer {
@@ -338,6 +337,13 @@ vec3 EvaluateIBL(vec3 albedo, float metallic, float roughness, vec3 N, vec3 V, f
     return (diffuse + specular) * ao;
 }
 
+float Attenuation(float distance, float range) {
+    float sqrDist = distance * distance;
+    float invSqrRange = 1.0 / max(range * range, 0.0001);
+    float factor = sqrDist * invSqrRange;
+    float smoothFactor = max(1.0 - factor * factor, 0.0);
+    return (smoothFactor * smoothFactor) / max(sqrDist, 0.0001);
+}
 
 vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid grid, vec3 V, vec3 albedo, float metallic, float roughness, float ao) {
     vec3 totalLighting = vec3(0.0);
@@ -365,12 +371,12 @@ vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid gri
 
         vec3 L = toLight / max(distance, 1e-5);
 
-        float attenuation = 1.0 / (light.attenuation.x + light.attenuation.y * distance + light.attenuation.z * (distance * distance));
+        float attenuation = Attenuation(distance, radius);
         float edge = EdgeFade(distance, radius);
         float shadow = PointShadow(fragPos, norm, lightIndex, light);
         vec3  brdf = EvaluateBRDF(albedo, metallic, roughness, norm, V, L);
 
-        totalLighting += (1.0 - shadow) * brdf * light.color.rgb * light.color.w * attenuation * edge;
+        totalLighting += (1.0 - shadow) * brdf * light.color.rgb * light.color.w * attenuation;
     }
 
     // spot lights
@@ -380,12 +386,13 @@ vec3 CalculateLighting(vec3 norm, vec3 fragPos, float fragDepthVS, LightGrid gri
 
         vec3  toLight  = light.position.xyz - fragPos;
         float distance = length(toLight);
+        float radius   = light.position.w;
 
         if (distance > light.position.w) continue;
 
         vec3 L = normalize(toLight);
 
-        float attenuation = 1.0 / (1.0 + light.params.z * distance + light.params.w * (distance * distance));
+        float attenuation = Attenuation(distance, radius);
 
         float theta = dot(L, normalize(-light.direction.xyz));
         float epsilon = light.params.x - light.params.y;

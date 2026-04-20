@@ -48,7 +48,7 @@ void main() {
     color = mix(color, vec3(0.2, 0.2, 1.0), clamp(zAxis, 0.0, 1.0));
     color = mix(color, vec3(1.0, 0.2, 0.2), clamp(xAxis, 0.0, 1.0));
 
-    float alpha = max(minor * 0.55, major) * fade;
+    float alpha = max(minor * 0.1, major * 0.15) * fade;
 
     vec4 clipPos = u_Projection * u_View * vec4(worldPos, 1.0);
     gl_FragDepth = (clipPos.z / clipPos.w) * 0.5 + 0.5;

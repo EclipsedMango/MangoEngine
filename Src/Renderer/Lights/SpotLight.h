@@ -12,32 +12,25 @@ public:
     void SetDirection(const glm::vec3 direction) { m_direction = direction; }
     void SetColor(const glm::vec3 color) { m_color = color; }
     void SetIntensity(const float intensity) { m_intensity = intensity; }
+    void SetRadius(const float radius) { m_radius = radius; }
     void SetCutOffs(float cutOffAngle, float outerCutOffAngle);
-    void SetAttenuation(float constant, float linear, float quadratic);
 
     [[nodiscard]] glm::vec3 GetPosition() const { return m_position; }
     [[nodiscard]] glm::vec3 GetDirection() const { return m_direction; }
     [[nodiscard]] glm::vec3 GetColor() const { return m_color; }
     [[nodiscard]] float GetIntensity() const { return m_intensity; }
-
+    [[nodiscard]] float GetRadius() const { return m_radius; }
     [[nodiscard]] float GetCutOff() const { return m_cutOff; }
     [[nodiscard]] float GetOuterCutOff() const { return m_outerCutOff; }
-    [[nodiscard]] float GetConstant() const { return m_constant; }
-    [[nodiscard]] float GetLinear() const { return m_linear; }
-    [[nodiscard]] float GetQuadratic() const { return m_quadratic; }
 
 private:
     glm::vec3 m_position{};
     glm::vec3 m_direction{};
     glm::vec3 m_color{};
-    float m_intensity;
-
+    float m_intensity = 1.0f;
+    float m_radius = 8.0f;
     float m_cutOff{};
     float m_outerCutOff{};
-
-    float m_constant = 1.0f;
-    float m_linear = 0.09f;
-    float m_quadratic = 0.032f;
 };
 
 
