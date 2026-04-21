@@ -335,6 +335,6 @@ void Material::SetDisplacement(const std::string &path) {
 }
 
 void Material::SetEmissive(const std::string &path) {
-    m_emissive = ResourceManager::Get().LoadTexture(path, false);
+    m_emissive = ResourceManager::Get().LoadTexture(path, true);
     m_dirty = true;
 }
