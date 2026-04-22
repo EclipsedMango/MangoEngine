@@ -15,6 +15,7 @@ layout (std140, binding = 0) uniform CameraData {
 uniform mat4 u_NormalMatrix;
 uniform mat4 u_Model;
 uniform bool u_UseSkinnedVertexBuffer;
+uniform bool u_UseInstancing;
 
 struct SkinnedVertex {
     vec4 position;
@@ -26,12 +27,28 @@ layout (std430, binding = 11) readonly buffer SkinnedVertexBuffer {
     SkinnedVertex u_SkinnedVertices[];
 };
 
+struct InstanceData {
+    mat4 model;
+    mat4 normalMatrix;
+};
+
+layout (std430, binding = 16) readonly buffer InstanceDataBuffer {
+    InstanceData u_InstanceData[];
+};
+
 out vec3 v_Normal;
 out vec2 v_TexCoord;
 out vec3 v_FragPos;
 out mat3 v_TBN;
 
 void main() {
+    mat4 modelMatrix = u_Model;
+    mat4 normalMatrix = u_NormalMatrix;
+    if (u_UseInstancing) {
+        modelMatrix = u_InstanceData[gl_InstanceID].model;
+        normalMatrix = u_InstanceData[gl_InstanceID].normalMatrix;
+    }
+
     vec4 localPosition = vec4(a_Position, 1.0);
     vec3 localNormal = a_Normal;
     vec3 localTangent = a_Tangent.xyz;
@@ -45,13 +62,13 @@ void main() {
         tangentSign = skinned.tangent.w;
     }
 
-    vec4 worldPosition = u_Model * localPosition;
+    vec4 worldPosition = modelMatrix * localPosition;
     v_FragPos = worldPosition.xyz;
 
     gl_Position = u_Projection * u_View * worldPosition;
 
-    vec3 N = normalize(mat3(u_NormalMatrix) * localNormal);
-    vec3 T = normalize(mat3(u_NormalMatrix) * localTangent);
+    vec3 N = normalize(mat3(normalMatrix) * localNormal);
+    vec3 T = normalize(mat3(normalMatrix) * localTangent);
     T = normalize(T - dot(T, N) * N); // re-orthogonalize against N
     vec3 B = cross(N, T) * tangentSign; // w handles mirrored UVs
 

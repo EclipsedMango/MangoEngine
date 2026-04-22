@@ -69,6 +69,7 @@ private:
     };
 
     void EnsurePointShadowMetaBuffer(size_t pointLightCount);
+    void EnsureInstanceBuffer(size_t instanceCount);
     static float ScorePointLight(const PointLight* light, const CameraNode3d& camera);
     static void BuildPointShadowFaceMatrices(const glm::vec3& lightPos, float nearPlane, float farPlane, glm::mat4 outVP[6]);
 
@@ -81,6 +82,7 @@ private:
     std::shared_ptr<Shader> m_pointShadowDepthShader;
     std::unique_ptr<PointLightShadowMap> m_pointShadowMap;
     std::unique_ptr<ShaderStorageBuffer> m_pointShadowMetaSsbo;  // binding 8
+    std::unique_ptr<ShaderStorageBuffer> m_instanceSsbo;  // binding 12
 
     uint32_t m_shadowDrawCallCount = 0;
     std::vector<ShadowedPointLightDebug> m_shadowedPointLightsDebug;

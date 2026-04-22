@@ -1,6 +1,7 @@
 
 #include "Mesh.h"
 
+#include <atomic>
 #include <cstdint>
 
 #include "glm/glm.hpp"
@@ -20,7 +21,17 @@ namespace {
 
 REGISTER_PROPERTY_TYPE(Mesh)
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) : m_vertices(vertices), m_indices(indices) {
+uint64_t Mesh::GenerateResourceId() {
+    static std::atomic<uint64_t> s_nextId {1};
+    return s_nextId.fetch_add(1, std::memory_order_relaxed);
+}
+
+Mesh::Mesh() : m_resourceId(GenerateResourceId()) {
+    RegisterProperties();
+}
+
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
+    : m_vertices(vertices), m_indices(indices), m_resourceId(GenerateResourceId()) {
     ComputeSkinWeightsUsage();
     m_skinningSourceUploaded = false;
     Upload();

@@ -1,11 +1,27 @@
 
 #include "Material.h"
 
+#include <atomic>
+
 #include "Core/ResourceManager.h"
 
 REGISTER_PROPERTY_TYPE(Material)
 
-Material::Material() {
+uint64_t Material::GenerateResourceId() {
+    static std::atomic<uint64_t> s_nextId {1};
+    return s_nextId.fetch_add(1, std::memory_order_relaxed);
+}
+
+uint64_t Material::GetDefaultResourceId() {
+    static const uint64_t s_defaultMaterialId = GenerateResourceId();
+    return s_defaultMaterialId;
+}
+
+void Material::TouchResourceId() {
+    m_resourceId = GenerateResourceId();
+}
+
+Material::Material() : m_resourceId(GetDefaultResourceId()) {
     AddProperty("name",
         [this]() -> PropertyValue { return GetName(); },
         [this](const PropertyValue& v) { SetName(std::get<std::string>(v)); }
@@ -114,6 +130,71 @@ Material::Material() {
     );
 }
 
+Material::Material(const Material& other) : Material() {
+    m_resourceId = other.m_resourceId;
+    m_name = other.m_name;
+    m_filePath = other.m_filePath;
+    m_albedoColor = other.m_albedoColor;
+    m_metallicValue = other.m_metallicValue;
+    m_roughnessValue = other.m_roughnessValue;
+    m_aoStrength = other.m_aoStrength;
+    m_normalStrength = other.m_normalStrength;
+    m_emissionStrength = other.m_emissionStrength;
+    m_emissionColor = other.m_emissionColor;
+    m_displacementScale = other.m_displacementScale;
+    m_useDisplacement = other.m_useDisplacement;
+    m_castShadows = other.m_castShadows;
+    m_doubleSided = other.m_doubleSided;
+    m_dirty = other.m_dirty;
+    m_blendMode = other.m_blendMode;
+    m_alphaScissorThreshold = other.m_alphaScissorThreshold;
+    m_uvScale = other.m_uvScale;
+    m_uvOffset = other.m_uvOffset;
+    m_shader = other.m_shader;
+    m_diffuse = other.m_diffuse;
+    m_ambientOcclusion = other.m_ambientOcclusion;
+    m_normal = other.m_normal;
+    m_roughness = other.m_roughness;
+    m_metallic = other.m_metallic;
+    m_displacement = other.m_displacement;
+    m_emissive = other.m_emissive;
+}
+
+Material& Material::operator=(const Material& other) {
+    if (this == &other) {
+        return *this;
+    }
+
+    m_resourceId = other.m_resourceId;
+    m_name = other.m_name;
+    m_filePath = other.m_filePath;
+    m_albedoColor = other.m_albedoColor;
+    m_metallicValue = other.m_metallicValue;
+    m_roughnessValue = other.m_roughnessValue;
+    m_aoStrength = other.m_aoStrength;
+    m_normalStrength = other.m_normalStrength;
+    m_emissionStrength = other.m_emissionStrength;
+    m_emissionColor = other.m_emissionColor;
+    m_displacementScale = other.m_displacementScale;
+    m_useDisplacement = other.m_useDisplacement;
+    m_castShadows = other.m_castShadows;
+    m_doubleSided = other.m_doubleSided;
+    m_dirty = other.m_dirty;
+    m_blendMode = other.m_blendMode;
+    m_alphaScissorThreshold = other.m_alphaScissorThreshold;
+    m_uvScale = other.m_uvScale;
+    m_uvOffset = other.m_uvOffset;
+    m_shader = other.m_shader;
+    m_diffuse = other.m_diffuse;
+    m_ambientOcclusion = other.m_ambientOcclusion;
+    m_normal = other.m_normal;
+    m_roughness = other.m_roughness;
+    m_metallic = other.m_metallic;
+    m_displacement = other.m_displacement;
+    m_emissive = other.m_emissive;
+    return *this;
+}
+
 /*
  * Material textures layout order:
  *
@@ -204,96 +285,99 @@ void Material::Bind(const Shader &shader) const {
 
 void Material::SetName(const std::string &name) {
     m_name = name;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetFilePath(const std::string &path) {
     m_filePath = path;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetAlbedoColor(const glm::vec4 &color) {
     m_albedoColor = color;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetMetallicValue(const float value) {
     m_metallicValue = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetRoughnessValue(const float value) {
     m_roughnessValue = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetAOStrength(const float value) {
     m_aoStrength = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetNormalStrength(const float value) {
     m_normalStrength = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetEmissionStrength(const float value) {
     m_emissionStrength = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetEmissionColor(const glm::vec3 &color) {
     m_emissionColor = color;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetDisplacementScale(const float value) {
     m_displacementScale = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetUseDisplacement(const bool value) {
     m_useDisplacement = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetCastShadows(const bool value) {
     m_castShadows = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetDoubleSided(const bool value) {
     m_doubleSided = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetDirty(const bool value) {
     m_dirty = value;
+    if (value) {
+        TouchResourceId();
+    }
 }
 
 void Material::SetBlendMode(const BlendMode mode) {
     m_blendMode = mode;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetAlphaScissorThreshold(const float value) {
     m_alphaScissorThreshold = value;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetUVScale(const glm::vec2 &scale) {
     m_uvScale = scale;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetUVOffset(const glm::vec2 &offset) {
     m_uvOffset = offset;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetShader(const std::shared_ptr<Shader> &shader) {
     m_shader = shader;
-    m_dirty = true;
+    SetDirty(true);
 }
 
 std::shared_ptr<Shader> Material::GetShader() const {
@@ -306,35 +390,35 @@ std::shared_ptr<Shader> Material::GetShader() const {
 
 void Material::SetDiffuse(const std::string &path) {
     m_diffuse = ResourceManager::Get().LoadTexture(path, true);
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetAmbientOcclusion(const std::string &path) {
     m_ambientOcclusion = ResourceManager::Get().LoadTexture(path, false);
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetNormal(const std::string &path) {
     m_normal = ResourceManager::Get().LoadTexture(path, false);
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetRoughness(const std::string &path) {
     m_roughness = ResourceManager::Get().LoadTexture(path, false);
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetMetallic(const std::string &path) {
     m_metallic = ResourceManager::Get().LoadTexture(path, false);
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetDisplacement(const std::string &path) {
     m_displacement = ResourceManager::Get().LoadTexture(path, false);
-    m_dirty = true;
+    SetDirty(true);
 }
 
 void Material::SetEmissive(const std::string &path) {
     m_emissive = ResourceManager::Get().LoadTexture(path, true);
-    m_dirty = true;
+    SetDirty(true);
 }

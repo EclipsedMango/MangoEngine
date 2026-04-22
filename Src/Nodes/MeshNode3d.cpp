@@ -55,6 +55,7 @@ std::unique_ptr<Node3d> MeshNode3d::Clone() {
     }
     clone->SetAnimator(m_animator);
     clone->SetAnimatorAutoUpdate(m_animatorAutoUpdate);
+    clone->SetIsUnique(m_isUnique);
 
     CopyBaseStateTo(*clone);
 
@@ -153,6 +154,13 @@ void MeshNode3d::Init() {
             if (const auto mat = std::dynamic_pointer_cast<Material>(holder)) {
                 m_material = mat;
             }
+        }
+    );
+
+    AddProperty("is_unique",
+        [this]() -> PropertyValue { return m_isUnique; },
+        [this](const PropertyValue& v) {
+            m_isUnique = std::get<bool>(v);
         }
     );
 }

@@ -2,6 +2,7 @@
 #include "Shader.h"
 
 #include <algorithm>
+#include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -12,25 +13,30 @@
 
 REGISTER_PROPERTY_TYPE(Shader)
 
-Shader::Shader(const char *vertexPath, const char *fragmentPath) {
+uint64_t Shader::GenerateResourceId() {
+    static std::atomic<uint64_t> s_nextId {1};
+    return s_nextId.fetch_add(1, std::memory_order_relaxed);
+}
+
+Shader::Shader(const char *vertexPath, const char *fragmentPath) : m_resourceId(GenerateResourceId()) {
     m_vertexPath = vertexPath;
     m_fragmentPath = fragmentPath;
     Recompile();
 }
 
-Shader::Shader(const char *vertexPath, const char *fragmentPath, const char *geometryPath) {
+Shader::Shader(const char *vertexPath, const char *fragmentPath, const char *geometryPath) : m_resourceId(GenerateResourceId()) {
     m_vertexPath = vertexPath;
     m_fragmentPath = fragmentPath;
     m_geometryPath = geometryPath;
     Recompile();
 }
 
-Shader::Shader(const char* computePath) {
+Shader::Shader(const char* computePath) : m_resourceId(GenerateResourceId()) {
     m_computePath = computePath;
     Recompile();
 }
 
-Shader::Shader() {
+Shader::Shader() : m_resourceId(GenerateResourceId()) {
     AddProperty("name",
         [this]() -> PropertyValue { return GetName(); },
         [this](const PropertyValue& v) { SetName(std::get<std::string>(v)); }

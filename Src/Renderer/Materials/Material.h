@@ -2,6 +2,7 @@
 #ifndef MANGORENDERING_MATERIAL_H
 #define MANGORENDERING_MATERIAL_H
 #include <memory>
+#include <cstdint>
 
 #include "Texture.h"
 #include <glm/glm.hpp>
@@ -14,6 +15,8 @@ enum class BlendMode { Opaque, AlphaBlend, AlphaScissor, Additive };
 class Material : public PropertyHolder {
 public:
     Material();
+    Material(const Material& other);
+    Material& operator=(const Material& other);
 
     void Bind(const Shader& shader) const;
 
@@ -39,6 +42,7 @@ public:
 
     [[nodiscard]] std::string GetPropertyHolderType() const override { return "Material"; }
     [[nodiscard]] std::shared_ptr<Shader> GetShader() const;
+    [[nodiscard]] uint64_t GetResourceId() const { return m_resourceId; }
 
     [[nodiscard]] std::string GetName() const { return m_name; }
     [[nodiscard]] std::string GetFilePath() const { return m_filePath; }
@@ -76,6 +80,11 @@ public:
     [[nodiscard]] std::shared_ptr<Texture> GetEmissive() const { return m_emissive; }
 
 private:
+    static uint64_t GenerateResourceId();
+    static uint64_t GetDefaultResourceId();
+    void TouchResourceId();
+
+    uint64_t m_resourceId = 0;
     std::string m_name;
     std::string m_filePath;
 

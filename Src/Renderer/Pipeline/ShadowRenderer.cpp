@@ -2,7 +2,9 @@
 #include "ShadowRenderer.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
+#include <unordered_map>
 
 #include "glad/gl.h"
 #include "glm/gtc/matrix_transform.hpp"
@@ -10,6 +12,15 @@
 #include "Core/RenderApi.h"
 #include "Core/ResourceManager.h"
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
+
+namespace {
+    constexpr uint32_t kInstanceDataBinding = 16;
+
+    struct InstanceDrawData {
+        glm::mat4 model;
+        glm::mat4 normalMatrix;
+    };
+}
 
 ShadowRenderer::ShadowRenderer() {
     m_shadowDepthShader = ResourceManager::Get().LoadShader("ShadowDepth", "shadow_depth.vert", "shadow_depth.frag");
@@ -70,12 +81,89 @@ void ShadowRenderer::RenderDirectionalShadows(const CameraNode3d& camera, const 
             csm->BeginRender(c);
             m_shadowDepthShader->SetMatrix4("u_LightSpaceMatrix", csm->GetLightSpaceMatrix(c));
 
+            struct BatchKey {
+                uint64_t meshId = 0;
+                uint64_t materialId = 0;
+
+                bool operator==(const BatchKey& other) const {
+                    return meshId == other.meshId && materialId == other.materialId;
+                }
+            };
+            struct BatchKeyHash {
+                size_t operator()(const BatchKey& key) const {
+                    const size_t h1 = std::hash<uint64_t>{}(key.meshId);
+                    const size_t h2 = std::hash<uint64_t>{}(key.materialId);
+                    return h1 ^ (h2 << 1);
+                }
+            };
+
+            std::unordered_map<BatchKey, std::vector<const MeshNode3d*>, BatchKeyHash> instancedBatches;
+            std::vector<const MeshNode3d*> singleDraws;
+            singleDraws.reserve(renderQueue.size());
+
             for (const MeshNode3d* node : renderQueue) {
                 const Material* mat = node->GetActiveMaterial();
                 if (!mat->GetCastShadows()) continue;
 
+                if (node->IsUnique() || node->HasSkinning()) {
+                    singleDraws.push_back(node);
+                    continue;
+                }
+
+                instancedBatches[BatchKey{
+                    node->GetMesh()->GetResourceId(),
+                    mat->GetResourceId()
+                }].push_back(node);
+            }
+
+            for (const auto& [key, nodes] : instancedBatches) {
+                if (nodes.empty()) continue;
+                const MeshNode3d* representative = nodes.front();
+                const Material* mat = representative->GetActiveMaterial();
                 RenderApi::ApplyMaterialCull(mat);
 
+                m_shadowDepthShader->SetBool("u_UseSkinnedVertexBuffer", false);
+                m_shadowDepthShader->SetBool("u_UseInstancing", true);
+                m_shadowDepthShader->SetBool("u_AlphaScissor", mat->GetBlendMode() == BlendMode::AlphaScissor);
+                m_shadowDepthShader->SetFloat("u_AlphaScissorThreshold", mat->GetAlphaScissorThreshold());
+                m_shadowDepthShader->SetBool("u_HasDiffuse", mat->GetDiffuse() != nullptr);
+                m_shadowDepthShader->SetBool("u_AlphaDitherShadow", mat->GetBlendMode() == BlendMode::AlphaBlend);
+
+                if (mat->GetDiffuse()) {
+                    mat->GetDiffuse()->Bind(0);
+                    m_shadowDepthShader->SetInt("u_Diffuse", 0);
+                }
+
+                std::vector<InstanceDrawData> instanceData;
+                instanceData.reserve(nodes.size());
+                for (const MeshNode3d* node : nodes) {
+                    const glm::mat4 model = node->GetWorldMatrix();
+                    instanceData.push_back({
+                        model,
+                        glm::transpose(glm::inverse(model))
+                    });
+                }
+
+                EnsureInstanceBuffer(instanceData.size());
+                m_instanceSsbo->SetData(instanceData.data(), instanceData.size() * sizeof(InstanceDrawData), 0);
+                m_instanceSsbo->Bind();
+
+                representative->GetMesh()->GetBuffer()->Bind();
+                glDrawElementsInstanced(
+                    GL_TRIANGLES,
+                    representative->GetMesh()->GetBuffer()->GetIndexCount(),
+                    GL_UNSIGNED_INT,
+                    nullptr,
+                    static_cast<GLsizei>(instanceData.size())
+                );
+                m_shadowDrawCallCount++;
+            }
+
+            for (const MeshNode3d* node : singleDraws) {
+                const Material* mat = node->GetActiveMaterial();
+                RenderApi::ApplyMaterialCull(mat);
+
+                m_shadowDepthShader->SetBool("u_UseInstancing", false);
                 m_shadowDepthShader->SetBool("u_AlphaScissor", mat->GetBlendMode() == BlendMode::AlphaScissor);
                 m_shadowDepthShader->SetFloat("u_AlphaScissorThreshold", mat->GetAlphaScissorThreshold());
                 m_shadowDepthShader->SetBool("u_HasDiffuse", mat->GetDiffuse() != nullptr);
@@ -167,6 +255,26 @@ void ShadowRenderer::RenderPointLightShadows(const CameraNode3d& camera, const s
 
         m_pointShadowMap->BeginLight(slot);
 
+        struct BatchKey {
+            uint64_t meshId = 0;
+            uint64_t materialId = 0;
+
+            bool operator==(const BatchKey& other) const {
+                return meshId == other.meshId && materialId == other.materialId;
+            }
+        };
+        struct BatchKeyHash {
+            size_t operator()(const BatchKey& key) const {
+                const size_t h1 = std::hash<uint64_t>{}(key.meshId);
+                const size_t h2 = std::hash<uint64_t>{}(key.materialId);
+                return h1 ^ (h2 << 1);
+            }
+        };
+
+        std::unordered_map<BatchKey, std::vector<const MeshNode3d*>, BatchKeyHash> instancedBatches;
+        std::vector<const MeshNode3d*> singleDraws;
+        singleDraws.reserve(renderQueue.size());
+
         for (const MeshNode3d* node : renderQueue) {
             const Material* mat = node->GetActiveMaterial();
             if (!mat->GetCastShadows()) continue;
@@ -179,8 +287,65 @@ void ShadowRenderer::RenderPointLightShadows(const CameraNode3d& camera, const s
                 continue;
             }
 
-            RenderApi::ApplyMaterialCull(node->GetActiveMaterial());
+            if (node->IsUnique() || node->HasSkinning()) {
+                singleDraws.push_back(node);
+                continue;
+            }
 
+            instancedBatches[BatchKey{
+                mesh->GetResourceId(),
+                mat->GetResourceId()
+            }].push_back(node);
+        }
+
+        for (const auto& [key, nodes] : instancedBatches) {
+            if (nodes.empty()) continue;
+            const MeshNode3d* representative = nodes.front();
+            const Material* mat = representative->GetActiveMaterial();
+            RenderApi::ApplyMaterialCull(mat);
+
+            m_pointShadowDepthShader->SetBool("u_UseSkinnedVertexBuffer", false);
+            m_pointShadowDepthShader->SetBool("u_UseInstancing", true);
+            m_pointShadowDepthShader->SetBool("u_AlphaScissor", mat->GetBlendMode() == BlendMode::AlphaScissor);
+            m_pointShadowDepthShader->SetFloat("u_AlphaScissorThreshold", mat->GetAlphaScissorThreshold());
+            m_pointShadowDepthShader->SetBool("u_HasDiffuse", mat->GetDiffuse() != nullptr);
+            m_pointShadowDepthShader->SetBool("u_AlphaDitherShadow", mat->GetBlendMode() == BlendMode::AlphaBlend);
+
+            if (mat->GetDiffuse()) {
+                mat->GetDiffuse()->Bind(0);
+                m_pointShadowDepthShader->SetInt("u_Diffuse", 0);
+            }
+
+            std::vector<InstanceDrawData> instanceData;
+            instanceData.reserve(nodes.size());
+            for (const MeshNode3d* node : nodes) {
+                const glm::mat4 model = node->GetWorldMatrix();
+                instanceData.push_back({
+                    model,
+                    glm::transpose(glm::inverse(model))
+                });
+            }
+
+            EnsureInstanceBuffer(instanceData.size());
+            m_instanceSsbo->SetData(instanceData.data(), instanceData.size() * sizeof(InstanceDrawData), 0);
+            m_instanceSsbo->Bind();
+
+            representative->GetMesh()->GetBuffer()->Bind();
+            glDrawElementsInstanced(
+                GL_TRIANGLES,
+                representative->GetMesh()->GetBuffer()->GetIndexCount(),
+                GL_UNSIGNED_INT,
+                nullptr,
+                static_cast<GLsizei>(instanceData.size())
+            );
+            m_shadowDrawCallCount += 6;
+        }
+
+        for (const MeshNode3d* node : singleDraws) {
+            const Material* mat = node->GetActiveMaterial();
+            RenderApi::ApplyMaterialCull(mat);
+
+            m_pointShadowDepthShader->SetBool("u_UseInstancing", false);
             m_pointShadowDepthShader->SetBool("u_AlphaScissor", mat->GetBlendMode() == BlendMode::AlphaScissor);
             m_pointShadowDepthShader->SetFloat("u_AlphaScissorThreshold", mat->GetAlphaScissorThreshold());
             m_pointShadowDepthShader->SetBool("u_HasDiffuse", mat->GetDiffuse() != nullptr);
@@ -241,6 +406,17 @@ void ShadowRenderer::EnsurePointShadowMetaBuffer(const size_t pointLightCount) {
     const size_t bytes = pointLightCount * sizeof(GPUPointShadowMeta);
     if (!m_pointShadowMetaSsbo || m_pointShadowMetaSsbo->GetSize() < bytes) {
         m_pointShadowMetaSsbo = std::make_unique<ShaderStorageBuffer>(bytes, 8);
+    }
+}
+
+void ShadowRenderer::EnsureInstanceBuffer(const size_t instanceCount) {
+    if (instanceCount == 0) {
+        return;
+    }
+
+    const size_t bytes = instanceCount * sizeof(InstanceDrawData);
+    if (!m_instanceSsbo || m_instanceSsbo->GetSize() < bytes) {
+        m_instanceSsbo = std::make_unique<ShaderStorageBuffer>(bytes, kInstanceDataBinding);
     }
 }
 

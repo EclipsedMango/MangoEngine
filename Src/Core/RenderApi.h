@@ -103,6 +103,7 @@ public:
 private:
     void InitGLResources(); // called once after GLAD is loaded
     void InitDepthPass();
+    void EnsureInstanceBuffer(size_t instanceCount);
 
     // for frustum culling
     [[nodiscard]] static bool IsCulled(const MeshNode3d* node, const Frustum& frustum, RenderStats& stats);
@@ -119,7 +120,7 @@ private:
 
     RenderStats RenderView(const CameraNode3d* camera, const Framebuffer* targetFbo, bool clearFbo, const PortalNode3d* excludedPortal = nullptr, bool isMainPass = true);
 
-    void RenderMainPass(const CameraNode3d* camera, const Framebuffer* targetFbo, const std::vector<MeshNode3d*>& opaqueQueue, RenderStats& stats) const;
+    void RenderMainPass(const CameraNode3d* camera, const Framebuffer* targetFbo, const std::vector<MeshNode3d*>& opaqueQueue, RenderStats& stats);
     static void RenderTransparentPass(const Frustum& frustum, const std::vector<MeshNode3d*>& transparentQueue, RenderStats& stats);
 
     void RenderPortalPasses(const CameraNode3d* camera, const Framebuffer* targetFbo, int remainingDepth, int currentStencil = 0);
@@ -143,6 +144,7 @@ private:
     std::unique_ptr<ShadowRenderer> m_shadowRenderer;
 
     std::unique_ptr<UniformBuffer> m_cameraUbo;
+    std::unique_ptr<ShaderStorageBuffer> m_instanceSsbo;
     std::shared_ptr<Shader> m_depthShader;
     std::shared_ptr<Shader> m_gridShader;
     std::shared_ptr<Shader> m_postProcessShader;

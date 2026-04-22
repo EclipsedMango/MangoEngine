@@ -2,6 +2,7 @@
 #define MANGORENDERING_SHADER_H
 
 #include <string>
+#include <cstdint>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -38,6 +39,7 @@ public:
     [[nodiscard]] std::string GetGeometryPath() const { return m_geometryPath; }
     [[nodiscard]] std::string GetComputePath() const { return m_computePath; }
     [[nodiscard]] bool IsCompute() const { return !m_computePath.empty(); }
+    [[nodiscard]] uint64_t GetResourceId() const { return m_resourceId; }
 
     void SetName(const std::string& name) { m_name = name; }
     void SetVertexPath(const std::string& path) { m_vertexPath = path; }
@@ -47,12 +49,15 @@ public:
 
     void Recompile();
 private:
+    static uint64_t GenerateResourceId();
+
     std::string m_name = "New Shader";
     std::string m_vertexPath;
     std::string m_fragmentPath;
     std::string m_geometryPath;
     std::string m_computePath;
     bool m_isCompute = false;
+    uint64_t m_resourceId = 0;
 
     bool IsBound() const;
 

@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 
 #include "Renderer/VertexArray.h"
 #include "Renderer/Buffers/ShaderStorageBuffer.h"
@@ -12,7 +13,7 @@
 class Mesh : public PropertyHolder {
 public:
     // ONLY for internal use and serializing, use other constructors instead
-    Mesh() { RegisterProperties(); }
+    Mesh();
     Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
     ~Mesh() override = default;
 
@@ -25,6 +26,7 @@ public:
     [[nodiscard]] std::string GetPropertyHolderType() const override { return "Mesh"; }
 
     [[nodiscard]] bool IsUploaded() const { return m_buffer != nullptr; }
+    [[nodiscard]] uint64_t GetResourceId() const { return m_resourceId; }
 
     [[nodiscard]] const std::vector<Vertex>& GetVertices() const { return m_vertices; }
     [[nodiscard]] const std::vector<uint32_t>& GetIndices() const { return m_indices; }
@@ -38,6 +40,7 @@ public:
 
 private:
     void RegisterProperties();
+    static uint64_t GenerateResourceId();
     void ComputeBounds();
     void ComputeSkinWeightsUsage();
     void EnsureSkinningSourceBuffer() const;
@@ -45,6 +48,7 @@ private:
     std::vector<Vertex> m_vertices;
     std::vector<uint32_t> m_indices;
     std::unique_ptr<VertexArray> m_buffer;
+    uint64_t m_resourceId = 0;
 
     glm::vec3 m_boundsCenter = glm::vec3(0.0f);
     float m_boundsRadius = 0.0f;
