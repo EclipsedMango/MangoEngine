@@ -263,12 +263,18 @@ void Core::StepFrame(const float deltaTime) {
     while (m_accumulator >= FIXED_TIMESTEP) {
         PhysicsWorld::Get().Step(FIXED_TIMESTEP);
         for (auto* node : m_nodeCache) {
+            if (!node->IsProcessEnabled()) {
+                continue;
+            }
             node->PhysicsProcess(FIXED_TIMESTEP);
         }
         m_accumulator -= FIXED_TIMESTEP;
     }
 
     for (auto* node : m_nodeCache) {
+        if (!node->IsProcessEnabled()) {
+            continue;
+        }
         node->Process(deltaTime);
     }
 

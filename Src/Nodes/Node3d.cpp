@@ -30,6 +30,10 @@ Node3d::Node3d() : m_id(++s_nextId) {
         [this]() -> PropertyValue { return IsVisible(); },
         [this](const PropertyValue& v) { SetVisible(std::get<bool>(v)); }
     );
+    AddProperty("process_enabled",
+        [this]() -> PropertyValue { return IsProcessEnabled(); },
+        [this](const PropertyValue& v) { SetProcessEnabled(std::get<bool>(v)); }
+    );
     AddProperty("script",
         [this]() -> PropertyValue { return GetScriptPath(); },
         [this](const PropertyValue& v) { SetScript(std::get<std::string>(v)); }
@@ -169,6 +173,7 @@ glm::mat4 Node3d::GetLocalMatrix() {
 void Node3d::CopyBaseStateTo(Node3d &clone) const {
     clone.m_name = m_name;
     clone.m_visible = m_visible;
+    clone.m_processEnabled = m_processEnabled;
     clone.m_position = m_position;
     clone.m_rotation = m_rotation;
     clone.m_scale = m_scale;

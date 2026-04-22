@@ -40,6 +40,7 @@ public:
     void SetRoot();
     void SetName(const std::string& name) { m_name = name; }
     void SetVisible(const bool visible) { m_visible = visible; }
+    void SetProcessEnabled(bool enabled) { m_processEnabled = enabled; }
     void SetLocalTransform(const glm::mat4& mat);
     void SetPosition(const glm::vec3& position);
     void SetScale(const glm::vec3& scale);
@@ -55,6 +56,7 @@ public:
     [[nodiscard]] std::string GetName() const { return m_name; }
     [[nodiscard]] virtual std::string GetNodeType() const { return "Node3d"; }
     [[nodiscard]] bool IsVisible() const { return m_visible; }
+    [[nodiscard]] bool IsProcessEnabled() const { return m_processEnabled; }
     [[nodiscard]] glm::vec3 GetPosition() const { return m_position; }
     [[nodiscard]] glm::vec3 GetScale() const { return m_scale; }
     [[nodiscard]] glm::quat GetRotation() const { return m_rotation; }
@@ -85,6 +87,7 @@ private:
     bool m_localDirty = false;
 
     bool m_visible = true;
+    bool m_processEnabled = true;
     bool m_is_root = false;
 
     std::string m_scriptPath;

@@ -137,6 +137,7 @@ RenderApi::~RenderApi() {
     m_postProcessShader.reset();
     m_postProcessFramebuffer.reset();
     m_cameraUbo.reset();
+    m_instanceSsbo.reset();
     m_ibl = {};
     if (m_gridVao != 0) {
         glDeleteVertexArrays(1, &m_gridVao);
