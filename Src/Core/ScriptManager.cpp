@@ -12,6 +12,7 @@
 #include "ResourceManager.h"
 #include "Nodes/CameraNode3d.h"
 #include "Nodes/Node3d.h"
+#include "Nodes/RayCastNode3d.h"
 #include "Nodes/RigidBody3d.h"
 
 struct ScriptManager::Impl {
@@ -134,6 +135,7 @@ void ScriptManager::Init() {
         "GetName", &Node3d::GetName,
         "SetName", &Node3d::SetName,
         "GetPosition", &Node3d::GetPosition,
+        "GetWorldPosition", &Node3d::GetWorldPosition,
         "SetPosition", &Node3d::SetPosition,
         "GetRotationEuler", &Node3d::GetRotationEuler,
         "SetRotationEuler", &Node3d::SetRotationEuler,
@@ -143,11 +145,39 @@ void ScriptManager::Init() {
         "SetVisible", &Node3d::SetVisible,
         "GetParent", &Node3d::GetParent,
         "GetNodeType", &Node3d::GetNodeType,
+        "GetChildCount", &Node3d::GetChildCount,
+        "GetChild", [](const Node3d* node, const int index) -> Node3d* {
+            if (!node || index < 1) {
+                return nullptr;
+            }
+
+            return node->GetChild(static_cast<size_t>(index - 1));
+        },
+
+        "FindChild", [](const Node3d* node, const std::string& name, const sol::optional<bool> recursive) -> Node3d* {
+            if (!node) {
+                return nullptr;
+            }
+
+            return node->FindChild(name, recursive.value_or(true));
+        },
+
+        "FindChildByType", [](const Node3d* node, const std::string& nodeType, const sol::optional<bool> recursive) -> Node3d* {
+            if (!node) {
+                return nullptr;
+            }
+
+            return node->FindChildByType(nodeType, recursive.value_or(true));
+        },
+
         "AsCamera", [](Node3d* node) -> CameraNode3d* {
             return dynamic_cast<CameraNode3d*>(node);
         },
         "AsRigidBody", [](Node3d* node) -> RigidBody3d* {
             return dynamic_cast<RigidBody3d*>(node);
+        },
+        "AsRayCast", [](Node3d* node) -> RayCastNode3d* {
+            return dynamic_cast<RayCastNode3d*>(node);
         }
     );
 
@@ -161,10 +191,34 @@ void ScriptManager::Init() {
 
     lua.new_usertype<RigidBody3d>("RigidBody3d",
         sol::base_classes, sol::bases<Node3d, PropertyHolder>(),
+
         "GetLinearVelocity", &RigidBody3d::GetLinearVelocity,
         "SetLinearVelocity", &RigidBody3d::SetLinearVelocity,
+
         "GetAngularVelocity", &RigidBody3d::GetAngularVelocity,
         "SetAngularVelocity", &RigidBody3d::SetAngularVelocity
+    );
+
+    lua.new_usertype<RayCastNode3d>("RayCastNode3d",
+        sol::base_classes, sol::bases<Node3d, PropertyHolder>(),
+
+        "SetEnabled", &RayCastNode3d::SetEnabled,
+        "IsEnabled", &RayCastNode3d::IsEnabled,
+
+        "SetTargetPosition", &RayCastNode3d::SetTargetPosition,
+        "GetTargetPosition", &RayCastNode3d::GetTargetPosition,
+
+        "SetExcludeParentBody", &RayCastNode3d::SetExcludeParentBody,
+        "GetExcludeParentBody", &RayCastNode3d::GetExcludeParentBody,
+
+        "ForceUpdate", &RayCastNode3d::ForceUpdate,
+
+        "IsColliding", &RayCastNode3d::IsColliding,
+        "GetCollisionPoint", &RayCastNode3d::GetCollisionPoint,
+        "GetCollisionNormal", &RayCastNode3d::GetCollisionNormal,
+        "GetCollisionFraction", &RayCastNode3d::GetCollisionFraction,
+
+        "GetCollider", &RayCastNode3d::GetCollider
     );
 
     sol::table inputModule = lua.create_named_table("Input");

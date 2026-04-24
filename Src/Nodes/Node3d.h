@@ -53,12 +53,18 @@ public:
     [[nodiscard]] Node3d* GetParent() const { return m_parent; }
     [[nodiscard]] const std::vector<Node3d*>& GetChildren() const { return m_children; }
 
+    [[nodiscard]] size_t GetChildCount() const;
+    [[nodiscard]] Node3d* GetChild(size_t index) const;
+    [[nodiscard]] Node3d* FindChild(const std::string& name, bool recursive = true) const;
+    [[nodiscard]] Node3d* FindChildByType(const std::string& nodeType, bool recursive = true) const;
+
     [[nodiscard]] bool IsRoot() const { return m_is_root; }
     [[nodiscard]] std::string GetName() const { return m_name; }
     [[nodiscard]] virtual std::string GetNodeType() const { return "Node3d"; }
     [[nodiscard]] bool IsVisible() const { return m_visible; }
     [[nodiscard]] bool IsProcessEnabled() const { return m_processEnabled; }
     [[nodiscard]] glm::vec3 GetPosition() const { return m_position; }
+    [[nodiscard]] glm::vec3 GetWorldPosition() const;
     [[nodiscard]] glm::vec3 GetScale() const { return m_scale; }
     [[nodiscard]] glm::quat GetRotation() const { return m_rotation; }
     [[nodiscard]] glm::vec3 GetRotationEuler() const;

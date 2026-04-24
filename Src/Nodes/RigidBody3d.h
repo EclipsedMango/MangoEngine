@@ -38,6 +38,9 @@ public:
     [[nodiscard]] bool IsRotationLocked() const { return m_lockRotation; }
     [[nodiscard]] bool IsSyncToPhysicsEnabled() const { return m_syncToPhysics; }
 
+    [[nodiscard]] bool HasPhysicsBody() const { return m_hasBody; }
+    [[nodiscard]] JPH::BodyID GetBodyId() const { return m_bodyId; }
+
     [[nodiscard]] std::string GetNodeType() const override { return "RigidBody3d"; }
 
 private:

@@ -170,6 +170,69 @@ void Node3d::SetRotationEuler(const glm::vec3 &degrees) {
     SetRotation(glm::quat(glm::radians(degrees)));
 }
 
+size_t Node3d::GetChildCount() const {
+    return m_children.size();
+}
+
+Node3d* Node3d::GetChild(const size_t index) const {
+    if (index >= m_children.size()) {
+        return nullptr;
+    }
+
+    return m_children[index];
+}
+
+Node3d* Node3d::FindChild(const std::string &name, const bool recursive) const {
+    for (Node3d* child : m_children) {
+        if (!child) {
+            continue;
+        }
+
+        if (child->GetName() == name) {
+            return child;
+        }
+
+        if (recursive) {
+            Node3d* found = child->FindChild(name, true);
+            if (found) {
+                return found;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+Node3d* Node3d::FindChildByType(const std::string &nodeType, const bool recursive) const {
+    for (Node3d* child : m_children) {
+        if (!child) {
+            continue;
+        }
+
+        if (child->GetNodeType() == nodeType) {
+            return child;
+        }
+
+        if (recursive) {
+            Node3d* found = child->FindChildByType(nodeType, true);
+            if (found) {
+                return found;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+glm::vec3 Node3d::GetWorldPosition() const {
+    // return local pos (only should happen for editor cam or root node)
+    if (!m_parent) {
+        return m_position;
+    }
+
+    return { m_worldMatrix[3] };
+}
+
 glm::vec3 Node3d::GetRotationEuler() const {
     return glm::degrees(glm::eulerAngles(GetRotation()));
 }

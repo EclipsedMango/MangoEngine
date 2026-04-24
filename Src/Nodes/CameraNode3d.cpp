@@ -7,7 +7,7 @@ CameraNode3d::CameraNode3d() : CameraNode3d(glm::vec3(0.0f), 60.0f, 16.0f / 9.0f
 
 CameraNode3d::CameraNode3d(const glm::vec3 position, const float fov, const float aspectRatio) : m_fov(fov), m_aspectRatio(aspectRatio) {
     SetPosition(position);
-    UpdateVectors();
+    SetRotation(RotationFromYawPitch(-90.0f, 0.0f));
     SetName("CameraNode3d");
 
     AddProperty("fov",
@@ -23,11 +23,11 @@ CameraNode3d::CameraNode3d(const glm::vec3 position, const float fov, const floa
         [this](const PropertyValue& v) { SetFarPlane(std::get<float>(v)); }
     );
     AddProperty("yaw",
-        [this]() -> PropertyValue { return m_yaw; },
+        [this]() -> PropertyValue { return GetYaw(); },
         [this](const PropertyValue& v) { SetYaw(std::get<float>(v)); }
     );
     AddProperty("pitch",
-        [this]() -> PropertyValue { return m_pitch; },
+        [this]() -> PropertyValue { return GetPitch(); },
         [this](const PropertyValue& v) { SetPitch(std::get<float>(v)); }
     );
     AddProperty("is_main_camera",
@@ -39,22 +39,26 @@ CameraNode3d::CameraNode3d(const glm::vec3 position, const float fov, const floa
 std::unique_ptr<Node3d> CameraNode3d::Clone() {
     auto clone = std::make_unique<CameraNode3d>(GetPosition(), m_fov, m_aspectRatio);
 
-    clone->SetName(GetName());
-    clone->SetLocalTransform(GetLocalMatrix());
+    CopyBaseStateTo(*clone);
 
-    clone->SetYaw(m_yaw);
-    clone->SetPitch(m_pitch);
     clone->SetNearPlane(m_nearPlane);
     clone->SetFarPlane(m_farPlane);
+    clone->SetAspectRatio(m_aspectRatio);
     clone->SetAsGameCamera(m_isGameCamera);
-
-    CopyBaseStateTo(*clone);
 
     for (Node3d* child : GetChildren()) {
         clone->AddChild(child->Clone());
     }
 
     return clone;
+}
+
+void CameraNode3d::SetYaw(const float yaw) {
+    SetYawPitch(yaw, GetPitch());
+}
+
+void CameraNode3d::SetPitch(const float pitch) {
+    SetYawPitch(GetYaw(), pitch);
 }
 
 void CameraNode3d::SetViewMatrixOverride(const glm::mat4 &viewMatrix) {
@@ -76,29 +80,106 @@ void CameraNode3d::ClearProjectionMatrixOverride() {
 }
 
 glm::mat4 CameraNode3d::GetViewMatrix() const {
-    if (m_hasViewOverride) return m_viewOverride;
-    return glm::lookAt(GetPosition(), GetPosition() + m_front, m_up);
+    if (m_hasViewOverride) {
+        return m_viewOverride;
+    }
+
+    const glm::vec3 worldPosition = GetWorldPosition();
+    const glm::vec3 front = GetFront();
+    const glm::vec3 up = GetUp();
+
+    return glm::lookAt(worldPosition, worldPosition + front, up);
 }
 
 glm::mat4 CameraNode3d::GetProjectionMatrix() const {
-    if (m_hasProjectionOverride) return m_projOverride;
+    if (m_hasProjectionOverride) {
+        return m_projOverride;
+    }
+
     return glm::perspective(glm::radians(m_fov), m_aspectRatio, m_nearPlane, m_farPlane);
 }
 
-void CameraNode3d::Rotate(const float yawDelta, const float pitchDelta) {
-    m_yaw += yawDelta;
-    m_pitch = glm::clamp(m_pitch + pitchDelta, -89.0f, 89.0f);
-    UpdateVectors();
+glm::vec3 CameraNode3d::GetFront() const {
+    return TransformLocalDirection(glm::vec3(0.0f, 0.0f, -1.0f));
 }
 
-void CameraNode3d::UpdateVectors() {
-    const glm::vec3 front = {
-        cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch)),
-        sin(glm::radians(m_pitch)),
-        sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch))
-    };
+glm::vec3 CameraNode3d::GetRight() const {
+    return TransformLocalDirection(glm::vec3(1.0f, 0.0f, 0.0f));
+}
 
-    m_front = glm::normalize(front);
-    m_right = glm::normalize(glm::cross(m_front, m_worldUp));
-    m_up    = glm::normalize(glm::cross(m_right, m_front));
+glm::vec3 CameraNode3d::GetUp() const {
+    return TransformLocalDirection(glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+float CameraNode3d::GetYaw() const {
+    return glm::degrees(std::atan2(GetLocalFront().z, GetLocalFront().x));
+}
+
+float CameraNode3d::GetPitch() const {
+    return glm::degrees(std::asin(glm::clamp(GetLocalFront().y, -1.0f, 1.0f)));
+}
+
+void CameraNode3d::Rotate(const float yawDelta, const float pitchDelta) {
+    const float yaw = GetYaw() + yawDelta;
+    const float pitch = GetPitch() + pitchDelta;
+
+    SetYawPitch(yaw, pitch);
+}
+
+void CameraNode3d::SetYawPitch(float yaw, float pitch) {
+    const float clampedPitch = glm::clamp(pitch, -89.0f, 89.0f);
+    SetRotation(RotationFromYawPitch(yaw, clampedPitch));
+}
+
+glm::vec3 CameraNode3d::GetLocalFront() const {
+    return glm::normalize(GetRotation() * glm::vec3(0.0f, 0.0f, -1.0f));
+}
+
+glm::vec3 CameraNode3d::TransformLocalDirection(const glm::vec3 &localDir) const {
+    glm::vec3 dir = GetRotation() * localDir;
+
+    // I intentionally do not use world matrix here because during _process
+    // the world matrix may not have been rebuilt yet after Rotate()
+    if (const Node3d* parent = GetParent()) {
+        dir = glm::mat3(parent->GetWorldMatrix()) * dir;
+    }
+
+    const float len = glm::length(dir);
+    if (len <= 0.00001f) {
+        return {0.0f, 0.0f, -1.0f};
+    }
+
+    return dir / len;
+}
+
+glm::quat CameraNode3d::RotationFromYawPitch(float yaw, float pitch) {
+    const float yawRad = glm::radians(yaw);
+    const float pitchRad = glm::radians(pitch);
+
+    const glm::vec3 front = glm::normalize(glm::vec3(
+        std::cos(yawRad) * std::cos(pitchRad),
+        std::sin(pitchRad),
+        std::sin(yawRad) * std::cos(pitchRad)
+    ));
+
+    constexpr glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
+    glm::vec3 right = glm::cross(front, worldUp);
+
+    if (glm::length(right) <= 0.00001f) {
+        right = glm::vec3(1.0f, 0.0f, 0.0f);
+    } else {
+        right = glm::normalize(right);
+    }
+
+    const glm::vec3 up = glm::normalize(glm::cross(right, front));
+
+    // GLM matrices are column-major
+    //
+    // Local +X = right
+    // Local +Y = up
+    // Local -Z = front
+    //
+    // Therefore local +Z = -front.
+    const glm::mat3 rotationMatrix(right, up, -front);
+    return glm::normalize(glm::quat_cast(rotationMatrix));
 }

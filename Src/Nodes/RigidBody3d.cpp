@@ -145,10 +145,10 @@ std::unique_ptr<Node3d> RigidBody3d::Clone() {
 }
 
 void RigidBody3d::PhysicsProcess(const float deltaTime) {
-    Node3d::PhysicsProcess(deltaTime);
-
     EnsureBody();
+
     if (!m_hasBody) {
+        Node3d::PhysicsProcess(deltaTime);
         return;
     }
 
@@ -156,7 +156,10 @@ void RigidBody3d::PhysicsProcess(const float deltaTime) {
         if (m_syncToPhysics) {
             PullTransformFromPhysics();
         }
+
+        Node3d::PhysicsProcess(deltaTime);
     } else {
+        Node3d::PhysicsProcess(deltaTime);
         PushTransformToPhysics(deltaTime);
     }
 }
@@ -290,6 +293,7 @@ void RigidBody3d::RecreateBody() {
         m_bodyType == BodyType::Static ? LAYER_NON_MOVING : LAYER_MOVING
     );
 
+    settings.mUserData = reinterpret_cast<JPH::uint64>(this);
     settings.mAllowDynamicOrKinematic = true;
     settings.mGravityFactor = m_gravityScale;
     settings.mLinearVelocity = ToJoltVec3(m_linearVelocity);
