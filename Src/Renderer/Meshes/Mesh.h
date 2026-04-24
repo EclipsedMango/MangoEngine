@@ -38,6 +38,9 @@ public:
     [[nodiscard]] glm::vec3 GetBoundsCenter() const { return m_boundsCenter; }
     [[nodiscard]] float GetBoundsRadius() const { return m_boundsRadius; }
 
+    void SetSourcePath(const std::string& path) { m_sourcePath = path; }
+    [[nodiscard]] const std::string& GetSourcePath() const { return m_sourcePath; }
+
 private:
     void RegisterProperties();
     static uint64_t GenerateResourceId();
@@ -55,6 +58,8 @@ private:
     bool m_hasSkinWeights = false;
     mutable std::unique_ptr<ShaderStorageBuffer> m_skinningSourceSsbo;
     mutable bool m_skinningSourceUploaded = false;
+
+    std::string m_sourcePath;
 };
 
 

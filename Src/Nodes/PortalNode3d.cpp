@@ -10,14 +10,13 @@ PortalNode3d::PortalNode3d() {
 
 std::unique_ptr<Node3d> PortalNode3d::Clone() {
     auto clone = std::make_unique<PortalNode3d>();
-
     clone->SetName(GetName());
     if (auto* mat = GetMaterialPtr().get()) {
         clone->SetMaterial(std::make_shared<Material>(*mat));
     }
-
     clone->SetMesh(GetMeshPtr());
     clone->GetActiveMaterial()->SetShader(GetActiveMaterial()->GetShader());
+    clone->m_linkedPortalName = m_linkedPortalName;
 
     CopyBaseStateTo(*clone);
 

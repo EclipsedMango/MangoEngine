@@ -120,12 +120,14 @@ void RenderApi::InitGLResources() {
 
 void RenderApi::InitDepthPass() {
     m_depthShader = ResourceManager::Get().LoadShader("DepthOnly", "depth_only.vert", "depth_only.frag");
+    m_portalMaskShader = ResourceManager::Get().LoadShader("PortalMask", "portal_mask.vert", "portal_mask.frag");
 }
 
 RenderApi::~RenderApi() {
     m_clusterSystem.reset();
     m_lightManager.reset();
     m_shadowRenderer.reset();
+    m_portalMaskShader.reset();
     m_depthShader.reset();
     m_gridShader.reset();
     m_postProcessShader.reset();
@@ -133,10 +135,12 @@ RenderApi::~RenderApi() {
     m_cameraUbo.reset();
     m_instanceSsbo.reset();
     m_ibl = {};
+
     if (m_gridVao != 0) {
         glDeleteVertexArrays(1, &m_gridVao);
         m_gridVao = 0;
     }
+
     if (m_postProcessVao != 0) {
         glDeleteVertexArrays(1, &m_postProcessVao);
         m_postProcessVao = 0;
@@ -305,7 +309,8 @@ RenderStats RenderApi::RenderSceneWithPortals(const CameraNode3d *camera, const 
     const RenderStats stats = RenderView(camera, m_postProcessFramebuffer.get(), true, nullptr, true);
 
     if (maxPortalDepth > 0) {
-        RenderPortalPasses(camera, m_postProcessFramebuffer.get(), maxPortalDepth, 0);
+        std::unordered_set<const PortalNode3d*> recursionPath;
+        RenderPortalPasses(camera, m_postProcessFramebuffer.get(), maxPortalDepth, 0, nullptr, &recursionPath);
     }
 
     Framebuffer::Unbind();
@@ -602,10 +607,16 @@ void RenderApi::RenderTransparentPass(const Frustum& frustum, const std::vector<
     glDepthFunc(GL_LEQUAL);
 }
 
-void RenderApi::RenderPortalPasses(const CameraNode3d *camera, const Framebuffer *targetFbo, const int remainingDepth, const int currentStencil) {
+void RenderApi::RenderPortalPasses(const CameraNode3d *camera, const Framebuffer *targetFbo, const int remainingDepth, const int currentStencil, const PortalNode3d* excludedPortal, std::unordered_set<const PortalNode3d*>* recursionPath) {
     ZoneScoped;
+
     if (remainingDepth <= 0 || m_portalQueue.empty() || !camera || !targetFbo) {
         return;
+    }
+
+    std::unordered_set<const PortalNode3d*> localRecursionPath;
+    if (!recursionPath) {
+        recursionPath = &localRecursionPath;
     }
 
     Frustum cameraFrustum{};
@@ -614,9 +625,27 @@ void RenderApi::RenderPortalPasses(const CameraNode3d *camera, const Framebuffer
     targetFbo->Bind();
 
     for (const PortalNode3d* portal : m_portalQueue) {
-        if (!portal || !portal->IsLinked() || !portal->GetMesh() || !portal->GetActiveMaterial()->GetShader()) continue;
+        if (!portal || excludedPortal && portal == excludedPortal) {
+            continue;
+        }
+
+        if (!portal->IsLinked() || !portal->GetMesh()) {
+            continue;
+        }
+
         const PortalNode3d* linked = portal->GetLinkedPortal();
-        if (!linked || !linked->GetMesh()) continue;
+        if (!linked || !linked->GetMesh()) {
+            continue;
+        }
+
+        if (recursionPath->contains(portal) || recursionPath->contains(linked)) {
+            continue;
+        }
+
+        glEnable(GL_STENCIL_TEST);
+        glStencilMask(0xFF);
+        glStencilFunc(GL_EQUAL, currentStencil, 0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
         const Mesh* mesh = portal->GetMesh();
         const glm::mat4 world = portal->GetWorldMatrix();
@@ -628,33 +657,50 @@ void RenderApi::RenderPortalPasses(const CameraNode3d *camera, const Framebuffer
         }
 
         const glm::vec3 portalPos = glm::vec3(portal->GetWorldMatrix()[3]);
-        // assuming portal mesh faces +Z. If it faces +X or +Y, change the vec4 below to (1,0,0,0) or (0,1,0,0).
-        const glm::vec3 portalNormal = glm::normalize(glm::vec3(portal->GetWorldMatrix() * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));
-        const glm::vec3 camToPortal = portalPos - camera->GetPosition();
+        const glm::vec3 portalNormal = glm::normalize(
+            glm::vec3(portal->GetWorldMatrix() * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f))
+        );
 
-        if (glm::dot(camToPortal, portalNormal) > 0.0f) {
+        const glm::vec3 camPos = camera->GetPosition();
+        const float planeDist = glm::dot(camPos - portalPos, portalNormal);
+        if (planeDist <= -0.01f) {
             continue;
         }
 
-        const float distance = glm::length(camToPortal);
-        const float estimatedScreenSize = worldRadius / distance * (camera->GetFov() / 90.0f);
+        const float distance = glm::length(portalPos - camPos);
+        const float safeDistance = std::max(distance, 0.05f);
+        const float estimatedScreenSize = worldRadius / safeDistance;
         if (currentStencil > 1 && estimatedScreenSize < 0.01f) {
             continue;
         }
 
         const int nextStencil = currentStencil + 1;
-        if (nextStencil > 255) break;
+        if (nextStencil > 255) {
+            break;
+        }
 
         DrawPortalMask(portal, currentStencil, camera);
 
         const glm::mat4 virtualView = ComputePortalView(camera, portal, linked);
         CameraNode3d portalCamera = BuildPortalRenderCamera(camera, targetFbo, virtualView);
+
         const glm::mat4 obliqueProjMat = ObliqueProjection(portalCamera.GetProjectionMatrix(), virtualView, linked);
         portalCamera.SetProjectionMatrixOverride(obliqueProjMat);
 
+        recursionPath->insert(portal);
+        recursionPath->insert(linked);
+
         RenderView(&portalCamera, targetFbo, false, linked, false);
 
-        RenderPortalPasses(&portalCamera, targetFbo, remainingDepth - 1, nextStencil);
+        targetFbo->Bind();
+
+        RenderPortalPasses(&portalCamera, targetFbo, remainingDepth - 1, nextStencil, linked, recursionPath);
+
+        targetFbo->Bind();
+
+        recursionPath->erase(linked);
+        recursionPath->erase(portal);
+
         RestorePortalMask(portal, nextStencil, camera);
 
         targetFbo->Bind();
@@ -698,65 +744,101 @@ glm::mat4 RenderApi::ObliqueProjection(const glm::mat4 &projMat, const glm::mat4
 }
 
 void RenderApi::DrawPortalMask(const PortalNode3d *portal, const int currentStencil, const CameraNode3d *camera) const {
-    if (!portal || !camera || !portal->GetMesh() || !portal->GetActiveMaterial()->GetShader()) return;
+    if (!portal || !camera || !portal->GetMesh() || !m_portalMaskShader) {
+        return;
+    }
 
     UploadCameraData(camera);
 
-    const Shader* shader = portal->GetActiveMaterial()->GetShader().get();
-    shader->Bind();
-    shader->SetMatrix4("u_Model", portal->GetWorldMatrix());
+    const Material* mat = portal->GetActiveMaterial();
+    if (mat) {
+        ApplyMaterialCull(mat);
+    } else {
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+    }
 
+    m_portalMaskShader->Bind();
+    m_portalMaskShader->SetMatrix4("u_Model", portal->GetWorldMatrix());
+
+    glEnable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
+
+    const int nextStencil = currentStencil + 1;
+
+    // increment stencil where the portal shape is visible
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(GL_FALSE);
 
-    glEnable(GL_STENCIL_TEST);
     glStencilMask(0xFF);
-
     glStencilFunc(GL_EQUAL, currentStencil, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 
-    DrawMesh(*portal->GetMesh(), *shader);
+    DrawMesh(*portal->GetMesh(), *m_portalMaskShader);
 
+    // force far depth inside the portal area only
+    glStencilFunc(GL_EQUAL, nextStencil, 0xFF);
+    glStencilMask(0x00);
+
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_ALWAYS);
+
     glDepthRange(1.0, 1.0);
-
-    const int nextStencil = currentStencil + 1;
-    glStencilFunc(GL_EQUAL, nextStencil, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-    DrawMesh(*portal->GetMesh(), *shader);
-
+    DrawMesh(*portal->GetMesh(), *m_portalMaskShader);
     glDepthRange(0.0, 1.0);
+
+    // restore expected state for portal contents rendering
     glDepthFunc(GL_LEQUAL);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthMask(GL_TRUE);
 
-    glStencilMask(0x00);
     glStencilFunc(GL_EQUAL, nextStencil, 0xFF);
+    glStencilMask(0x00);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 }
 
 void RenderApi::RestorePortalMask(const PortalNode3d *portal, const int nextStencil, const CameraNode3d *camera) const {
-    if (!portal || !camera || !portal->GetMesh() || !portal->GetActiveMaterial()->GetShader()) return;
+    if (!portal || !camera || !portal->GetMesh() || !m_portalMaskShader) {
+        return;
+    }
 
     UploadCameraData(camera);
 
-    const Shader* shader = portal->GetActiveMaterial()->GetShader().get();
-    shader->Bind();
-    shader->SetMatrix4("u_Model", portal->GetWorldMatrix());
+    const Material* mat = portal->GetActiveMaterial();
+    if (mat) {
+        ApplyMaterialCull(mat);
+    } else {
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+    }
 
+    m_portalMaskShader->Bind();
+    m_portalMaskShader->SetMatrix4("u_Model", portal->GetWorldMatrix());
+
+    glEnable(GL_STENCIL_TEST);
+
+    // decrement stencil where this portal level was active
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(GL_FALSE);
-    glEnable(GL_STENCIL_TEST);
-    glStencilMask(0xFF);
 
+    glStencilMask(0xFF);
     glStencilFunc(GL_EQUAL, nextStencil, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
 
-    DrawMesh(*portal->GetMesh(), *shader);
+    DrawMesh(*portal->GetMesh(), *m_portalMaskShader);
+
+    // restore real portal surface depth
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    DrawMesh(*portal->GetMesh(), *m_portalMaskShader);
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
 
     glStencilMask(0x00);
     glStencilFunc(GL_EQUAL, nextStencil - 1, 0xFF);
@@ -1002,11 +1084,9 @@ RenderStats RenderApi::RenderView(const CameraNode3d *camera, const Framebuffer 
         stats.shadowDrawCalls = m_shadowRenderer->GetShadowDrawCallCount();
     }
 
-    if (stencilEnabled) {
-        glEnable(GL_STENCIL_TEST);
-        glStencilFunc(static_cast<GLenum>(savedStencilFunc), savedStencilRef, static_cast<GLuint>(savedStencilMask));
-        glStencilOp(static_cast<GLenum>(savedStencilFail), static_cast<GLenum>(savedStencilPassDepthFail), static_cast<GLenum>(savedStencilPassDepthPass));
-    }
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(static_cast<GLenum>(savedStencilFunc), savedStencilRef, static_cast<GLuint>(savedStencilMask));
+    glStencilOp(static_cast<GLenum>(savedStencilFail), static_cast<GLenum>(savedStencilPassDepthFail), static_cast<GLenum>(savedStencilPassDepthPass));
 
     targetFbo->Bind();
     glViewport(0, 0, targetFbo->GetWidth(), targetFbo->GetHeight());
@@ -1122,6 +1202,7 @@ RenderStats RenderApi::RenderView(const CameraNode3d *camera, const Framebuffer 
 
     if (m_skybox) {
         m_skybox->GetSkybox()->Draw(camera->GetViewMatrix(), camera->GetProjectionMatrix());
+        glBindTextureUnit(0, 0);
     }
 
     RenderTransparentPass(cameraFrustum, transparentQueue, stats);
@@ -1166,6 +1247,10 @@ void RenderApi::DrawMeshNodeDepth(const MeshNode3d *node, RenderStats& stats) co
 void RenderApi::DrawMesh(const Mesh &mesh, const Shader& shader) {
     if (!mesh.IsUploaded()) {
         throw std::runtime_error("DrawMesh: mesh not uploaded to GPU");
+    }
+
+    if (mesh.GetBuffer()->GetIndexCount() == 0) {
+        return;
     }
 
     shader.Bind();

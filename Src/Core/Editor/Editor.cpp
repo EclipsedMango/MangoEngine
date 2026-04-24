@@ -422,6 +422,7 @@ void Editor::OnStop() {
 
     for (const auto& vp : m_viewports) {
         if (auto snapshot = vp->TakeSnapshot()) {
+            PackedScene::RelinkPortals(snapshot.get());
             vp->LoadScene(std::move(snapshot));
         }
     }

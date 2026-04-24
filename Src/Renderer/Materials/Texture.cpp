@@ -235,4 +235,8 @@ void Texture::RegisterProperties() {
     AddProperty("Height", [this]() -> PropertyValue { return m_height; }, [](const PropertyValue&){});
     AddProperty("Channels", [this]() -> PropertyValue { return m_channels; }, [](const PropertyValue&){});
     AddProperty("GL Handle", [this]() -> PropertyValue { return static_cast<int>(m_id); }, [](const PropertyValue&){});
+    AddProperty("source_path",
+        [this]() -> PropertyValue { return m_sourcePath; },
+        [this](const PropertyValue& v) { m_sourcePath = std::get<std::string>(v); }
+    );
 }

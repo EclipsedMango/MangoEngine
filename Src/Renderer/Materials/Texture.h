@@ -37,6 +37,9 @@ public:
     [[nodiscard]] int GetChannels() const { return m_channels; }
     [[nodiscard]] bool IsCubemap()  const { return m_target == GL_TEXTURE_CUBE_MAP; }
 
+    void SetSourcePath(const std::string& path) { m_sourcePath = path; }
+    [[nodiscard]] const std::string& GetSourcePath() const { return m_sourcePath; }
+
 private:
     void RegisterProperties();
 
@@ -46,6 +49,8 @@ private:
     int m_width = 0;
     int m_height = 0;
     int m_channels = 0;
+
+    std::string m_sourcePath;
 };
 
 

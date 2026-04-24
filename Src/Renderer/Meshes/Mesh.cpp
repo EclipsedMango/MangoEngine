@@ -89,6 +89,10 @@ void Mesh::RegisterProperties() {
         [this]() -> PropertyValue { return m_boundsRadius; },
         [](const PropertyValue&) {}
     );
+    AddProperty("source_path",
+        [this]() -> PropertyValue { return m_sourcePath; },
+        [this](const PropertyValue& v) { m_sourcePath = std::get<std::string>(v); }
+    );
 }
 
 void Mesh::ComputeBounds() {

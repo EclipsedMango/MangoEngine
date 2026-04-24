@@ -101,14 +101,18 @@ void MeshNode3d::Init() {
     m_meshSlot = std::make_shared<PropertyHolder>();
 
     m_meshSlot->AddProperty("mesh_type",
-        [this]() -> PropertyValue {
-            return m_mesh ? "LoadedMesh" : "None";
-        },
-        [this](const PropertyValue& v) {
-            const std::string name = std::get<std::string>(v);
-            SetMesh(ResourceManager::Get().Load<Mesh>(name));
+    [this]() -> PropertyValue {
+        if (m_mesh && !m_mesh->GetSourcePath().empty()) {
+            return m_mesh->GetSourcePath();
         }
-    );
+        return std::string("None");
+    },
+    [this](const PropertyValue& v) {
+        const std::string name = std::get<std::string>(v);
+        if (name.empty() || name == "None") return;
+        SetMesh(ResourceManager::Get().Load<Mesh>(name));
+    }
+);
 
     m_meshSlot->AddProperty("mesh",
         [this]() -> PropertyValue {

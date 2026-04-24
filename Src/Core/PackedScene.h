@@ -25,13 +25,14 @@ public:
     [[nodiscard]] static PackedScene LoadFromFile(const std::string& path);
     void SaveToFile(const std::string& path) const;
 
+    static void RelinkPortals(Node3d* root);
+
     [[nodiscard]] std::unique_ptr<Node3d> Instantiate() const;
 
 private:
     PackedScene() = default;
 
     static std::unique_ptr<Node3d> InstantiateNode(const PackedNode& packedNode);
-    static void RelinkPortals(Node3d* root);
     static fkyaml::node FromPackedNode(const PackedNode& packedNode);
 
     std::optional<PackedNode> m_node;

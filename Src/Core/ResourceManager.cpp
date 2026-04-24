@@ -21,6 +21,8 @@ template<> ResourceManager::Cache<Shader>& ResourceManager::GetCache<Shader>() {
 // texture loading
 template<>
 std::shared_ptr<Texture> ResourceManager::Load<Texture>(const std::string& filepath, const CacheMode mode) {
+    if (filepath.empty()) return nullptr;
+
     if (mode == CacheMode::Reuse) {
         if (auto cached = Get<Texture>(filepath)) return cached;
     }
@@ -32,6 +34,7 @@ std::shared_ptr<Texture> ResourceManager::Load<Texture>(const std::string& filep
     }
 
     auto tex = std::make_shared<Texture>(fullPath);
+    tex->SetSourcePath(filepath);
     Register<Texture>(filepath, tex);
     return tex;
 }
@@ -76,6 +79,7 @@ std::shared_ptr<Mesh> ResourceManager::Load<Mesh>(const std::string& filepath, C
         return nullptr;
     }
 
+    mesh->SetSourcePath(filepath);
     Register<Mesh>(filepath, mesh);
     return mesh;
 }
@@ -278,6 +282,8 @@ std::shared_ptr<Texture> ResourceManager::LoadTextureFromMemory(const std::strin
 }
 
 std::shared_ptr<Texture> ResourceManager::LoadTexture(const std::string &filepath, bool isSRGB, bool flipVertically) {
+    if (filepath.empty()) return nullptr;
+
     const std::string cacheKey = filepath + (isSRGB ? "|srgb" : "|linear");
     if (auto cached = Get<Texture>(cacheKey)) return cached;
 
@@ -288,6 +294,7 @@ std::shared_ptr<Texture> ResourceManager::LoadTexture(const std::string &filepat
     }
 
     auto tex = std::make_shared<Texture>(fullPath, flipVertically, isSRGB);
+    tex->SetSourcePath(filepath);
     Register<Texture>(cacheKey, tex);
     return tex;
 }

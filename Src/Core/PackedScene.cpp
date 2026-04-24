@@ -113,8 +113,8 @@ void PackedScene::RelinkPortals(Node3d *root) {
             if (!linked.contains(p)) {
                 const std::string partnerName = p->Get<std::string>("linked_portal_name");
                 if (!partnerName.empty()) {
-                    auto it = portalMap.find(partnerName);
-                    if (it != portalMap.end()) {
+                    const auto it = portalMap.find(partnerName);
+                    if (it != portalMap.end() && it->second != p) {
                         PortalNode3d::LinkPair(p, it->second);
                         linked.insert(p);
                         linked.insert(it->second);

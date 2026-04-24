@@ -123,7 +123,7 @@ private:
     void RenderMainPass(const CameraNode3d* camera, const Framebuffer* targetFbo, const std::vector<MeshNode3d*>& opaqueQueue, RenderStats& stats);
     static void RenderTransparentPass(const Frustum& frustum, const std::vector<MeshNode3d*>& transparentQueue, RenderStats& stats);
 
-    void RenderPortalPasses(const CameraNode3d* camera, const Framebuffer* targetFbo, int remainingDepth, int currentStencil = 0);
+    void RenderPortalPasses(const CameraNode3d* camera, const Framebuffer* targetFbo, int remainingDepth, int currentStencil, const PortalNode3d* excludedPortal = nullptr, std::unordered_set<const PortalNode3d*>* recursionPath = nullptr);
     static glm::mat4 ComputePortalView(const CameraNode3d* mainCamera, const PortalNode3d* sourcePortal, const PortalNode3d* destPortal);
     static glm::mat4 ObliqueProjection(const glm::mat4& projMat, const glm::mat4& virtualView, const PortalNode3d* destPortal);
 
@@ -148,6 +148,7 @@ private:
     std::shared_ptr<Shader> m_depthShader;
     std::shared_ptr<Shader> m_gridShader;
     std::shared_ptr<Shader> m_postProcessShader;
+    std::shared_ptr<Shader> m_portalMaskShader;
     GLuint m_gridVao = 0;
     GLuint m_postProcessVao = 0;
     std::unique_ptr<Framebuffer> m_postProcessFramebuffer;
