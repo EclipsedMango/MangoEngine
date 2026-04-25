@@ -14,6 +14,7 @@ local function normalize_xz(v)
 end
 
 return {
+    base_speed = 5.0,
     speed = 5.0,
     jump_velocity = 7.0,
 
@@ -61,6 +62,12 @@ return {
     _process = function(self, delta)
         if Input.IsKeyPressed(Input.Key.SPACE) then
             self.jump_buffer_timer = self.jump_buffer_time
+        end
+
+        if Input.IsKeyHeld(Input.Key.LSHIFT) then
+           self.speed = self.base_speed * 4.5
+        else
+            self.speed = self.base_speed
         end
 
         if Input.IsKeyPressed(Input.Key.ESCAPE) then

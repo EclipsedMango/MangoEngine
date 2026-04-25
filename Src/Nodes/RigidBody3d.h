@@ -29,6 +29,7 @@ public:
     void SetAngularVelocity(const glm::vec3& velocity);
     void SetLockRotation(bool lockRotation);
     void SetSyncToPhysics(bool syncToPhysics);
+    void TeleportToWorldTransform(const glm::mat4& worldTransform);
 
     [[nodiscard]] BodyType GetBodyType() const { return m_bodyType; }
     [[nodiscard]] float GetMass() const { return m_mass; }
@@ -37,6 +38,7 @@ public:
     [[nodiscard]] glm::vec3 GetAngularVelocity() const { return m_angularVelocity; }
     [[nodiscard]] bool IsRotationLocked() const { return m_lockRotation; }
     [[nodiscard]] bool IsSyncToPhysicsEnabled() const { return m_syncToPhysics; }
+    [[nodiscard]] glm::mat4 GetPhysicsWorldTransform() const;
 
     [[nodiscard]] bool HasPhysicsBody() const { return m_hasBody; }
     [[nodiscard]] JPH::BodyID GetBodyId() const { return m_bodyId; }

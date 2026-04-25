@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <functional>
 
 #include <glm/glm.hpp>
 
@@ -34,12 +35,24 @@ struct QueuedSignal {
     std::vector<SignalArg> args;
 };
 
+using NativeSignalCallback = std::function<void(const std::vector<SignalArg>&)>;
+
+struct NativeSignalConnection {
+    Node3d* owner = nullptr;
+    NativeSignalCallback callback;
+    bool oneShot = false;
+};
+
 class SignalBus {
 public:
     static SignalBus& Get();
 
     void Connect(Node3d* source, const std::string& signal, Node3d* target, const std::string& method, bool oneShot = false);
     void Disconnect(Node3d* source, const std::string& signal, Node3d* target, const std::string& method);
+
+    void ConnectNative(Node3d* source, const std::string& signal, Node3d* owner, NativeSignalCallback callback, bool oneShot = false);
+    void DisconnectNative(Node3d* source, const std::string& signal, Node3d* owner);
+
     void Emit(Node3d* source, const std::string& signal, const std::vector<SignalArg>& args = {});
     void Queue(Node3d* source, const std::string& signal, const std::vector<SignalArg>& args = {});
 
@@ -49,7 +62,9 @@ public:
 private:
     std::mutex m_mutex;
 
+    // connections are for lua
     std::unordered_map<Node3d*, std::unordered_map<std::string, std::vector<SignalConnection>>> m_connections;
+    std::unordered_map<Node3d*, std::unordered_map<std::string, std::vector<NativeSignalConnection>>> m_nativeConnections;
     std::vector<QueuedSignal> m_queue;
 };
 

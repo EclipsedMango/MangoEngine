@@ -387,6 +387,7 @@ void ScriptManager::Init() {
     keys["E"] = SDL_SCANCODE_E;
     keys["SPACE"] = SDL_SCANCODE_SPACE;
     keys["LCTRL"] = SDL_SCANCODE_LCTRL;
+    keys["LSHIFT"] = SDL_SCANCODE_LSHIFT;
     keys["ESCAPE"] = SDL_SCANCODE_ESCAPE;
     keys["TAB"] = SDL_SCANCODE_TAB;
 

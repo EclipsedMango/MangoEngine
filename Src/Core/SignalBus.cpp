@@ -66,32 +66,87 @@ void SignalBus::Disconnect(Node3d* source, const std::string& signal, Node3d* ta
     }
 }
 
+void SignalBus::ConnectNative(Node3d *source, const std::string &signal, Node3d *owner, NativeSignalCallback callback, bool oneShot) {
+    if (!source || !owner || signal.empty() || !callback) {
+        return;
+    }
+
+    std::lock_guard lock(m_mutex);
+    auto& connections = m_nativeConnections[source][signal];
+
+    for (const auto& connection : connections) {
+        if (connection.owner == owner) {
+            return;
+        }
+    }
+
+    connections.push_back({
+        .owner = owner,
+        .callback = std::move(callback),
+        .oneShot = oneShot
+    });
+}
+
+void SignalBus::DisconnectNative(Node3d *source, const std::string &signal, Node3d *owner) {
+    if (!source || !owner) {
+        return;
+    }
+
+    std::lock_guard lock(m_mutex);
+
+    const auto sourceIt = m_nativeConnections.find(source);
+    if (sourceIt == m_nativeConnections.end()) {
+        return;
+    }
+
+    const auto signalIt = sourceIt->second.find(signal);
+    if (signalIt == sourceIt->second.end()) {
+        return;
+    }
+
+    auto& connections = signalIt->second;
+
+    std::erase_if(connections, [&](const NativeSignalConnection& connection) {
+        return connection.owner == owner;
+    });
+
+    if (connections.empty()) {
+        sourceIt->second.erase(signalIt);
+    }
+
+    if (sourceIt->second.empty()) {
+        m_nativeConnections.erase(sourceIt);
+    }
+}
+
 void SignalBus::Emit(Node3d* source, const std::string& signal, const std::vector<SignalArg>& args) {
     if (!source || signal.empty()) {
         return;
     }
 
-    std::vector<SignalConnection> connections;
+    std::vector<SignalConnection> scriptConnections;
+    std::vector<NativeSignalConnection> nativeConnections;
 
     {
         std::lock_guard lock(m_mutex);
 
-        const auto sourceIt = m_connections.find(source);
-        if (sourceIt == m_connections.end()) {
-            return;
+        if (const auto sourceIt = m_connections.find(source); sourceIt != m_connections.end()) {
+            if (const auto signalIt = sourceIt->second.find(signal); signalIt != sourceIt->second.end()) {
+                scriptConnections = signalIt->second;
+            }
         }
 
-        const auto signalIt = sourceIt->second.find(signal);
-        if (signalIt == sourceIt->second.end()) {
-            return;
+        if (const auto sourceIt = m_nativeConnections.find(source); sourceIt != m_nativeConnections.end()) {
+            if (const auto signalIt = sourceIt->second.find(signal); signalIt != sourceIt->second.end()) {
+                nativeConnections = signalIt->second;
+            }
         }
-
-        connections = signalIt->second;
     }
 
-    std::vector<SignalConnection> oneShotConnections;
+    std::vector<SignalConnection> oneShotScriptConnections;
+    std::vector<NativeSignalConnection> oneShotNativeConnections;
 
-    for (const auto& connection : connections) {
+    for (const auto& connection : scriptConnections) {
         if (!connection.target) {
             continue;
         }
@@ -103,12 +158,28 @@ void SignalBus::Emit(Node3d* source, const std::string& signal, const std::vecto
         );
 
         if (connection.oneShot) {
-            oneShotConnections.push_back(connection);
+            oneShotScriptConnections.push_back(connection);
         }
     }
 
-    for (const auto& connection : oneShotConnections) {
+    for (const auto& connection : nativeConnections) {
+        if (!connection.owner || !connection.callback) {
+            continue;
+        }
+
+        connection.callback(args);
+
+        if (connection.oneShot) {
+            oneShotNativeConnections.push_back(connection);
+        }
+    }
+
+    for (const auto& connection : oneShotScriptConnections) {
         Disconnect(source, signal, connection.target, connection.method);
+    }
+
+    for (const auto& connection : oneShotNativeConnections) {
+        DisconnectNative(source, signal, connection.owner);
     }
 }
 
@@ -147,6 +218,7 @@ void SignalBus::RemoveNode(Node3d* node) {
     std::lock_guard lock(m_mutex);
 
     m_connections.erase(node);
+    m_nativeConnections.erase(node);
 
     for (auto &signalMap: m_connections | std::views::values) {
         for (auto &connections: signalMap | std::views::values) {
@@ -161,6 +233,22 @@ void SignalBus::RemoveNode(Node3d* node) {
     }
 
     std::erase_if(m_connections, [](const auto& pair) {
+        return pair.second.empty();
+    });
+
+    for (auto& signalMap : m_nativeConnections | std::views::values) {
+        for (auto& connections : signalMap | std::views::values) {
+            std::erase_if(connections, [&](const NativeSignalConnection& connection) {
+                return connection.owner == node;
+            });
+        }
+
+        std::erase_if(signalMap, [](const auto& pair) {
+            return pair.second.empty();
+        });
+    }
+
+    std::erase_if(m_nativeConnections, [](const auto& pair) {
         return pair.second.empty();
     });
 

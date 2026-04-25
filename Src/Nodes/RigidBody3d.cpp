@@ -206,6 +206,67 @@ void RigidBody3d::SetSyncToPhysics(const bool syncToPhysics) {
     m_syncToPhysics = syncToPhysics;
 }
 
+void RigidBody3d::TeleportToWorldTransform(const glm::mat4 &worldTransform) {
+    glm::mat4 parentWorld(1.0f);
+
+    if (Node3d* parent = GetParent()) {
+        parentWorld = ComposeWorldMatrix(parent);
+    }
+
+    const glm::mat4 localTransform = glm::inverse(parentWorld) * worldTransform;
+    SetLocalTransform(localTransform);
+
+    if (!m_hasBody) {
+        return;
+    }
+
+    PhysicsWorld& world = PhysicsWorld::Get();
+
+    if (!world.IsInitialized()) {
+        return;
+    }
+
+    const glm::vec3 worldPosition = glm::vec3(worldTransform[3]);
+    const glm::quat worldRotation = glm::normalize(glm::quat_cast(worldTransform));
+
+    JPH::BodyInterface& bodyInterface = world.GetBodyInterface();
+
+    bodyInterface.SetPositionAndRotation(
+        m_bodyId,
+        JPH::RVec3(worldPosition.x, worldPosition.y, worldPosition.z),
+        ToJoltQuat(worldRotation),
+        JPH::EActivation::Activate
+    );
+
+    bodyInterface.SetLinearVelocity(m_bodyId, ToJoltVec3(m_linearVelocity));
+
+    if (m_lockRotation) {
+        bodyInterface.SetAngularVelocity(m_bodyId, JPH::Vec3::sZero());
+    } else {
+        bodyInterface.SetAngularVelocity(m_bodyId, ToJoltVec3(m_angularVelocity));
+    }
+}
+
+glm::mat4 RigidBody3d::GetPhysicsWorldTransform() const {
+    if (!m_hasBody || !PhysicsWorld::Get().IsInitialized()) {
+        return ComposeWorldMatrix(const_cast<RigidBody3d*>(this));
+    }
+
+    const JPH::BodyInterface& bodyInterface = PhysicsWorld::Get().GetBodyInterface();
+
+    JPH::RVec3 worldPosition;
+    JPH::Quat worldRotation {};
+
+    bodyInterface.GetPositionAndRotation(m_bodyId, worldPosition, worldRotation);
+
+    glm::mat4 worldTransform = glm::translate(glm::mat4(1.0f), glm::vec3(worldPosition.GetX(), worldPosition.GetY(), worldPosition.GetZ()));
+
+    worldTransform *= glm::mat4_cast(ToGlmQuat(worldRotation));
+    worldTransform = glm::scale(worldTransform, GetScale());
+
+    return worldTransform;
+}
+
 std::string RigidBody3d::BodyTypeToString(const BodyType type) {
     switch (type) {
         case BodyType::Static: return "Static";
