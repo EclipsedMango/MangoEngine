@@ -10,6 +10,7 @@
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 #include <Jolt/Physics/Collision/ObjectLayer.h>
 #include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/ContactListener.h>
 
 class PhysicsWorld {
 public:
@@ -37,6 +38,8 @@ private:
     std::unique_ptr<JPH::BroadPhaseLayerInterface> m_broadPhaseLayerInterface;
     std::unique_ptr<JPH::ObjectVsBroadPhaseLayerFilter> m_objectVsBroadPhaseLayerFilter;
     std::unique_ptr<JPH::ObjectLayerPairFilter> m_objectLayerPairFilter;
+
+    std::unique_ptr<JPH::ContactListener> m_contactListener;
 };
 
 #endif //MANGORENDERING_PHYSICSWORLD_H

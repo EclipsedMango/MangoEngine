@@ -12,7 +12,104 @@
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 #include <Jolt/Physics/Collision/ObjectLayer.h>
 
+#include "Nodes/AreaNode3d.h"
+
 namespace {
+    class EngineContactListener final : public JPH::ContactListener {
+    public:
+        struct ActiveAreaContact {
+            AreaNode3d* area = nullptr;
+            JPH::BodyID otherBodyId {};
+            uint32_t contactCount = 0;
+        };
+
+        JPH::ValidateResult OnContactValidate(const JPH::Body&, const JPH::Body&, JPH::RVec3Arg, const JPH::CollideShapeResult&) override {
+            return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
+        }
+
+        void OnContactAdded(const JPH::Body& body1, const JPH::Body& body2, const JPH::ContactManifold&, JPH::ContactSettings&) override {
+            Node3d* node1 = reinterpret_cast<Node3d*>(body1.GetUserData());
+            Node3d* node2 = reinterpret_cast<Node3d*>(body2.GetUserData());
+
+            auto* area1 = dynamic_cast<AreaNode3d*>(node1);
+            auto* area2 = dynamic_cast<AreaNode3d*>(node2);
+
+            if (!area1 && !area2) {
+                return;
+            }
+
+            // Ignore Area vs Area for now.
+            if (area1 && area2) {
+                return;
+            }
+
+            AreaNode3d* area = area1 ? area1 : area2;
+            Node3d* otherNode = area1 ? node2 : node1;
+            const JPH::BodyID otherBodyId = area1 ? body2.GetID() : body1.GetID();
+
+            if (!area || !otherNode) {
+                return;
+            }
+
+            const uint64_t key = MakeBodyPairKey(body1.GetID(), body2.GetID());
+
+            const auto it = m_activeAreaContacts.find(key);
+            if (it == m_activeAreaContacts.end()) {
+                ActiveAreaContact contact;
+                contact.area = area;
+                contact.otherBodyId = otherBodyId;
+                contact.contactCount = 1;
+
+                m_activeAreaContacts[key] = contact;
+
+                area->NotifyBodyEntered(otherBodyId, otherNode);
+            } else {
+                it->second.contactCount++;
+            }
+        }
+
+        void OnContactPersisted(const JPH::Body&, const JPH::Body&, const JPH::ContactManifold&, JPH::ContactSettings&) override {
+            // Nothing needed for simple area enter/exit.
+        }
+
+        void OnContactRemoved(const JPH::SubShapeIDPair& pair) override {
+            const uint64_t key = MakeBodyPairKey(
+                pair.GetBody1ID(),
+                pair.GetBody2ID()
+            );
+
+            auto it = m_activeAreaContacts.find(key);
+
+            if (it == m_activeAreaContacts.end()) {
+                return;
+            }
+
+            if (it->second.contactCount > 1) {
+                it->second.contactCount--;
+                return;
+            }
+
+            if (it->second.area) {
+                it->second.area->NotifyBodyExited(it->second.otherBodyId);
+            }
+
+            m_activeAreaContacts.erase(it);
+        }
+
+    private:
+        static uint64_t MakeBodyPairKey(const JPH::BodyID a, const JPH::BodyID b) {
+            const uint32_t av = a.GetIndexAndSequenceNumber();
+            const uint32_t bv = b.GetIndexAndSequenceNumber();
+
+            const uint32_t lo = std::min(av, bv);
+            const uint32_t hi = std::max(av, bv);
+
+            return (static_cast<uint64_t>(lo) << 32ull) | static_cast<uint64_t>(hi);
+        }
+
+        std::unordered_map<uint64_t, ActiveAreaContact> m_activeAreaContacts;
+    };
+
     namespace Layers {
         constexpr JPH::ObjectLayer NON_MOVING = 0;
         constexpr JPH::ObjectLayer MOVING = 1;
@@ -141,6 +238,9 @@ void PhysicsWorld::Initialize() {
         *m_objectLayerPairFilter
     );
 
+    m_contactListener = std::make_unique<EngineContactListener>();
+    m_physicsSystem.SetContactListener(m_contactListener.get());
+
     m_initialized = true;
 }
 
@@ -148,6 +248,9 @@ void PhysicsWorld::Shutdown() {
     if (!m_initialized) {
         return;
     }
+
+    m_physicsSystem.SetContactListener(nullptr);
+    m_contactListener.reset();
 
     m_objectLayerPairFilter.reset();
     m_objectVsBroadPhaseLayerFilter.reset();

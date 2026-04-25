@@ -20,6 +20,7 @@
 #include "PhysicsWorld.h"
 #include "Nodes/PortalNode3d.h"
 #include "Renderer/Animation/Animator.h"
+#include "SignalBus.h"
 
 Core::~Core() {
     m_currentScene.reset();
@@ -314,12 +315,18 @@ void Core::StepFrame(const float deltaTime) {
     m_accumulator += deltaTime;
     while (m_accumulator >= FIXED_TIMESTEP) {
         PhysicsWorld::Get().Step(FIXED_TIMESTEP);
+
+        SignalBus::Get().DispatchQueued();
+
         for (auto* node : m_nodeCache) {
             if (!node->IsProcessEnabled()) {
                 continue;
             }
             node->PhysicsProcess(FIXED_TIMESTEP);
         }
+
+        SignalBus::Get().DispatchQueued();
+
         m_accumulator -= FIXED_TIMESTEP;
     }
 
@@ -329,6 +336,8 @@ void Core::StepFrame(const float deltaTime) {
         }
         node->Process(deltaTime);
     }
+
+    SignalBus::Get().DispatchQueued();
 
     for (auto* node : m_nodeCache) {
         if (!node->GetParent()) {

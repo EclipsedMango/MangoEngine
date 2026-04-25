@@ -188,6 +188,10 @@ add_executable(MangoRendering Src/main.cpp
         Src/Core/PhysicsWorld.h
         Src/Nodes/RayCastNode3d.cpp
         Src/Nodes/RayCastNode3d.h
+        Src/Nodes/AreaNode3d.cpp
+        Src/Nodes/AreaNode3d.h
+        Src/Core/SignalBus.cpp
+        Src/Core/SignalBus.h
 )
 
 target_link_libraries(MangoRendering PRIVATE SDL3::SDL3 glad_gl imgui ${CMAKE_DL_LIBS} fkYAML::fkYAML lua::lua sol2::sol2 Jolt TracyClient)

@@ -10,6 +10,7 @@
 
 #include "Input.h"
 #include "ResourceManager.h"
+#include "Nodes/AreaNode3d.h"
 #include "Nodes/CameraNode3d.h"
 #include "Nodes/Node3d.h"
 #include "Nodes/RayCastNode3d.h"
@@ -30,6 +31,43 @@ struct ScriptManager::Impl {
     bool runtimeEnabled = true;
     std::function<void()> quitHandler;
 };
+
+static sol::object SignalArgToLua(const SignalArg& arg, const sol::state_view& lua) {
+    if (std::holds_alternative<int>(arg)) {
+        return sol::make_object(lua, std::get<int>(arg));
+    }
+
+    if (std::holds_alternative<float>(arg)) {
+        return sol::make_object(lua, std::get<float>(arg));
+    }
+
+    if (std::holds_alternative<bool>(arg)) {
+        return sol::make_object(lua, std::get<bool>(arg));
+    }
+
+    if (std::holds_alternative<std::string>(arg)) {
+        return sol::make_object(lua, std::get<std::string>(arg));
+    }
+
+    if (std::holds_alternative<glm::vec2>(arg)) {
+        return sol::make_object(lua, std::get<glm::vec2>(arg));
+    }
+
+    if (std::holds_alternative<glm::vec3>(arg)) {
+        return sol::make_object(lua, std::get<glm::vec3>(arg));
+    }
+
+    if (std::holds_alternative<Node3d*>(arg)) {
+        Node3d* node = std::get<Node3d*>(arg);
+        if (node) {
+            return sol::make_object(lua, node);
+        }
+
+        return sol::lua_nil;
+    }
+
+    return sol::lua_nil;
+}
 
 ScriptManager::ScriptManager() : m_impl(std::make_unique<Impl>()) {}
 ScriptManager::~ScriptManager() = default;
@@ -178,6 +216,94 @@ void ScriptManager::Init() {
         },
         "AsRayCast", [](Node3d* node) -> RayCastNode3d* {
             return dynamic_cast<RayCastNode3d*>(node);
+        },
+        "AsArea", [](Node3d* node) -> AreaNode3d* {
+            return dynamic_cast<AreaNode3d*>(node);
+        },
+
+        "Connect", [](Node3d* source, const std::string& signal, Node3d* target, const std::string& method) {
+            if (!source || !target) {
+                return;
+            }
+
+            source->Connect(signal, target, method);
+        },
+
+        "ConnectOneShot", [](Node3d* source, const std::string& signal, Node3d* target, const std::string& method) {
+            if (!source || !target) {
+                return;
+            }
+
+            source->Connect(signal, target, method, true);
+        },
+
+        "Disconnect", [](Node3d* source, const std::string& signal, Node3d* target, const std::string& method) {
+            if (!source || !target) {
+                return;
+            }
+
+            source->Disconnect(signal, target, method);
+        },
+
+        "EmitSignal", [](Node3d* source, const std::string& signal, sol::variadic_args va) {
+            if (!source) {
+                return;
+            }
+
+            std::vector<SignalArg> args;
+
+            for (const sol::object& obj : va) {
+                if (obj.is<bool>()) {
+                    args.emplace_back(obj.as<bool>());
+                } else if (obj.is<int>()) {
+                    args.emplace_back(obj.as<int>());
+                } else if (obj.is<double>()) {
+                    args.emplace_back(static_cast<float>(obj.as<double>()));
+                } else if (obj.is<std::string>()) {
+                    args.emplace_back(obj.as<std::string>());
+                } else if (obj.is<glm::vec2>()) {
+                    args.emplace_back(obj.as<glm::vec2>());
+                } else if (obj.is<glm::vec3>()) {
+                    args.emplace_back(obj.as<glm::vec3>());
+                } else if (obj.is<Node3d*>()) {
+                    args.emplace_back(obj.as<Node3d*>());
+                } else {
+                    std::cerr << "[Lua Signal Warning] Unsupported argument type for signal '"
+                              << signal << "'.\n";
+                }
+            }
+
+            source->EmitSignal(signal, args);
+        },
+
+        "QueueSignal", [](Node3d* source, const std::string& signal, sol::variadic_args va) {
+            if (!source) {
+                return;
+            }
+
+            std::vector<SignalArg> args;
+
+            for (const sol::object& obj : va) {
+                if (obj.is<bool>()) {
+                    args.emplace_back(obj.as<bool>());
+                } else if (obj.is<int>()) {
+                    args.emplace_back(obj.as<int>());
+                } else if (obj.is<double>()) {
+                    args.emplace_back(static_cast<float>(obj.as<double>()));
+                } else if (obj.is<std::string>()) {
+                    args.emplace_back(obj.as<std::string>());
+                } else if (obj.is<glm::vec2>()) {
+                    args.emplace_back(obj.as<glm::vec2>());
+                } else if (obj.is<glm::vec3>()) {
+                    args.emplace_back(obj.as<glm::vec3>());
+                } else if (obj.is<Node3d*>()) {
+                    args.emplace_back(obj.as<Node3d*>());
+                } else {
+                    std::cerr << "[Lua Signal Warning] Unsupported argument type for signal '" << signal << "'.\n";
+                }
+            }
+
+            source->QueueSignal(signal, args);
         }
     );
 
@@ -219,6 +345,28 @@ void ScriptManager::Init() {
         "GetCollisionFraction", &RayCastNode3d::GetCollisionFraction,
 
         "GetCollider", &RayCastNode3d::GetCollider
+    );
+
+    lua.new_usertype<AreaNode3d>("AreaNode3d",
+        sol::base_classes, sol::bases<Node3d, PropertyHolder>(),
+
+        "SetEnabled", &AreaNode3d::SetEnabled,
+        "IsEnabled", &AreaNode3d::IsEnabled,
+
+        "HasPhysicsBody", &AreaNode3d::HasPhysicsBody,
+
+        "HasOverlappingBodies", &AreaNode3d::HasOverlappingBodies,
+        "GetOverlappingBodyCount", &AreaNode3d::GetOverlappingBodyCount,
+
+        "GetOverlappingBody", [](const AreaNode3d* area, const int index) -> Node3d* {
+            if (!area || index < 1) {
+                return nullptr;
+            }
+
+            return area->GetOverlappingBody(static_cast<size_t>(index - 1));
+        },
+
+        "IsBodyOverlapping", &AreaNode3d::IsBodyOverlapping
     );
 
     sol::table inputModule = lua.create_named_table("Input");
@@ -392,4 +540,41 @@ void ScriptManager::CallPhysicsProcess(Node3d *node, float deltaTime) const {
 
     const auto result = it->second.physicsProcess(it->second.table, deltaTime);
     ReportProtectedFunctionError(result, "_physics_process");
+}
+
+void ScriptManager::CallSignalMethod(Node3d *target, const std::string &methodName, const std::vector<SignalArg> &args) const {
+    ZoneScoped;
+
+    if (!m_impl->runtimeEnabled || !target || methodName.empty()) {
+        return;
+    }
+
+    const auto it = m_impl->scripts.find(target);
+    if (it == m_impl->scripts.end()) {
+        return;
+    }
+
+    const sol::object methodObject = it->second.table[methodName];
+    if (!methodObject.valid() || methodObject == sol::lua_nil) {
+        return;
+    }
+
+    if (!methodObject.is<sol::protected_function>()) {
+        std::cerr << "[Signal Warning] Method '" << methodName << "' exists but is not callable on node '" << target->GetName() << "'.\n";
+        return;
+    }
+
+    sol::protected_function method = methodObject.as<sol::protected_function>();
+
+    std::vector<sol::object> luaArgs;
+    luaArgs.reserve(args.size());
+
+    const sol::state_view luaView(m_impl->lua);
+
+    for (const SignalArg& arg : args) {
+        luaArgs.push_back(SignalArgToLua(arg, luaView));
+    }
+
+    const auto result = method(it->second.table, sol::as_args(luaArgs));
+    ReportProtectedFunctionError(result, "signal method " + methodName);
 }

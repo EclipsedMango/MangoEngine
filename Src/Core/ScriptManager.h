@@ -6,6 +6,8 @@
 #include <memory>
 #include <string>
 
+#include "SignalBus.h"
+
 class Node3d;
 
 class ScriptManager {
@@ -27,6 +29,8 @@ public:
     void CallReady(const Node3d* node) const;
     void CallProcess(Node3d* node, float deltaTime) const;
     void CallPhysicsProcess(Node3d* node, float deltaTime) const;
+
+    void CallSignalMethod(Node3d* target, const std::string& methodName, const std::vector<SignalArg>& args) const;
 
     ScriptManager(const ScriptManager&) = delete;
     ScriptManager& operator=(const ScriptManager&) = delete;

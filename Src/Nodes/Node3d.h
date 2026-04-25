@@ -11,6 +11,7 @@
 
 #include "Core/PropertyHolder.h"
 #include "Core/NodeRegistry.h"
+#include "Core/SignalBus.h"
 
 enum class NodeNotification;
 class TreeListener;
@@ -26,6 +27,11 @@ public:
 
     void PropagateEnterTree(TreeListener* listener);
     void PropagateExitTree();
+
+    void Connect(const std::string& signal, Node3d* target, const std::string& method, bool oneShot = false);
+    void Disconnect(const std::string& signal, Node3d* target, const std::string& method);
+    void EmitSignal(const std::string& signal, const std::vector<SignalArg>& args = {});
+    void QueueSignal(const std::string& signal, const std::vector<SignalArg>& args = {});
 
     [[nodiscard]] virtual std::unique_ptr<Node3d> Clone();
 

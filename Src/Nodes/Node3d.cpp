@@ -6,6 +6,7 @@
 
 #include "Core/ScriptManager.h"
 #include "Core/TreeListener.h"
+#include "Core/SignalBus.h"
 
 REGISTER_NODE_TYPE(Node3d)
 
@@ -41,6 +42,7 @@ Node3d::Node3d() : m_id(++s_nextId) {
 }
 
 Node3d::~Node3d() {
+    SignalBus::Get().RemoveNode(this);
     ScriptManager::Get().ClearScript(this);
 
     for (const auto* child : m_children) {
@@ -288,6 +290,22 @@ void Node3d::PropagateExitTree() {
 
     m_treeListener->Notification(this, NodeNotification::ExitTree);
     m_treeListener = nullptr;
+}
+
+void Node3d::Connect(const std::string &signal, Node3d *target, const std::string &method, bool oneShot) {
+    SignalBus::Get().Connect(this, signal, target, method, oneShot);
+}
+
+void Node3d::Disconnect(const std::string &signal, Node3d *target, const std::string &method) {
+    SignalBus::Get().Disconnect(this, signal, target, method);
+}
+
+void Node3d::EmitSignal(const std::string &signal, const std::vector<SignalArg> &args) {
+    SignalBus::Get().Emit(this, signal, args);
+}
+
+void Node3d::QueueSignal(const std::string &signal, const std::vector<SignalArg> &args) {
+    SignalBus::Get().Queue(this, signal, args);
 }
 
 [[nodiscard]] std::unique_ptr<Node3d> Node3d::Clone() {
