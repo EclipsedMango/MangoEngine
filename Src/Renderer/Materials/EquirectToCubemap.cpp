@@ -29,7 +29,7 @@ std::shared_ptr<Texture> EquirectToCubemap::Convert(const std::string &hdrPath, 
     std::unique_ptr<Texture> equirect(Texture::LoadHDR(hdrPath));
     auto cubemap = std::make_shared<Texture>(faceSize, faceSize, GL_RGB16F, 1);
 
-    const auto shader = ResourceManager::Get().LoadShader("EquirectToCube", "equirect_to_cubemap.vert", "equirect_to_cubemap.frag");
+    const auto shader = ResourceManager::Get().LoadShader("EquirectToCube", "Engine://Shaders/equirect_to_cubemap.vert", "Engine://Shaders/equirect_to_cubemap.frag");
     auto cubeMesh = ResourceManager::Get().Load<Mesh>("Cube");
 
     const Framebuffer fbo(faceSize, faceSize, FramebufferType::ColorOnly);

@@ -109,8 +109,8 @@ private:
     EditorStyle() = default;
 
     void LoadFonts(ImGuiIO& io) {
-        const std::string lexend = ResourceManager::Get().ResolveAssetPath("Lexend-VariableFont_wght.ttf");
-        const std::string nerdFontPath = ResourceManager::Get().ResolveAssetPath("JetBrainsMonoNerdFont-Regular.ttf");
+        const std::string lexend = ResourceManager::Get().ResolveAssetPath("Engine://Editor/Fonts/Lexend/Lexend-VariableFont_wght.ttf");
+        const std::string nerdFontPath = ResourceManager::Get().ResolveAssetPath("Engine://Editor/Fonts/JetBrainsMonoNerdFont/JetBrainsMonoNerdFont-Regular.ttf");
 
         static constexpr ImWchar icon_ranges[] = { 0xe000, 0xf8ff, 0 };
 

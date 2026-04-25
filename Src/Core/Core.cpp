@@ -139,7 +139,7 @@ void Core::InitRenderer() {
     Input::SetCaptureWindow(m_activeWindow->GetSDLWindow());
     SDL_SetWindowRelativeMouseMode(m_activeWindow->GetSDLWindow(), false);
 
-    m_defaultShader = ResourceManager::Get().LoadShader("default", "test.vert", "test.frag");
+    m_defaultShader = ResourceManager::Get().LoadShader("Default", "Engine://Shaders/default.vert", "Engine://Shaders/default.frag");
 }
 
 void Core::InitImGui() const {

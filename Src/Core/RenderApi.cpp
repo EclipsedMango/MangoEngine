@@ -108,9 +108,9 @@ void RenderApi::InitGLResources() {
     // camera UBO
     m_cameraUbo = std::make_unique<UniformBuffer>(2 * sizeof(glm::mat4), 0);
 
-    m_gridShader = ResourceManager::Get().LoadShader("GridShader", "grid.vert", "grid.frag");
+    m_gridShader = ResourceManager::Get().LoadShader("GridShader", "Shaders/grid.vert", "Shaders/grid.frag");
     glGenVertexArrays(1, &m_gridVao);
-    m_postProcessShader = ResourceManager::Get().LoadShader("PostProcessShader", "post_process.vert", "post_process.frag");
+    m_postProcessShader = ResourceManager::Get().LoadShader("PostProcessShader", "Shaders/post_process.vert", "Shaders/post_process.frag");
     glGenVertexArrays(1, &m_postProcessVao);
 
     m_clusterSystem = std::make_unique<ClusterSystem>();
@@ -119,8 +119,8 @@ void RenderApi::InitGLResources() {
 }
 
 void RenderApi::InitDepthPass() {
-    m_depthShader = ResourceManager::Get().LoadShader("DepthOnly", "depth_only.vert", "depth_only.frag");
-    m_portalMaskShader = ResourceManager::Get().LoadShader("PortalMask", "portal_mask.vert", "portal_mask.frag");
+    m_depthShader = ResourceManager::Get().LoadShader("DepthOnly", "Shaders/depth_only.vert", "Shaders/depth_only.frag");
+    m_portalMaskShader = ResourceManager::Get().LoadShader("PortalMask", "Shaders/portal_mask.vert", "Shaders/portal_mask.frag");
 }
 
 RenderApi::~RenderApi() {

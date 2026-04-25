@@ -62,8 +62,8 @@ IBLPrecomputer::Result IBLPrecomputer::Compute(const Texture &envCubemap) {
 
     const auto cube = CreateCaptureCube();
 
-    m_irradianceShader = ResourceManager::Get().LoadShader("IrradianceShader", "ibl_capture.vert", "ibl_irradiance.frag");
-    m_prefilterShader = ResourceManager::Get().LoadShader("IblPrefilterShader", "ibl_capture.vert", "ibl_prefilter.frag");
+    m_irradianceShader = ResourceManager::Get().LoadShader("IrradianceShader", "Engine://Shaders/ibl_capture.vert", "Engine://Shaders/ibl_irradiance.frag");
+    m_prefilterShader = ResourceManager::Get().LoadShader("IblPrefilterShader", "Engine://Shaders/ibl_capture.vert", "Engine://Shaders/ibl_prefilter.frag");
 
     if (!m_irradianceShader || !m_prefilterShader) {
         std::cerr << "[IBLPrecomputer] Failed to load shaders, aborting." << std::endl;

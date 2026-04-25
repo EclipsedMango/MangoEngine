@@ -13,18 +13,19 @@
 #include "UI/ViewportWindow.h"
 
 Editor::Editor(std::unique_ptr<Node3d> scene) : m_inspector(this), m_sceneTree(this), m_contentBrowserWindow(this) {
+#ifdef MANGO_DEV_ASSET_PATHS
+    ResourceManager::Get().SetUserDirectory(std::filesystem::path(MANGO_PROJECT_ROOT_DIR));
+#else
+    const std::filesystem::path engineAssets = ResourceManager::Get().GetEngineDirectory();
+    const std::filesystem::path userProjectRoot = engineAssets.parent_path() / "Root";
+    ResourceManager::Get().SetUserDirectory(userProjectRoot);
+#endif
+
     m_core.Init();
     ScriptManager::Get().SetRuntimeEnabled(false);
     ScriptManager::Get().SetQuitHandler([this] {
         m_scriptQuitRequested = true;
     });
-
-    // setup user project assets and engine assets
-    const std::filesystem::path engineAssets = ResourceManager::Get().GetEngineDirectory();
-    const std::filesystem::path userProjectRoot = engineAssets.parent_path() / "Root";
-    const std::filesystem::path userAssets = userProjectRoot / "Assets";
-
-    ResourceManager::Get().SetUserDirectory(userAssets);
 
     m_mainViewport = std::make_unique<ViewportWindow>(this, "Main Viewport");
     m_mainViewport->LoadScene(std::move(scene));
@@ -56,6 +57,9 @@ Editor::~Editor() {
 
 void Editor::Run() {
     uint64_t lastTime = SDL_GetTicksNS();
+
+    constexpr float scriptReloadCheckTime = 1.0f / 1.0f;
+    float accumulator = 0.0f;
 
     while (m_core.GetActiveWindow()->IsOpen()) {
         const uint64_t cpuStart = SDL_GetTicksNS();
@@ -91,6 +95,7 @@ void Editor::Run() {
             ImGui::GetIO().MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
         }
 
+        accumulator += deltaTime;
         if (m_state != State::Playing) {
             std::vector<Node3d*> scenesToUpdate;
             if (m_core.GetScene()) scenesToUpdate.push_back(m_core.GetScene());
@@ -105,6 +110,11 @@ void Editor::Run() {
 
             for (auto* s : scenesToUpdate) {
                 s->UpdateWorldTransform();
+            }
+
+            if (accumulator >= scriptReloadCheckTime) {
+                ScriptManager::Get().PollHotReload();
+                accumulator -= scriptReloadCheckTime;
             }
         } else {
             m_core.StepFrame(deltaTime);

@@ -26,8 +26,8 @@ namespace {
 }
 
 ShadowRenderer::ShadowRenderer() {
-    m_shadowDepthShader = ResourceManager::Get().LoadShader("ShadowDepth", "shadow_depth.vert", "shadow_depth.frag");
-    m_pointShadowDepthShader = ResourceManager::Get().LoadShaderWithGeom("PointShadowDepth", "point_shadow_depth.vert", "point_shadow_depth.frag", "point_shadow_depth.geom");
+    m_shadowDepthShader = ResourceManager::Get().LoadShader("ShadowDepth", "Engine://Shaders/shadow_depth.vert", "Engine://Shaders/shadow_depth.frag");
+    m_pointShadowDepthShader = ResourceManager::Get().LoadShaderWithGeom("PointShadowDepth", "Engine://Shaders/point_shadow_depth.vert", "Engine://Shaders/point_shadow_depth.frag", "Engine://Shaders/point_shadow_depth.geom");
     m_pointShadowMap = std::make_unique<PointLightShadowMap>(POINT_SHADOW_RES, MAX_SHADOWED_POINT_LIGHTS);
 }
 

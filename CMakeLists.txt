@@ -194,9 +194,6 @@ add_executable(MangoRendering Src/main.cpp
         Src/Core/SignalBus.h
 )
 
-target_link_libraries(MangoRendering PRIVATE SDL3::SDL3 glad_gl imgui ${CMAKE_DL_LIBS} fkYAML::fkYAML lua::lua sol2::sol2 Jolt TracyClient)
-target_compile_definitions(MangoRendering PRIVATE SOL_LUA_VERSION=504)
-
 set_property(TARGET MangoRendering PROPERTY CXX_SCAN_FOR_MODULES OFF)
 set_property(TARGET imgui PROPERTY CXX_SCAN_FOR_MODULES OFF)
 
@@ -209,22 +206,38 @@ target_include_directories(MangoRendering PRIVATE
         ${tracy_SOURCE_DIR}/public
 )
 
-add_custom_target(copy_assets ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/EngineAssets
-        ${CMAKE_BINARY_DIR}/EngineAssets
-)
+target_link_libraries(MangoRendering PRIVATE SDL3::SDL3 glad_gl imgui ${CMAKE_DL_LIBS} fkYAML::fkYAML lua::lua sol2::sol2 Jolt TracyClient)
+target_compile_definitions(MangoRendering PRIVATE SOL_LUA_VERSION=504)
 
-add_custom_target(copy_root ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Root
-        ${CMAKE_BINARY_DIR}/Root
-)
+option(MANGO_DEV_ASSET_PATHS "Load Root/ and EngineAssets/ from source tree during development" ON)
+option(MANGO_COPY_ASSETS_TO_BINARY_DIR "Copy Root/ and EngineAssets/ to build directory" OFF)
+
+if(MANGO_DEV_ASSET_PATHS)
+    target_compile_definitions(MangoRendering PRIVATE
+            MANGO_DEV_ASSET_PATHS=1
+            "MANGO_ENGINE_ASSETS_DIR=\"${CMAKE_SOURCE_DIR}/EngineAssets\""
+            "MANGO_PROJECT_ROOT_DIR=\"${CMAKE_SOURCE_DIR}/Root\""
+    )
+endif()
+
+if(MANGO_COPY_ASSETS_TO_BINARY_DIR)
+    add_custom_target(copy_assets ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/EngineAssets
+            ${CMAKE_BINARY_DIR}/EngineAssets
+    )
+
+    add_custom_target(copy_root ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/Root
+            ${CMAKE_BINARY_DIR}/Root
+    )
+
+    add_dependencies(MangoRendering copy_assets copy_root)
+endif()
 
 add_custom_command(TARGET MangoRendering POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:SDL3::SDL3>
         $<TARGET_FILE_DIR:MangoRendering>
 )
-
-add_dependencies(MangoRendering copy_assets copy_root)

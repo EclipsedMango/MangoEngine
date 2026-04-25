@@ -4,6 +4,8 @@
 #include "LuaIncludes.hpp"
 #include <sol/sol.hpp>
 #include <iostream>
+#include <ranges>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <tracy/Tracy.hpp>
@@ -28,6 +30,7 @@ struct ScriptManager::Impl {
 
     sol::state lua;
     std::unordered_map<Node3d*, ScriptInstance> scripts;
+    std::unordered_map<std::string, std::filesystem::file_time_type> scriptModTimes;
     bool runtimeEnabled = true;
     std::function<void()> quitHandler;
 };
@@ -415,6 +418,13 @@ void ScriptManager::SetScript(Node3d *node, const std::string &path) const {
         return;
     }
 
+    try {
+        m_impl->scriptModTimes[resolvedPath] = std::filesystem::last_write_time(resolvedPath);
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "[Script Warning] Failed to cache script mod time for " << resolvedPath << ": " << e.what() << "\n";
+    }
+
+    std::cout << "[Script] Loading from disk: " << resolvedPath << std::endl;
     sol::load_result loaded = lua.load_file(resolvedPath);
     if (!loaded.valid()) {
         const sol::error err = loaded;
@@ -461,6 +471,64 @@ void ScriptManager::ClearScript(Node3d *node) const {
     }
 
     m_impl->scripts.erase(node);
+}
+
+void ScriptManager::HotReloadScript(Node3d *node) const {
+    const auto it = m_impl->scripts.find(node);
+    if (it == m_impl->scripts.end()) return;
+
+    const std::string scriptName = it->second.table.get<std::string>("script_name");
+    SetScript(node, scriptName);
+}
+
+void ScriptManager::PollHotReload() const {
+    std::unordered_set<std::string> changedPaths;
+
+    for (auto &instance: m_impl->scripts | std::views::values) {
+        const std::string path = instance.table["script_path"];
+        if (path.empty()) {
+            continue;
+        }
+
+        try {
+            const auto currentTime = std::filesystem::last_write_time(path);
+
+            auto [it, inserted] = m_impl->scriptModTimes.try_emplace(path, currentTime);
+
+            if (!inserted && currentTime != it->second) {
+                it->second = currentTime;
+                changedPaths.insert(path);
+            }
+        } catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "[HotReload] Failed to stat file: " << path << " - " << e.what() << "\n";
+        }
+    }
+
+    if (changedPaths.empty()) {
+        return;
+    }
+
+    std::vector<Node3d*> nodesToReload;
+
+    for (auto& [node, instance] : m_impl->scripts) {
+        const std::string path = instance.table["script_path"];
+        if (changedPaths.contains(path)) {
+            nodesToReload.push_back(node);
+        }
+    }
+
+    for (Node3d* node : nodesToReload) {
+        const auto it = m_impl->scripts.find(node);
+        if (it == m_impl->scripts.end()) {
+            continue;
+        }
+
+        const std::string path = it->second.table["script_path"];
+        std::cout << "[HotReload] Reloading: " << path << std::endl;
+
+        HotReloadScript(node);
+        CallReady(node);
+    }
 }
 
 void ScriptManager::SetRuntimeEnabled(const bool enabled) const {

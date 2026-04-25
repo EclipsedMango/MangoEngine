@@ -163,18 +163,36 @@ void ResourceManager::Save(const std::shared_ptr<Material> &mat, const std::stri
 }
 
 ResourceManager::ResourceManager() {
-    const char* basePathStr = SDL_GetBasePath();
-    fs::path searchPath = basePathStr ? fs::path(basePathStr) : fs::current_path();
-
     bool foundEngineAssets = false;
-    while (searchPath.has_parent_path()) {
-        fs::path potentialEngineAssets = searchPath / "EngineAssets";
-        if (fs::exists(potentialEngineAssets) && fs::is_directory(potentialEngineAssets)) {
-            m_engineAssetsPath = potentialEngineAssets;
+
+#ifdef MANGO_DEV_ASSET_PATHS
+    {
+        fs::path devEngineAssets = fs::path(MANGO_ENGINE_ASSETS_DIR);
+
+        if (fs::exists(devEngineAssets) && fs::is_directory(devEngineAssets)) {
+            m_engineAssetsPath = fs::weakly_canonical(devEngineAssets);
             foundEngineAssets = true;
-            break;
+
+            std::cout << "[ResourceManager] Using dev EngineAssets: " << m_engineAssetsPath << std::endl;
         }
-        searchPath = searchPath.parent_path();
+    }
+#endif
+
+    if (!foundEngineAssets) {
+        const char* basePathStr = SDL_GetBasePath();
+        fs::path searchPath = basePathStr ? fs::path(basePathStr) : fs::current_path();
+
+        while (searchPath.has_parent_path()) {
+            fs::path potentialEngineAssets = searchPath / "EngineAssets";
+
+            if (fs::exists(potentialEngineAssets) && fs::is_directory(potentialEngineAssets)) {
+                m_engineAssetsPath = fs::weakly_canonical(potentialEngineAssets);
+                foundEngineAssets = true;
+                break;
+            }
+
+            searchPath = searchPath.parent_path();
+        }
     }
 
     if (!foundEngineAssets) {
@@ -190,37 +208,102 @@ ResourceManager::~ResourceManager() {
 }
 
 void ResourceManager::ScanDirectoryIntoRegistry(const fs::path& directory) {
-    if (fs::exists(directory) && fs::is_directory(directory)) {
-        for (const auto& entry : fs::recursive_directory_iterator(directory)) {
-            if (entry.is_regular_file()) {
-                m_fileRegistry[entry.path().filename().string()] = entry.path().string();
-            }
+    if (!fs::exists(directory) || !fs::is_directory(directory)) {
+        return;
+    }
+
+    for (const auto& entry : fs::recursive_directory_iterator(directory)) {
+        if (!entry.is_regular_file()) {
+            continue;
         }
+
+        const fs::path absolutePath = fs::weakly_canonical(entry.path());
+        const std::string relativePath = fs::relative(absolutePath, directory).generic_string();
+
+        // register by relative path, eg. "Scripts/player.lua"
+        m_fileRegistry[relativePath] = absolutePath.string();
     }
 }
 
-std::string ResourceManager::ManualSearch(const fs::path& directory, const std::string& filename) {
-    if (fs::exists(directory) && fs::is_directory(directory)) {
-        for (const auto& entry : fs::recursive_directory_iterator(directory)) {
-            if (entry.is_regular_file() && entry.path().filename().string() == filename) {
-                m_fileRegistry[filename] = entry.path().string();
-                return entry.path().string();
-            }
-        }
-    }
-    return "";
+static std::string NormalizeAssetPathString(std::string path) {
+    std::ranges::replace(path, '\\', '/');
+    return path;
+}
+
+static bool StartsWith(const std::string& str, std::string_view prefix) {
+    return str.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
 std::string ResourceManager::SearchAssetFile(const std::string& filename) {
-    if (fs::exists(filename)) return filename;
-    if (const auto it = m_fileRegistry.find(filename); it != m_fileRegistry.end()) {
-        if (fs::exists(it->second)) return it->second;
+    if (filename.empty()) {
+        return "";
     }
 
-    std::string foundPath;
-    if (!m_userAssetsPath.empty()) foundPath = ManualSearch(m_userAssetsPath, filename);
-    if (foundPath.empty()) foundPath = ManualSearch(m_engineAssetsPath, filename);
-    return foundPath;
+    std::string normalized = NormalizeAssetPathString(filename);
+    enum class SearchMode {
+        UserThenEngine,
+        UserOnly,
+        EngineOnly
+    };
+
+    SearchMode mode = SearchMode::UserThenEngine;
+
+    if (StartsWith(normalized, "Root://")) {
+        normalized = normalized.substr(std::string_view("Root://").size());
+        mode = SearchMode::UserOnly;
+    } else if (StartsWith(normalized, "Engine://")) {
+        normalized = normalized.substr(std::string_view("Engine://").size());
+        mode = SearchMode::EngineOnly;
+    }
+
+    const fs::path path = normalized;
+
+    // absolute path
+    if (path.is_absolute()) {
+        if (fs::exists(path)) {
+            return fs::weakly_canonical(path).string();
+        }
+
+        return "";
+    }
+
+    auto tryPath = [](const fs::path& base, const std::string& relative) -> std::string {
+        if (base.empty()) {
+            return "";
+        }
+
+        const fs::path candidate = base / relative;
+
+        if (fs::exists(candidate)) {
+            return fs::weakly_canonical(candidate).string();
+        }
+
+        return "";
+    };
+
+    std::string found;
+    if (mode == SearchMode::UserOnly || mode == SearchMode::UserThenEngine) {
+        found = tryPath(m_userAssetsPath, normalized);
+        if (!found.empty()) {
+            return found;
+        }
+    }
+
+    if (mode == SearchMode::EngineOnly || mode == SearchMode::UserThenEngine) {
+        found = tryPath(m_engineAssetsPath, normalized);
+        if (!found.empty()) {
+            return found;
+        }
+    }
+
+    // registry fallback
+    if (const auto it = m_fileRegistry.find(normalized); it != m_fileRegistry.end()) {
+        if (fs::exists(it->second)) {
+            return fs::weakly_canonical(it->second).string();
+        }
+    }
+
+    return "";
 }
 
 void ResourceManager::SetUserDirectory(const std::filesystem::path& userPath) {
@@ -265,7 +348,7 @@ void ResourceManager::EraseExpired(Cache<T>& cache) {
 }
 
 void ResourceManager::InitializeDefaultResources() {
-    m_defaultShader = LoadShader("default", "test.vert", "test.frag");
+    m_defaultShader = LoadShader("Default", "Engine://Shaders/default.vert", "Engine://Shaders/default.frag");
 }
 
 void ResourceManager::ClearDefaultResources() {

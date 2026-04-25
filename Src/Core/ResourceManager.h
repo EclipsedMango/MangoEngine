@@ -73,7 +73,6 @@ private:
     std::shared_ptr<Shader> m_defaultShader;
 
     void ScanDirectoryIntoRegistry(const fs::path& directory);
-    std::string ManualSearch(const fs::path& directory, const std::string& filename);
     std::string SearchAssetFile(const std::string& filename);
 
     template<typename T> using Cache = std::unordered_map<std::string, std::weak_ptr<T>>;

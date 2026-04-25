@@ -245,7 +245,7 @@ void MeshNode3d::SyncSkinningBuffer() const {
     }
 
     if (!m_skinningComputeShader) {
-        m_skinningComputeShader = ResourceManager::Get().LoadComputeShader("SkinningCompute", "skinning.comp");
+        m_skinningComputeShader = ResourceManager::Get().LoadComputeShader("SkinningCompute", "Engine://Shaders/skinning.comp");
     }
 
     const ShaderStorageBuffer* sourceBuffer = m_mesh->GetSkinningSourceBuffer();

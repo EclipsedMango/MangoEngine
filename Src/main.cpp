@@ -13,11 +13,11 @@ int main() {
     auto sun = std::make_unique<DirectionalLightNode3d>(glm::vec3(0.5f, -0.6f, -0.5f), glm::vec3(0.9f, 0.65f, 0.32f), 2.5f);
     liveScene->AddChild(std::move(sun));
 
-    auto skybox = std::make_unique<SkyboxNode3d>(ResourceManager::Get().ResolveAssetPath("kloppenheim_06_puresky_1k.hdr"));
+    auto skybox = std::make_unique<SkyboxNode3d>(ResourceManager::Get().ResolveAssetPath("Engine://Textures/Cubemaps/kloppenheim_06_puresky_1k.hdr"));
     editor.GetCore().SetGlobalSkybox(std::move(skybox));
 
     auto camera = std::make_unique<CameraNode3d>(glm::vec3(0.0f, 1.0f, 8.0f), 75.0f, 1280.0f / 720.0f);
-    camera->SetScript("Root/hello.lua");
+    camera->SetScript("Root://hello.lua");
     camera->SetAsGameCamera(true);
     liveScene->AddChild(std::move(camera));
 

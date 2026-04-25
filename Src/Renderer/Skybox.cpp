@@ -7,13 +7,13 @@
 
 Skybox::Skybox(std::vector<std::string>& faces) {
     m_texture = std::make_shared<Texture>(faces);
-    m_shader = ResourceManager::Get().LoadShader("SkyboxShader", "skybox.vert", "skybox.frag");
+    m_shader = ResourceManager::Get().LoadShader("SkyboxShader", "Engine://Shaders/skybox.vert", "Engine://Shaders/skybox.frag");
     m_vao = CubeGeometry::CreateVao();
 }
 
 Skybox::Skybox(const std::string &hdrPath, const int faceSize) {
     m_texture = EquirectToCubemap::Convert(hdrPath, faceSize);
-    m_shader = ResourceManager::Get().LoadShader("SkyboxShader", "skybox.vert", "skybox.frag");
+    m_shader = ResourceManager::Get().LoadShader("SkyboxShader", "Engine://Shaders/skybox.vert", "Engine://Shaders/skybox.frag");
     m_vao = CubeGeometry::CreateVao();
 }
 
