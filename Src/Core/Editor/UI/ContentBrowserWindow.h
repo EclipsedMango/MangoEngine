@@ -16,6 +16,11 @@ public:
     explicit ContentBrowserWindow(Editor* editor);
     ~ContentBrowserWindow() = default;
 
+    void SetRootPath(const fs::path& path);
+    void Refresh() { RefreshDirectory(); }
+
+    bool IsAtRoot() const;
+
     void DrawContentBrowser();
 
 private:
@@ -33,6 +38,8 @@ private:
 
     static void StartDrag(const std::string& fullPath, const std::string& filename);
     bool AcceptDrop(const fs::path& destDir);
+
+    fs::path m_rootPath;
 
     Editor* m_editor = nullptr;
     fs::path m_currentPath;

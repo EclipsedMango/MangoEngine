@@ -35,6 +35,9 @@ public:
 
     void SetGameCamera(std::unique_ptr<CameraNode3d> camera) { m_gameCamera = std::move(camera); }
 
+    void MarkSceneDirtyForNode(const Node3d* node) const;
+    bool OpenSceneFromFile(const std::filesystem::path& path);
+
 private:
     // panels
     void DrawViewportTabs();
@@ -46,6 +49,18 @@ private:
     void OnPlay();
     void OnPause();
     void OnStop();
+
+    bool NewScene();
+    bool OpenScene();
+
+    bool SaveActiveScene();
+    bool SaveActiveSceneAs() const;
+    bool SaveActiveSceneToPath(const std::filesystem::path& path) const;
+
+    bool PromptSaveIfDirty(ViewportWindow* viewport);
+    bool PromptSaveAllDirtyScenes();
+
+    void MarkActiveSceneDirty() const;
 
     static CameraNode3d* FindGameCamera(Node3d* node);
 

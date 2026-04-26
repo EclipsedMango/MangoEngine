@@ -326,6 +326,64 @@ std::string ResourceManager::ResolveAssetPath(const std::string& filename) {
     return SearchAssetFile(filename);
 }
 
+std::string ResourceManager::ToUserVirtualPath(const std::filesystem::path &absolutePath) const {
+    namespace fs = std::filesystem;
+
+    std::error_code ec;
+
+    const fs::path userRoot = fs::weakly_canonical(m_userAssetsPath, ec);
+    if (ec) {
+        return absolutePath.string();
+    }
+
+    const fs::path abs = fs::absolute(absolutePath, ec).lexically_normal();
+    if (ec) {
+        return absolutePath.string();
+    }
+
+    const fs::path rel = fs::relative(abs, userRoot, ec);
+    if (ec || rel.empty()) {
+        return absolutePath.string();
+    }
+
+    // reject paths outside the project root
+    const std::string relString = rel.generic_string();
+    if (relString.starts_with("../") || relString == "..") {
+        return absolutePath.string();
+    }
+
+    return "Root://" + relString;
+}
+
+std::filesystem::path ResourceManager::ResolveAssetPathForSave(const std::string &virtualPath) const {
+    namespace fs = std::filesystem;
+
+    if (virtualPath.empty()) {
+        return {};
+    }
+
+    std::string normalized = virtualPath;
+    std::ranges::replace(normalized, '\\', '/');
+
+    constexpr std::string_view rootPrefix = "Root://";
+    constexpr std::string_view enginePrefix = "Engine://";
+
+    if (normalized.starts_with(rootPrefix)) {
+        return m_userAssetsPath / normalized.substr(rootPrefix.size());
+    }
+
+    if (normalized.starts_with(enginePrefix)) {
+        return m_engineAssetsPath / normalized.substr(enginePrefix.size());
+    }
+
+    fs::path p(normalized);
+    if (p.is_absolute()) {
+        return p;
+    }
+
+    return m_userAssetsPath / normalized;
+}
+
 void ResourceManager::ReleaseAll() {
     m_textures.clear();
     m_materials.clear();

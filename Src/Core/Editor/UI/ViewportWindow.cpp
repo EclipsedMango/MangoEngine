@@ -123,7 +123,7 @@ void ViewportWindow::Draw() {
             }
         }
 
-        m_editor->GetGizmoSystem().UpdateAndDraw(
+        const bool gizmoChanged = m_editor->GetGizmoSystem().UpdateAndDraw(
             m_camera.get(),
             validSelectedNodes,
             m_viewportPos,
@@ -131,6 +131,12 @@ void ViewportWindow::Draw() {
             isPlaying,
             m_cameraController->IsLooking()
         );
+
+        if (gizmoChanged) {
+            for (const Node3d* node : validSelectedNodes) {
+                m_editor->MarkSceneDirtyForNode(node);
+            }
+        }
     }
 
     const Node3d* activeScene = m_editor->GetState() == Editor::State::Playing ? m_editor->GetCore().GetScene() : GetScene();
@@ -180,8 +186,7 @@ void ViewportWindow::DrawContent() {
 
         m_camera->SetAspectRatio(viewportSize.x / viewportSize.y);
 
-        Node3d* activeScene = m_editor->GetState() == Editor::State::Playing ? m_editor->GetCore().GetScene() : GetScene();
-
+        const Node3d* activeScene = m_editor->GetState() == Editor::State::Playing ? m_editor->GetCore().GetScene() : GetScene();
         if (shouldRender) {
             const CameraNode3d* renderCam = m_camera.get();
             if (m_editor->GetState() == Editor::State::Playing) {
@@ -208,13 +213,20 @@ void ViewportWindow::DrawContent() {
             }
         }
 
-        m_editor->GetGizmoSystem().UpdateAndDraw(
+        const bool gizmoChanged = m_editor->GetGizmoSystem().UpdateAndDraw(
             m_camera.get(),
             validSelectedNodes,
-            m_viewportPos, m_viewportSize,
+            m_viewportPos,
+            m_viewportSize,
             m_editor->GetState() == Editor::State::Playing,
             m_cameraController->IsLooking()
         );
+
+        if (gizmoChanged) {
+            for (const Node3d* node : validSelectedNodes) {
+                m_editor->MarkSceneDirtyForNode(node);
+            }
+        }
     }
 
     const Node3d* activeScene = m_editor->GetState() == Editor::State::Playing ? m_editor->GetCore().GetScene() : GetScene();
@@ -238,4 +250,41 @@ void ViewportWindow::DrawContent() {
     if (!Input::IsMouseButtonHeld(SDL_BUTTON_RIGHT)) {
         m_viewportHovered = ImGui::IsWindowHovered();
     }
+}
+
+void ViewportWindow::SetSceneAssetPath(std::string path) {
+    m_sceneAssetPath = std::move(path);
+    m_sceneUntitled = m_sceneAssetPath.empty();
+}
+
+std::string ViewportWindow::GetSceneDisplayName() const {
+    if (!m_sceneAssetPath.empty()) {
+        std::string normalized = m_sceneAssetPath;
+        std::ranges::replace(normalized, '\\', '/');
+
+        const size_t slash = normalized.find_last_of('/');
+        if (slash != std::string::npos) {
+            return normalized.substr(slash + 1);
+        }
+
+        return normalized;
+    }
+
+    if (m_scene && !m_scene->GetName().empty()) {
+        return m_scene->GetName();
+    }
+
+    return "Untitled";
+}
+
+std::string ViewportWindow::GetTabTitle() const {
+    std::string title = GetSceneDisplayName();
+    if (m_sceneDirty) {
+        title += "*";
+    }
+
+    title += "##";
+    title += m_name;
+
+    return title;
 }

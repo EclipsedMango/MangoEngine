@@ -24,6 +24,9 @@ FetchContent_MakeAvailable(imgui)
 FetchContent_Declare(imguizmo GIT_REPOSITORY https://github.com/CedricGuillemet/ImGuizmo.git GIT_TAG master)
 FetchContent_MakeAvailable(imguizmo)
 
+FetchContent_Declare(imguifiledialog GIT_REPOSITORY https://github.com/aiekick/ImGuiFileDialog.git GIT_TAG master SOURCE_SUBDIR _ignore)
+FetchContent_MakeAvailable(imguifiledialog)
+
 FetchContent_Declare(stb GIT_REPOSITORY https://github.com/nothings/stb.git GIT_TAG master)
 FetchContent_MakeAvailable(stb)
 
@@ -60,9 +63,11 @@ add_library(imgui STATIC
         ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
         ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
         ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp
+        ${imguifiledialog_SOURCE_DIR}/ImGuiFileDialog.cpp
 )
 
-target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends ${imguizmo_SOURCE_DIR})
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends ${imguizmo_SOURCE_DIR} ${imguifiledialog_SOURCE_DIR})
+target_compile_definitions(imgui PUBLIC USE_STD_FILESYSTEM)
 target_link_libraries(imgui PUBLIC SDL3::SDL3 glad_gl)
 
 add_executable(MangoRendering Src/main.cpp
@@ -192,6 +197,8 @@ add_executable(MangoRendering Src/main.cpp
         Src/Nodes/AreaNode3d.h
         Src/Core/SignalBus.cpp
         Src/Core/SignalBus.h
+        Src/Core/Editor/UI/FileDialogs.cpp
+        Src/Core/Editor/UI/FileDialogs.h
 )
 
 set_property(TARGET MangoRendering PROPERTY CXX_SCAN_FOR_MODULES OFF)

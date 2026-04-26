@@ -1,5 +1,8 @@
 
 #include "PackedScene.h"
+
+#include <filesystem>
+
 #include "Nodes/Node3d.h"
 
 #include <fstream>
@@ -59,14 +62,36 @@ PackedScene PackedScene::LoadFromFile(const std::string &path) {
     }
 
     auto yaml = fkyaml::node::deserialize(file);
+    if (!yaml.contains("node_type") || !yaml.contains("properties")) {
+        throw std::runtime_error("PackedScene: Invalid scene file: " + path);
+    }
+
     PackedScene scene;
     scene.m_node = PackedNode(yaml);
     return scene;
 }
 
 void PackedScene::SaveToFile(const std::string &path) const {
-    std::ofstream file(path);
+    if (!m_node) {
+        throw std::runtime_error("PackedScene: Cannot save empty scene");
+    }
+
+    const std::filesystem::path fsPath(path);
+
+    if (fsPath.has_parent_path()) {
+        std::filesystem::create_directories(fsPath.parent_path());
+    }
+
+    std::ofstream file(fsPath, std::ios::trunc);
+    if (!file.is_open()) {
+        throw std::runtime_error("PackedScene: Cannot save file: " + fsPath.string());
+    }
+
     file << fkyaml::node::serialize(FromPackedNode(*m_node));
+
+    if (!file.good()) {
+        throw std::runtime_error("PackedScene: Failed while writing file: " + fsPath.string());
+    }
 }
 
 std::unique_ptr<Node3d> PackedScene::Instantiate() const {

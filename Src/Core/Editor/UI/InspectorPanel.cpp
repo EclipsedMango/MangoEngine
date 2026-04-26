@@ -84,7 +84,7 @@ void InspectorPanel::DrawInspector(Node3d* selectedNode) {
     ImGui::Separator();
     ImGui::Spacing();
 
-    DrawProperties(selectedNode);
+    DrawProperties(selectedNode, selectedNode);
     if (auto* portal = dynamic_cast<PortalNode3d*>(selectedNode)) {
         DrawPortalProperties(portal);
     }
@@ -95,7 +95,7 @@ void InspectorPanel::DrawInspector(Node3d* selectedNode) {
     ImGui::PopStyleVar();
 }
 
-void InspectorPanel::DrawProperties(PropertyHolder* holder) {
+void InspectorPanel::DrawProperties(PropertyHolder* holder, Node3d* ownerNode) {
     std::vector<std::string> flatProps;
     std::vector<std::string> subProps;
 
@@ -108,14 +108,15 @@ void InspectorPanel::DrawProperties(PropertyHolder* holder) {
     if (!flatProps.empty()) {
         if (BeginPropertyTable()) {
             for (const auto& name : flatProps) {
-                DrawPropertyValue(name, holder);
+                DrawPropertyValue(name, holder, ownerNode);
             }
+            EndPropertyTable();
             EndPropertyTable();
         }
     }
 
     for (const auto& name : subProps) {
-        DrawPropertyValue(name, holder);
+        DrawPropertyValue(name, holder, ownerNode);
     }
 }
 
@@ -162,13 +163,22 @@ void InspectorPanel::DrawPortalProperties(PortalNode3d* portal) const {
     const char* preview = linked ? linked->GetName().c_str() : "None";
     if (ImGui::BeginCombo("##portal_target", preview)) {
         if (ImGui::Selectable("None", linked == nullptr)) {
+            const PortalNode3d* oldLinked = portal->GetLinkedPortal();
             portal->Unlink();
+
+            m_editor->MarkSceneDirtyForNode(portal);
+            if (oldLinked) {
+                m_editor->MarkSceneDirtyForNode(oldLinked);
+            }
         }
 
         for (PortalNode3d* c : candidates) {
             const bool selected = (linked == c);
             if (ImGui::Selectable(c->GetName().c_str(), selected)) {
                 portal->LinkTo(c);
+
+                m_editor->MarkSceneDirtyForNode(portal);
+                m_editor->MarkSceneDirtyForNode(c);
             }
 
             if (selected) ImGui::SetItemDefaultFocus();
@@ -180,7 +190,13 @@ void InspectorPanel::DrawPortalProperties(PortalNode3d* portal) const {
     if (linked) {
         ImGui::SameLine(0, 6);
         if (ImGui::SmallButton("×")) {
+            const PortalNode3d* oldLinked = portal->GetLinkedPortal();
             portal->Unlink();
+
+            m_editor->MarkSceneDirtyForNode(portal);
+            if (oldLinked) {
+                m_editor->MarkSceneDirtyForNode(oldLinked);
+            }
         }
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Unlink");
@@ -190,7 +206,7 @@ void InspectorPanel::DrawPortalProperties(PortalNode3d* portal) const {
     EndPropertyTable();
 }
 
-void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* holder) {
+void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* holder, Node3d* ownerNode) {
     const auto& style = EditorStyle::Get();
     PropertyValue value = holder->GetProperty(name);
 
@@ -204,6 +220,7 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
             float v = val;
             if (ImGui::DragFloat("##v", &v, 0.1f)) {
                 holder->Set(name, v);
+                m_editor->MarkSceneDirtyForNode(ownerNode);
             }
         }
 
@@ -212,6 +229,7 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
             int v = val;
             if (ImGui::DragInt("##v", &v, 1)) {
                 holder->Set(name, v);
+                m_editor->MarkSceneDirtyForNode(ownerNode);
             }
         }
 
@@ -220,6 +238,7 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
             bool v = val;
             if (ImGui::Checkbox("##v", &v)) {
                 holder->Set(name, v);
+                m_editor->MarkSceneDirtyForNode(ownerNode);
             }
         }
 
@@ -238,6 +257,7 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
 
                 if (ImGui::Combo("##v", &idx, meshTypes, IM_ARRAYSIZE(meshTypes))) {
                     holder->Set(name, std::string(meshTypes[idx]));
+                    m_editor->MarkSceneDirtyForNode(ownerNode);
                 }
 
                 return;
@@ -251,6 +271,7 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
 
             if (ImGui::InputText("##v", buf, sizeof(buf))) {
                 holder->Set(name, std::string(buf));
+                m_editor->MarkSceneDirtyForNode(ownerNode);
             }
         }
 
@@ -259,6 +280,7 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
             glm::vec2 v = val;
             if (ImGui::DragFloat2("##v", &v.x, 0.1f)) {
                 holder->Set(name, v);
+                m_editor->MarkSceneDirtyForNode(ownerNode);
             }
         }
 
@@ -269,10 +291,12 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
             if (name == "albedo_color" || name == "emission_color" || name == "color") {
                 if (ImGui::ColorEdit3("##v", &v.x, ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_PickerHueWheel)) {
                     holder->Set(name, v);
+                    m_editor->MarkSceneDirtyForNode(ownerNode);
                 }
             } else {
                 if (ImGui::DragFloat3("##v", &v.x, 0.1f)) {
                     holder->Set(name, v);
+                    m_editor->MarkSceneDirtyForNode(ownerNode);
                 }
             }
         }
@@ -317,13 +341,14 @@ void InspectorPanel::DrawPropertyValue(const std::string& name, PropertyHolder* 
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10, 10));
 
                 ImGui::BeginChild((name + "_child").c_str(), ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar);
-                DrawProperties(val.get());
+                DrawProperties(val.get(), ownerNode);
                 ImGui::EndChild();
                 ImGui::PopStyleVar();
 
                 ImGui::Spacing();
                 if (ImGui::Button(("Clear " + label).c_str(), ImVec2(-FLT_MIN, 0))) {
                     holder->Set(name, std::shared_ptr<PropertyHolder>(nullptr));
+                    m_editor->MarkSceneDirtyForNode(ownerNode);
                 }
 
                 ImGui::Unindent(8.0f);

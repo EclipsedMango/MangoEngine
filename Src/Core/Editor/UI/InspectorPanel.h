@@ -21,9 +21,9 @@ public:
     void OpenTexturePreview(const std::shared_ptr<Texture>& tex, const char* label);
 
 private:
-    void DrawProperties(PropertyHolder* holder);
+    void DrawProperties(PropertyHolder* holder, Node3d* ownerNode);
     void DrawPortalProperties(PortalNode3d *portal) const;
-    void DrawPropertyValue(const std::string& name, PropertyHolder* holder);
+    void DrawPropertyValue(const std::string& name, PropertyHolder* holder, Node3d* ownerNode);
 
     void DrawTexturePreviewPopup();
     std::shared_ptr<Texture> GetCachedTexture(const std::string& path);

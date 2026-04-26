@@ -13,10 +13,10 @@ void GizmoSystem::HandleShortcuts(bool isCameraLooking) {
     if (Input::IsKeyJustPressed(SDL_SCANCODE_R)) m_gizmoOp = ImGuizmo::SCALE;
 }
 
-void GizmoSystem::UpdateAndDraw(const CameraNode3d* camera, const std::vector<Node3d*>& selectedNodes, const ImVec2& viewportPos, const ImVec2& viewportSize, const bool isPlaying, const bool isCameraLooking) {
+bool GizmoSystem::UpdateAndDraw(const CameraNode3d* camera, const std::vector<Node3d*>& selectedNodes, const ImVec2& viewportPos, const ImVec2& viewportSize, const bool isPlaying, const bool isCameraLooking) {
     ImGuizmo::BeginFrame();
 
-    if (selectedNodes.empty() || isPlaying || !camera) return;
+    if (selectedNodes.empty() || isPlaying || !camera) return false;
 
     ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
     ImGuizmo::SetRect(viewportPos.x, viewportPos.y, viewportSize.x, viewportSize.y);
@@ -35,7 +35,7 @@ void GizmoSystem::UpdateAndDraw(const CameraNode3d* camera, const std::vector<No
     glm::mat4 pivotWorld = glm::translate(glm::mat4(1.0f), pivot);
     glm::mat4 delta = glm::mat4(1.0f);
 
-    bool snapObjectMovement = Input::IsKeyHeld(SDL_SCANCODE_LCTRL) && !Input::IsMouseButtonJustReleased(SDL_SCANCODE_LCTRL);
+    const bool snapObjectMovement = Input::IsKeyHeld(SDL_SCANCODE_LCTRL) && !Input::IsMouseButtonJustReleased(SDL_SCANCODE_LCTRL);
 
     constexpr glm::vec3 scaleTranslationSnap = glm::vec3(0.5f);
     constexpr glm::vec3 rotationSnap = glm::vec3(45.0f);
@@ -71,7 +71,7 @@ void GizmoSystem::UpdateAndDraw(const CameraNode3d* camera, const std::vector<No
 
     m_wasUsingGizmo = isUsing;
 
-    if (!isUsing) return;
+    if (!isUsing) return false;
 
     if (m_gizmoOp == ImGuizmo::SCALE) {
         const glm::vec3 totalScale = {
@@ -84,7 +84,7 @@ void GizmoSystem::UpdateAndDraw(const CameraNode3d* camera, const std::vector<No
             selectedNodes[i]->SetScale(m_gizmoInitialScales[i] * totalScale);
         }
 
-        return;
+        return true;
     }
 
     for (const auto node : selectedNodes) {
@@ -118,4 +118,6 @@ void GizmoSystem::UpdateAndDraw(const CameraNode3d* camera, const std::vector<No
         node->SetPosition(glm::vec3(localMatrix[3]));
         node->SetScale(scale);
     }
+
+    return true;
 }

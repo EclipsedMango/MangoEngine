@@ -4,10 +4,65 @@
 #include <fstream>
 
 #include "imgui.h"
+#include "Core/Editor/Editor.h"
 #include "Core/Editor/EditorStyle.h"
 
-ContentBrowserWindow::ContentBrowserWindow(Editor *editor) : m_editor(editor), m_currentPath(fs::current_path() / "Root") {
+static std::string LowerCopy(std::string s) {
+    std::ranges::transform(s, s.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    return s;
+}
+
+ContentBrowserWindow::ContentBrowserWindow(Editor* editor) : m_editor(editor) {}
+
+void ContentBrowserWindow::SetRootPath(const fs::path &path) {
+    std::error_code ec;
+
+    fs::path root = path;
+
+    if (root.empty()) {
+        root = fs::current_path() / "Root";
+    }
+
+    if (!fs::exists(root, ec)) {
+        fs::create_directories(root, ec);
+    }
+
+    if (ec) {
+        root = fs::current_path() / "Root";
+        fs::create_directories(root, ec);
+    }
+
+    m_rootPath = fs::weakly_canonical(root, ec);
+    if (ec) {
+        m_rootPath = fs::absolute(root).lexically_normal();
+    }
+
+    m_currentPath = m_rootPath;
+
     RefreshDirectory();
+    m_selection.Clear();
+}
+
+bool ContentBrowserWindow::IsAtRoot() const {
+    if (m_rootPath.empty() || m_currentPath.empty()) {
+        return true;
+    }
+
+    std::error_code ec;
+
+    const fs::path current = fs::weakly_canonical(m_currentPath, ec);
+    if (ec) {
+        return m_currentPath.lexically_normal() == m_rootPath.lexically_normal();
+    }
+
+    const fs::path root = fs::weakly_canonical(m_rootPath, ec);
+    if (ec) {
+        return m_currentPath.lexically_normal() == m_rootPath.lexically_normal();
+    }
+
+    return current == root;
 }
 
 void ContentBrowserWindow::DrawContentBrowser() {
@@ -20,7 +75,7 @@ void ContentBrowserWindow::DrawContentBrowser() {
     EditorStyle::PopLabel();
 
     if (ImGui::Button("Back", ImVec2(64, 32))) {
-        if (m_currentPath.filename() != "Root") {
+        if (!IsAtRoot()) {
             m_currentPath = m_currentPath.parent_path();
             RefreshDirectory();
             m_selection.Clear();
@@ -35,11 +90,12 @@ void ContentBrowserWindow::DrawContentBrowser() {
         if (m_backHoverStart == 0.0) {
             m_backHoverStart = ImGui::GetTime();
         } else if (ImGui::GetTime() - m_backHoverStart >= m_backHoverDelay) {
-            if (m_currentPath.filename() != "Root") {
+            if (!IsAtRoot()) {
                 m_currentPath = m_currentPath.parent_path();
                 RefreshDirectory();
                 m_selection.Clear();
             }
+
             m_backHoverStart = 0.0;
         }
     } else {
@@ -141,6 +197,12 @@ void ContentBrowserWindow::DrawEntry(const fs::directory_entry& entry, const int
     if (hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
         if (entry.is_directory()) {
             QueuePathChange(entry.path());
+        } else {
+            const std::string ext = LowerCopy(entry.path().extension().string());
+
+            if (ext == ".mscn") {
+                m_editor->OpenSceneFromFile(entry.path());
+            }
         }
     }
 
@@ -245,11 +307,32 @@ void ContentBrowserWindow::DrawEntryFolder(const ImVec2& startPos, const float i
 
 void ContentBrowserWindow::RefreshDirectory() {
     m_currentDirEntries.clear();
-    for (const auto& entry : fs::directory_iterator(m_currentPath)) {
-        m_currentDirEntries.push_back(entry);
+
+    if (m_currentPath.empty()) {
+        return;
     }
 
-    // TODO: sort m_currentDirEntries so folders are first or something
+    std::error_code ec;
+
+    if (!fs::exists(m_currentPath, ec) || !fs::is_directory(m_currentPath, ec)) {
+        return;
+    }
+
+    fs::directory_iterator it(m_currentPath, ec);
+    const fs::directory_iterator end;
+
+    while (!ec && it != end) {
+        m_currentDirEntries.push_back(*it);
+        it.increment(ec);
+    }
+
+    std::ranges::sort(m_currentDirEntries, [](const fs::directory_entry& a, const fs::directory_entry& b) {
+        if (a.is_directory() != b.is_directory()) {
+            return a.is_directory() > b.is_directory();
+        }
+
+        return a.path().filename().string() < b.path().filename().string();
+    });
 }
 
 void ContentBrowserWindow::QueuePathChange(const fs::path& newPath) {

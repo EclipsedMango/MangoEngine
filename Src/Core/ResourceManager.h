@@ -61,6 +61,8 @@ public:
     const std::filesystem::path& GetUserDirectory() const;
     void RefreshAssetRegistry();
     std::string ResolveAssetPath(const std::string& filename);
+    std::string ToUserVirtualPath(const std::filesystem::path& absolutePath) const;
+    std::filesystem::path ResolveAssetPathForSave(const std::string& virtualPath) const;
 
     template<typename T> void Release(const std::string& name) { GetCache<T>().erase(name); }
     void ReleaseAll();

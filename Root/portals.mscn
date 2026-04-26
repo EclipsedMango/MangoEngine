@@ -1,0 +1,2484 @@
+children:
+  -
+    children: []
+    node_type: DirectionalLightNode3d
+    properties:
+      color:
+        x: 0.9
+        y: 0.65
+        z: 0.32
+      intensity: 2.5
+      name: DirectionalLightNode3d
+      position:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      process_enabled: true
+      rotation:
+        x: -40.3156
+        y: -45.0
+        z: 3.13929e-05
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 1.0
+              y: 1.0
+              z: 1.0
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 30.0
+            y: 1.0
+            z: 30.0
+          script: 
+          visible: true
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 15.0
+            y: 0.5
+            z: 15.0
+          shape_type: Box
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Floor
+      position:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 0.5
+            y: 0.5
+            z: 0.5
+          shape_type: Capsule
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 1.0
+              y: 1.0
+              z: 1.0
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0182241
+                y: -9.97306e-08
+                z: -4.3123e-10
+              bounds_radius: 1.00017
+              index_count: 1632
+              property_type: Mesh
+              source_path: Capsule
+              vertex_count: 306
+            mesh_type: Capsule
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          visible: true
+      -
+        children: []
+        node_type: CameraNode3d
+        properties:
+          far_plane: 300.0
+          fov: 75.0
+          is_main_camera: true
+          name: CameraNode3d
+          near_plane: 0.1
+          pitch: -2.64782
+          position:
+            x: 0.0
+            y: 0.75
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: -2.64782
+            y: 78.074
+            z: 5.16442e-07
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: Root://hello.lua
+          visible: true
+          yaw: -168.074
+      -
+        children: []
+        node_type: RayCastNode3d
+        properties:
+          enabled: true
+          exclude_parent_body: true
+          name: RayCastNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          target_position:
+            x: 0.0
+            y: -0.9
+            z: 0.0
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Dynamic
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: true
+      mass: 1.0
+      name: Player
+      position:
+        x: -0.394966
+        y: 2.39609
+        z: 0.645445
+      process_enabled: true
+      rotation:
+        x: 1.35551e-08
+        y: -0.106381
+        z: -2.70708e-05
+      scale:
+        x: 0.994343
+        y: 0.999996
+        z: 0.999946
+      script: Root://player.lua
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 5.11612e-12
+                y: 4.41407
+                z: 1.32762e-10
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 0.999987
+              script: 
+              shape_size:
+                x: 0.5
+                y: 2.5
+                z: 2.5
+              shape_type: Box
+              visible: true
+        node_type: AreaNode3d
+        properties:
+          enabled: true
+          name: AreaNode3d
+          position:
+            x: -0.000172165
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 180.0
+            y: -89.702
+            z: 180.0
+          scale:
+            x: 1.0
+            y: 0.0333333
+            z: 0.0333351
+          script: 
+          visible: true
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: 0.0
+                y: -0.258132
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              script: 
+              shape_size:
+                x: 0.5
+                y: 2.5
+                z: 0.5
+              shape_type: Box
+              visible: true
+          -
+            children: []
+            node_type: MeshNode3d
+            properties:
+              is_unique: false
+              material:
+                albedo_color:
+                  x: 0.366308
+                  y: 0.366335
+                  z: 0.366345
+                alpha_scissor_threshold: 0.5
+                ambient_occlusion: 
+                ao_strength_value: 1.0
+                blend_mode: Opaque
+                cast_shadows: true
+                diffuse: 
+                displacement: 
+                displacement_scale_value: 0.01
+                double_sided: false
+                emission_strength: 1.0
+                emissive: 
+                metallic: 
+                metallic_value: 0.0
+                name: 
+                normal: 
+                normal_strength: 1.0
+                property_type: Material
+                roughness: 
+                roughness_value: 1.0
+                uv_offset:
+                  x: 0.0
+                  y: 0.0
+                uv_scale:
+                  x: 1.0
+                  y: 1.0
+              mesh:
+                mesh:
+                  bounds_center:
+                    x: 0.0
+                    y: 0.0
+                    z: 0.0
+                  bounds_radius: 0.866025
+                  index_count: 36
+                  property_type: Mesh
+                  source_path: Cube
+                  vertex_count: 24
+                mesh_type: Cube
+                property_type: PropertyHolder
+              name: MeshNode3d
+              position:
+                x: 0.0
+                y: -0.258132
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 5.0
+                z: 1.0
+              script: 
+              visible: true
+        node_type: RigidBody3d
+        properties:
+          angular_velocity:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          body_type: Static
+          gravity_scale: 1.0
+          linear_velocity:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          lock_rotation: false
+          mass: 1.0
+          name: RigidBody3d
+          position:
+            x: -0.598216
+            y: 0.10101
+            z: 0.342267
+          process_enabled: true
+          rotation:
+            x: 180.0
+            y: -89.9515
+            z: 180.0
+          scale:
+            x: 1.0
+            y: 0.2
+            z: 0.2
+          script: 
+          sync_to_physics: true
+          visible: true
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: 0.0
+                y: -0.258132
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              script: 
+              shape_size:
+                x: 0.5
+                y: 2.5
+                z: 0.5
+              shape_type: Box
+              visible: true
+          -
+            children: []
+            node_type: MeshNode3d
+            properties:
+              is_unique: false
+              material:
+                albedo_color:
+                  x: 0.366308
+                  y: 0.366335
+                  z: 0.366345
+                alpha_scissor_threshold: 0.5
+                ambient_occlusion: 
+                ao_strength_value: 1.0
+                blend_mode: Opaque
+                cast_shadows: true
+                diffuse: 
+                displacement: 
+                displacement_scale_value: 0.01
+                double_sided: false
+                emission_strength: 1.0
+                emissive: 
+                metallic: 
+                metallic_value: 0.0
+                name: 
+                normal: 
+                normal_strength: 1.0
+                property_type: Material
+                roughness: 
+                roughness_value: 1.0
+                uv_offset:
+                  x: 0.0
+                  y: 0.0
+                uv_scale:
+                  x: 1.0
+                  y: 1.0
+              mesh:
+                mesh:
+                  bounds_center:
+                    x: 0.0
+                    y: 0.0
+                    z: 0.0
+                  bounds_radius: 0.866025
+                  index_count: 36
+                  property_type: Mesh
+                  source_path: Cube
+                  vertex_count: 24
+                mesh_type: Cube
+                property_type: PropertyHolder
+              name: MeshNode3d
+              position:
+                x: 0.0
+                y: -0.258132
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 5.0
+                z: 1.0
+              script: 
+              visible: true
+        node_type: RigidBody3d
+        properties:
+          angular_velocity:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          body_type: Static
+          gravity_scale: 1.0
+          linear_velocity:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          lock_rotation: false
+          mass: 1.0
+          name: RigidBody3d
+          position:
+            x: 0.598636
+            y: 0.10101
+            z: 0.344336
+          process_enabled: true
+          rotation:
+            x: 180.0
+            y: -89.9515
+            z: 180.0
+          scale:
+            x: 1.0
+            y: 0.2
+            z: 0.2
+          script: 
+          sync_to_physics: true
+          visible: true
+    node_type: PortalNode3d
+    properties:
+      is_linked: true
+      is_unique: false
+      linked_portal_name: Portal2
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          source_path: Quad
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: Portal1
+      position:
+        x: -14.9454
+        y: 2.3
+        z: 0.0
+      process_enabled: true
+      rotation:
+        x: 180.0
+        y: 89.9802
+        z: 180.0
+      scale:
+        x: 5.0
+        y: 5.0
+        z: 1.0
+      script: 
+      visible: true
+  -
+    children:
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: -1.90732e-06
+                y: -1.9072e-06
+                z: -2.97173e-07
+              process_enabled: true
+              rotation:
+                x: 0.000237064
+                y: -4.41628
+                z: -0.00224647
+              scale:
+                x: 1.01205
+                y: 1.0
+                z: 0.999987
+              script: 
+              shape_size:
+                x: 0.5
+                y: 2.5
+                z: 2.5
+              shape_type: Box
+              visible: true
+        node_type: AreaNode3d
+        properties:
+          enabled: true
+          name: AreaNode3d
+          position:
+            x: 0.0
+            y: -3.47495e-05
+            z: -0.00034678
+          process_enabled: true
+          rotation:
+            x: 179.971
+            y: 89.702
+            z: 179.971
+          scale:
+            x: 1.00189
+            y: 0.0333333
+            z: 0.0333904
+          script: 
+          visible: true
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: 0.0
+                y: -0.258132
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              script: 
+              shape_size:
+                x: 0.5
+                y: 2.5
+                z: 0.5
+              shape_type: Box
+              visible: true
+          -
+            children: []
+            node_type: MeshNode3d
+            properties:
+              is_unique: false
+              material:
+                albedo_color:
+                  x: 0.366308
+                  y: 0.366335
+                  z: 0.366345
+                alpha_scissor_threshold: 0.5
+                ambient_occlusion: 
+                ao_strength_value: 1.0
+                blend_mode: Opaque
+                cast_shadows: true
+                diffuse: 
+                displacement: 
+                displacement_scale_value: 0.01
+                double_sided: false
+                emission_strength: 1.0
+                emissive: 
+                metallic: 
+                metallic_value: 0.0
+                name: 
+                normal: 
+                normal_strength: 1.0
+                property_type: Material
+                roughness: 
+                roughness_value: 1.0
+                uv_offset:
+                  x: 0.0
+                  y: 0.0
+                uv_scale:
+                  x: 1.0
+                  y: 1.0
+              mesh:
+                mesh:
+                  bounds_center:
+                    x: 0.0
+                    y: 0.0
+                    z: 0.0
+                  bounds_radius: 0.866025
+                  index_count: 36
+                  property_type: Mesh
+                  source_path: Cube
+                  vertex_count: 24
+                mesh_type: Cube
+                property_type: PropertyHolder
+              name: MeshNode3d
+              position:
+                x: 0.0
+                y: -0.258132
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 5.0
+                z: 1.0
+              script: 
+              visible: true
+        node_type: RigidBody3d
+        properties:
+          angular_velocity:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          body_type: Static
+          gravity_scale: 1.0
+          linear_velocity:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          lock_rotation: false
+          mass: 1.0
+          name: RigidBody3d
+          position:
+            x: 0.598233
+            y: 0.10101
+            z: 0.595692
+          process_enabled: true
+          rotation:
+            x: -179.971
+            y: 89.9407
+            z: -179.971
+          scale:
+            x: 1.00189
+            y: 0.2
+            z: 0.2
+          script: 
+          sync_to_physics: true
+          visible: true
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              script: 
+              shape_size:
+                x: 0.5
+                y: 2.5
+                z: 0.5
+              shape_type: Box
+              visible: true
+          -
+            children: []
+            node_type: MeshNode3d
+            properties:
+              is_unique: false
+              material:
+                albedo_color:
+                  x: 0.366308
+                  y: 0.366335
+                  z: 0.366345
+                alpha_scissor_threshold: 0.5
+                ambient_occlusion: 
+                ao_strength_value: 1.0
+                blend_mode: Opaque
+                cast_shadows: true
+                diffuse: 
+                displacement: 
+                displacement_scale_value: 0.01
+                double_sided: false
+                emission_strength: 1.0
+                emissive: 
+                metallic: 
+                metallic_value: 0.0
+                name: 
+                normal: 
+                normal_strength: 1.0
+                property_type: Material
+                roughness: 
+                roughness_value: 1.0
+                uv_offset:
+                  x: 0.0
+                  y: 0.0
+                uv_scale:
+                  x: 1.0
+                  y: 1.0
+              mesh:
+                mesh:
+                  bounds_center:
+                    x: 0.0
+                    y: 0.0
+                    z: 0.0
+                  bounds_radius: 0.866025
+                  index_count: 36
+                  property_type: Mesh
+                  source_path: Cube
+                  vertex_count: 24
+                mesh_type: Cube
+                property_type: PropertyHolder
+              name: MeshNode3d
+              position:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 5.0
+                z: 1.0
+              script: 
+              visible: true
+        node_type: RigidBody3d
+        properties:
+          angular_velocity:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          body_type: Static
+          gravity_scale: 1.0
+          linear_velocity:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          lock_rotation: false
+          mass: 1.0
+          name: RigidBody3d
+          position:
+            x: -0.598619
+            y: 0.10101
+            z: 0.597764
+          process_enabled: true
+          rotation:
+            x: -179.971
+            y: 89.9407
+            z: -179.971
+          scale:
+            x: 1.00189
+            y: 0.2
+            z: 0.2
+          script: 
+          sync_to_physics: true
+          visible: true
+    node_type: PortalNode3d
+    properties:
+      is_linked: true
+      is_unique: false
+      linked_portal_name: Portal1
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          source_path: Quad
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: Portal2
+      position:
+        x: 1.61571
+        y: 2.3
+        z: 0.0862951
+      process_enabled: true
+      rotation:
+        x: 180.0
+        y: -89.9802
+        z: 180.0
+      scale:
+        x: 5.0
+        y: 5.0
+        z: 0.99811
+      script: 
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 1.0
+              y: 1.0
+              z: 1.0
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 30.0
+            y: 1.0
+            z: 30.0
+          script: 
+          visible: true
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 15.0
+            y: 0.5
+            z: 15.0
+          shape_type: Box
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Floor
+      position:
+        x: 0.0
+        y: 0.0
+        z: 30.0
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 0.5
+            y: 0.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 1.0
+              y: 1.0
+              z: 1.0
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0175661
+                y: -1.12197e-07
+                z: -1.98791e-10
+              bounds_radius: 0.517566
+              index_count: 1536
+              property_type: Mesh
+              source_path: Sphere
+              vertex_count: 289
+            mesh_type: Sphere
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: AreaNode3d
+    properties:
+      enabled: true
+      name: Sphere
+      position:
+        x: -4.2024
+        y: 1.92102
+        z: 0.0
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: Root://trigger.lua
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 7.5
+            y: 2.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.911129
+              y: 0.322368
+              z: 0.322368
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 15.0
+            y: 5.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Wall1
+      position:
+        x: -6.86112
+        y: 2.85751
+        z: -3.97021
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 6.5
+            y: 2.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.911129
+              y: 0.322368
+              z: 0.322368
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 15.0
+            y: 10.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Roof1
+      position:
+        x: 2.52423
+        y: 5.50545
+        z: 0.0830745
+      process_enabled: true
+      rotation:
+        x: -90.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 0.99922
+        z: 0.99922
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 6.5
+            y: 2.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.911129
+              y: 0.322368
+              z: 0.322368
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 15.0
+            y: 10.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Roof2
+      position:
+        x: -17.9758
+        y: 5.50545
+        z: 0.0830745
+      process_enabled: true
+      rotation:
+        x: -90.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 0.999081
+        z: 0.999081
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 4.0
+            y: 2.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.911129
+              y: 0.322368
+              z: 0.322368
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 8.0
+            y: 5.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Wall2
+      position:
+        x: -14.3415
+        y: 2.85751
+        z: 3.86585
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 4.0
+            y: 2.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.911129
+              y: 0.322368
+              z: 0.322368
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 8.0
+            y: 5.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Wall3
+      position:
+        x: -0.841493
+        y: 2.85751
+        z: 3.86585
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 9.0
+            y: 2.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.911129
+              y: 0.322368
+              z: 0.322368
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 18.0
+            y: 5.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Wall4
+      position:
+        x: -5.8656
+        y: 2.85751
+        z: 9.3768
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 4.0
+            y: 2.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.911129
+              y: 0.322368
+              z: 0.322368
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 8.0
+            y: 5.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Wall5
+      position:
+        x: -11.3415
+        y: 2.85751
+        z: 7.86585
+      process_enabled: true
+      rotation:
+        x: 180.0
+        y: 89.9802
+        z: 180.0
+      scale:
+        x: 0.999671
+        y: 1.0
+        z: 0.999671
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 4.0
+            y: 2.5
+            z: 0.5
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.911129
+              y: 0.322368
+              z: 0.322368
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 8.0
+            y: 5.0
+            z: 1.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Wall6
+      position:
+        x: 7.15851
+        y: 2.85751
+        z: 6.06281
+      process_enabled: true
+      rotation:
+        x: 180.0
+        y: 89.9802
+        z: 180.0
+      scale:
+        x: 0.999466
+        y: 1.0
+        z: 0.999466
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: 0.0
+                y: -2.38419e-07
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              script: 
+              shape_size:
+                x: 1.8
+                y: 2.35
+                z: 0.5
+              shape_type: Box
+              visible: true
+        node_type: AreaNode3d
+        properties:
+          enabled: true
+          name: AreaNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 0.277778
+            y: 0.212766
+            z: 1.0
+          script: 
+          visible: true
+    node_type: PortalNode3d
+    properties:
+      is_linked: true
+      is_unique: false
+      linked_portal_name: Portal4
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          source_path: Quad
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: Portal3
+      position:
+        x: 4.90325
+        y: 2.79284
+        z: 10.0591
+      process_enabled: true
+      rotation:
+        x: 180.0
+        y: 1.34713e-05
+        z: 180.0
+      scale:
+        x: 3.59986
+        y: 4.7
+        z: 0.99995
+      script: 
+      visible: true
+  -
+    children:
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: -1.90735e-06
+                y: 9.53674e-07
+                z: 2.22822e-12
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: 3.28982e-05
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              script: 
+              shape_size:
+                x: 1.8
+                y: 2.35
+                z: 0.5
+              shape_type: Box
+              visible: true
+        node_type: AreaNode3d
+        properties:
+          enabled: true
+          name: AreaNode3d
+          position:
+            x: -6.12709e-07
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 180.0
+            y: -89.9802
+            z: 180.0
+          scale:
+            x: 1.00015
+            y: 0.212766
+            z: 0.277826
+          script: 
+          visible: true
+    node_type: PortalNode3d
+    properties:
+      is_linked: true
+      is_unique: false
+      linked_portal_name: Portal3
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          source_path: Quad
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: Portal4
+      position:
+        x: -18.5
+        y: 8.31357
+        z: 0.0
+      process_enabled: true
+      rotation:
+        x: 180.0
+        y: 89.9802
+        z: 180.0
+      scale:
+        x: 3.59938
+        y: 4.7
+        z: 0.999845
+      script: 
+      visible: true
+node_type: Node3d
+properties:
+  name: Node3d
+  position:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  process_enabled: true
+  rotation:
+    x: 0.0
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  script: 
+  visible: true

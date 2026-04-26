@@ -10,7 +10,16 @@
 #include "Core/ResourceManager.h"
 #include "Core/ScriptManager.h"
 #include "glm/gtc/type_ptr.inl"
+#include "UI/FileDialogs.h"
 #include "UI/ViewportWindow.h"
+
+static std::filesystem::path EnsureMscnExtension(std::filesystem::path path) {
+    if (path.extension() != ".mscn") {
+        path.replace_extension(".mscn");
+    }
+
+    return path;
+}
 
 Editor::Editor(std::unique_ptr<Node3d> scene) : m_inspector(this), m_sceneTree(this), m_contentBrowserWindow(this) {
 #ifdef MANGO_DEV_ASSET_PATHS
@@ -21,14 +30,19 @@ Editor::Editor(std::unique_ptr<Node3d> scene) : m_inspector(this), m_sceneTree(t
     ResourceManager::Get().SetUserDirectory(userProjectRoot);
 #endif
 
+    m_contentBrowserWindow.SetRootPath(ResourceManager::Get().GetUserDirectory());
+
     m_core.Init();
     ScriptManager::Get().SetRuntimeEnabled(false);
     ScriptManager::Get().SetQuitHandler([this] {
         m_scriptQuitRequested = true;
     });
 
-    m_mainViewport = std::make_unique<ViewportWindow>(this, "Main Viewport");
+    m_mainViewport = std::make_unique<ViewportWindow>(this, "Main");
     m_mainViewport->LoadScene(std::move(scene));
+    m_mainViewport->SetSceneAssetPath("");
+    m_mainViewport->SetSceneUntitled(true);
+    m_mainViewport->SetSceneDirty(false);
 
     m_activeViewport = m_mainViewport.get();
     m_viewports.push_back(std::move(m_mainViewport));
@@ -78,12 +92,14 @@ void Editor::Run() {
                 Node3d* sel = m_sceneTree.GetSelectedNode();
                 if (sel) {
                     m_sceneTree.BeginRename(sel);
+                    MarkSceneDirtyForNode(sel);
                 }
             }
         }
 
         if (Input::IsKeyJustPressedWithMod(SDL_SCANCODE_D, SDL_SCANCODE_LCTRL)) {
             m_sceneTree.DuplicateSelectedNodes();
+            MarkActiveSceneDirty();
         }
 
         const bool isLooking = IsAnyViewportLooking();
@@ -164,12 +180,25 @@ void Editor::Run() {
 
         Node3d* sceneToDraw = m_state == State::Playing ? m_core.GetScene() : m_activeViewport->GetScene();
         m_sceneTree.DrawSceneTree(sceneToDraw);
-
         m_inspector.DrawInspector(m_sceneTree.GetSelectedNode());
         m_contentBrowserWindow.DrawContentBrowser();
+        FileDialogs::Draw();
+
+        if (Input::IsKeyJustPressedWithMod(SDL_SCANCODE_S, SDL_SCANCODE_LCTRL)) {
+            SaveActiveScene();
+        }
+
+        if (Input::IsKeyJustPressedWithMod(SDL_SCANCODE_O, SDL_SCANCODE_LCTRL)) {
+            OpenScene();
+        }
+
+        if (Input::IsKeyJustPressedWithMod(SDL_SCANCODE_N, SDL_SCANCODE_LCTRL)) {
+            NewScene();
+        }
 
         if (Input::IsKeyJustPressed(SDL_SCANCODE_DELETE)) {
             m_sceneTree.DeleteSelectedNodes();
+            MarkActiveSceneDirty();
         }
 
         Core::EndImGuiFrame();
@@ -188,9 +217,9 @@ void Editor::DrawViewportTabs() {
     if (ImGui::BeginTabBar("##viewport_tabs", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs)) {
         for (int i = 0; i < static_cast<int>(m_viewports.size()); i++) {
             bool open = true;
-            const std::string& name = m_viewports[i]->GetName();
+            const std::string& tabTitle = m_viewports[i]->GetTabTitle();
 
-            if (ImGui::BeginTabItem(name.c_str(), &open)) {
+            if (ImGui::BeginTabItem(tabTitle.c_str(), &open)) {
                 if (m_activeViewport != m_viewports[i].get()) {
                     m_activeViewport = m_viewports[i].get();
                     m_core.SetEditorCamera(m_activeViewport->GetCamera());
@@ -201,6 +230,11 @@ void Editor::DrawViewportTabs() {
             }
 
             if (!open && m_viewports.size() > 1) {
+                if (!PromptSaveIfDirty(m_viewports[i].get())) {
+                    open = true;
+                    continue;
+                }
+
                 if (m_activeViewport == m_viewports[i].get()) {
                     const int next = i > 0 ? i - 1 : 1;
                     m_activeViewport = m_viewports[next].get();
@@ -219,9 +253,12 @@ void Editor::DrawViewportTabs() {
             auto vp = std::make_unique<ViewportWindow>(this, name);
 
             auto newScene = std::make_unique<Node3d>();
-            newScene->SetName("New Scene");
+            newScene->SetName("Untitled");
 
             vp->LoadScene(std::move(newScene));
+            vp->SetSceneAssetPath("");
+            vp->SetSceneUntitled(true);
+            vp->SetSceneDirty(false);
 
             m_viewports.push_back(std::move(vp));
             m_activeViewport = m_viewports.back().get();
@@ -241,23 +278,32 @@ void Editor::DrawMenuBar() {
     ImGui::TextUnformatted("Mango Editor");
 
     if (ImGui::BeginMenu("File")) {
-        if (ImGui::MenuItem("New Scene"))  { /* TODO */ }
-        if (ImGui::MenuItem("Open Scene")) {
-            try {
-                const auto packed = PackedScene::LoadFromFile("john.yml");
-                auto loaded = packed.Instantiate();
-                m_activeViewport->LoadScene(std::move(loaded));
-                m_sceneTree.ClearSelection();
-            } catch (const std::exception& e) {
-                std::cerr << "[Editor] Failed to open scene: " << e.what() << "\n";
-            }
+        const bool canEditScenes = m_state == State::Editing;
+
+        if (!canEditScenes) {
+            ImGui::BeginDisabled();
         }
-        if (ImGui::MenuItem("Save Scene")) {
-            const Node3d* activeScene = m_state == State::Playing ? m_core.GetScene() : m_activeViewport->GetScene();
-            if (activeScene) {
-                const PackedScene scene(activeScene);
-                scene.SaveToFile("john.yml");
-            }
+
+        if (ImGui::MenuItem("New Scene", "Ctrl+N")) {
+            NewScene();
+        }
+
+        if (ImGui::MenuItem("Open Scene...", "Ctrl+O")) {
+            FileDialogs::OpenSceneDialog([this](const std::filesystem::path& path) {
+                OpenSceneFromFile(path);
+            });
+        }
+
+        if (ImGui::MenuItem("Save Scene", "Ctrl+S")) {
+            SaveActiveScene();
+        }
+
+        if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S")) {
+            SaveActiveSceneAs();
+        }
+
+        if (!canEditScenes) {
+            ImGui::EndDisabled();
         }
         ImGui::Separator();
         if (ImGui::BeginMenu("Settings")) {
@@ -266,7 +312,11 @@ void Editor::DrawMenuBar() {
             ImGui::EndMenu();
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("Exit")) m_core.GetActiveWindow()->Close();
+        if (ImGui::MenuItem("Exit")) {
+            if (PromptSaveAllDirtyScenes()) {
+                m_core.GetActiveWindow()->Close();
+            }
+        }
         ImGui::EndMenu();
     }
 
@@ -447,6 +497,238 @@ void Editor::OnStop() {
     SDL_SetWindowMouseRect(m_core.GetActiveWindow()->GetSDLWindow(), nullptr);
     Input::SetMouseCaptureEnabled(false);
     Input::SetMouseDeltaEnabled(false);
+}
+
+bool Editor::NewScene() {
+    if (m_state != State::Editing) {
+        return false;
+    }
+
+    if (!PromptSaveIfDirty(m_activeViewport)) {
+        return false;
+    }
+
+    auto scene = std::make_unique<Node3d>();
+    scene->SetName("Untitled");
+
+    m_activeViewport->LoadScene(std::move(scene));
+    m_activeViewport->SetSceneAssetPath("");
+    m_activeViewport->SetSceneUntitled(true);
+    m_activeViewport->SetSceneDirty(false);
+
+    m_sceneTree.ClearSelection();
+
+    return true;
+}
+
+bool Editor::OpenScene() {
+    if (m_state != State::Editing) {
+        return false;
+    }
+
+    if (!PromptSaveIfDirty(m_activeViewport)) {
+        return false;
+    }
+
+    FileDialogs::OpenSceneDialog([this](const std::filesystem::path& path) {
+        OpenSceneFromFile(path);
+    });
+
+    return true;
+}
+
+bool Editor::OpenSceneFromFile(const std::filesystem::path &path) {
+    if (m_state != State::Editing) {
+        return false;
+    }
+
+    try {
+        const PackedScene packed = PackedScene::LoadFromFile(path.string());
+        auto loadedScene = packed.Instantiate();
+
+        m_activeViewport->LoadScene(std::move(loadedScene));
+        m_activeViewport->SetSceneAssetPath(ResourceManager::Get().ToUserVirtualPath(path));
+        m_activeViewport->SetSceneUntitled(false);
+        m_activeViewport->SetSceneDirty(false);
+
+        m_sceneTree.ClearSelection();
+
+        ResourceManager::Get().RefreshAssetRegistry();
+        m_contentBrowserWindow.Refresh();
+
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "[Editor] Failed to open scene: " << e.what() << "\n";
+        return false;
+    }
+}
+
+bool Editor::SaveActiveScene() {
+    if (m_state != State::Editing) {
+        return false;
+    }
+
+    if (!m_activeViewport || !m_activeViewport->GetScene()) {
+        return false;
+    }
+
+    // if no file assigned yet, save as
+    if (m_activeViewport->IsSceneUntitled() || m_activeViewport->GetSceneAssetPath().empty()) {
+        return SaveActiveSceneAs();
+    }
+
+    const std::string assetPath = m_activeViewport->GetSceneAssetPath();
+    const std::filesystem::path savePath = ResourceManager::Get().ResolveAssetPathForSave(assetPath);
+
+    // if the path is invalid or the file was deleted, ask for a new location
+    if (savePath.empty() || !std::filesystem::exists(savePath)) {
+        return SaveActiveSceneAs();
+    }
+
+    try {
+        const PackedScene packed(m_activeViewport->GetScene());
+        packed.SaveToFile(savePath.string());
+
+        m_activeViewport->SetSceneDirty(false);
+        m_activeViewport->SetSceneUntitled(false);
+
+        ResourceManager::Get().RefreshAssetRegistry();
+        m_contentBrowserWindow.Refresh();
+
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "[Editor] Failed to save scene: " << e.what() << "\n";
+        return false;
+    }
+}
+
+bool Editor::SaveActiveSceneAs() const {
+    if (m_state != State::Editing) {
+        return false;
+    }
+
+    if (!m_activeViewport || !m_activeViewport->GetScene()) {
+        return false;
+    }
+
+    std::filesystem::path suggestedPath;
+
+    if (!m_activeViewport->GetSceneAssetPath().empty()) {
+        suggestedPath = ResourceManager::Get().ResolveAssetPathForSave(
+            m_activeViewport->GetSceneAssetPath()
+        );
+    }
+
+    if (suggestedPath.empty()) {
+        suggestedPath = ResourceManager::Get().GetUserDirectory() / "Scenes" / "Untitled.mscn";
+    }
+
+    FileDialogs::SaveSceneDialog(suggestedPath, [this](const std::filesystem::path& path) {
+        SaveActiveSceneToPath(path);
+    });
+
+    return true;
+}
+
+bool Editor::SaveActiveSceneToPath(const std::filesystem::path &path) const {
+    if (m_state != State::Editing) {
+        return false;
+    }
+
+    if (!m_activeViewport || !m_activeViewport->GetScene()) {
+        return false;
+    }
+
+    try {
+        const PackedScene packed(m_activeViewport->GetScene());
+        packed.SaveToFile(path.string());
+
+        m_activeViewport->SetSceneAssetPath(ResourceManager::Get().ToUserVirtualPath(path));
+        m_activeViewport->SetSceneUntitled(false);
+        m_activeViewport->SetSceneDirty(false);
+
+        ResourceManager::Get().RefreshAssetRegistry();
+
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "[Editor] Failed to save scene: " << e.what() << "\n";
+        return false;
+    }
+}
+
+bool Editor::PromptSaveIfDirty(ViewportWindow *viewport) {
+    if (!viewport || !viewport->IsSceneDirty()) {
+        return true;
+    }
+
+    constexpr SDL_MessageBoxButtonData buttons[] = {
+        { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Save" },
+        { 0, 2, "Discard" },
+        { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 3, "Cancel" },
+    };
+
+    const SDL_MessageBoxData data = {
+        SDL_MESSAGEBOX_WARNING,
+        m_core.GetActiveWindow()->GetSDLWindow(),
+        "Unsaved Scene",
+        "This scene has unsaved changes. Save before continuing?",
+        3,
+        buttons,
+        nullptr
+    };
+
+    int buttonId = 0;
+    SDL_ShowMessageBox(&data, &buttonId);
+
+    if (buttonId == 1) {
+        ViewportWindow* previousActive = m_activeViewport;
+        m_activeViewport = viewport;
+
+        const bool saved = SaveActiveScene();
+
+        m_activeViewport = previousActive;
+        return saved;
+    }
+
+    if (buttonId == 2) {
+        return true;
+    }
+
+    return false;
+}
+
+bool Editor::PromptSaveAllDirtyScenes() {
+    for (const auto& viewport : m_viewports) {
+        if (!PromptSaveIfDirty(viewport.get())) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void Editor::MarkActiveSceneDirty() const {
+    if (m_state != State::Editing) {
+        return;
+    }
+
+    if (m_activeViewport) {
+        m_activeViewport->MarkSceneDirty();
+    }
+}
+
+void Editor::MarkSceneDirtyForNode(const Node3d *node) const {
+    if (m_state != State::Editing || !node) {
+        return;
+    }
+
+    for (const auto& viewport : m_viewports) {
+        const Node3d* scene = viewport->GetScene();
+        if (scene && Core::IsInScene(node, scene)) {
+            viewport->MarkSceneDirty();
+            return;
+        }
+    }
 }
 
 CameraNode3d* Editor::FindGameCamera(Node3d *node) {

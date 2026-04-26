@@ -15,7 +15,7 @@ public:
     GizmoSystem() = default;
 
     void HandleShortcuts(bool isCameraLooking);
-    void UpdateAndDraw(const CameraNode3d* camera, const std::vector<Node3d*>& selectedNodes, const ImVec2& viewportPos, const ImVec2& viewportSize, bool isPlaying, bool isCameraLooking);
+    bool UpdateAndDraw(const CameraNode3d* camera, const std::vector<Node3d*>& selectedNodes, const ImVec2& viewportPos, const ImVec2& viewportSize, bool isPlaying, bool isCameraLooking);
 
 private:
     ImGuizmo::OPERATION m_gizmoOp = ImGuizmo::TRANSLATE;
