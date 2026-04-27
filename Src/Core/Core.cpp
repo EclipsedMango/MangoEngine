@@ -149,6 +149,12 @@ void Core::InitImGui() const {
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
+#ifdef MANGO_DEV_ASSET_PATHS
+    io.IniFilename = MANGO_ENGINE_ASSETS_DIR "/imgui.ini";
+#else
+    io.IniFilename = "imgui.ini"; // next to the exe in release
+#endif
+
     EditorStyle::Get().Init(io);
 
     ImGui_ImplSDL3_InitForOpenGL(m_activeWindow->GetSDLWindow(), m_activeWindow->GetContext());
