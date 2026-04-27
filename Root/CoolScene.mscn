@@ -1,0 +1,590 @@
+children:
+  -
+    children: []
+    node_type: DirectionalLightNode3d
+    properties:
+      color:
+        x: 0.780336
+        y: 0.882917
+        z: 0.896118
+      intensity: 2.5
+      name: DirectionalLightNode3d
+      position:
+        x: 0.0
+        y: 0.0
+        z: 1.91282
+      process_enabled: true
+      rotation:
+        x: -40.3156
+        y: -45.0
+        z: 1.08668e-05
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 5.0
+            y: 0.5
+            z: 5.0
+          shape_type: Box
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 0.300704
+              y: 0.29375
+              z: 0.29375
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0
+                y: 0.0
+                z: 0.0
+              bounds_radius: 0.866025
+              index_count: 36
+              property_type: Mesh
+              source_path: Cube
+              vertex_count: 24
+            mesh_type: Cube
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 10.0
+            y: 1.0
+            z: 10.0
+          script: 
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Static
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: RigidBody3d
+      position:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children: []
+        node_type: CameraNode3d
+        properties:
+          far_plane: 300.0
+          fov: 75.0
+          is_main_camera: true
+          name: CameraNode3d
+          near_plane: 0.1
+          pitch: 0.0
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: 2.50448e-06
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: Root://hello.lua
+          visible: true
+          yaw: -90.0
+      -
+        children: []
+        node_type: CollisionShape3d
+        properties:
+          name: CollisionShape3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          shape_size:
+            x: 0.5
+            y: 0.5
+            z: 0.5
+          shape_type: Capsule
+          visible: true
+      -
+        children: []
+        node_type: MeshNode3d
+        properties:
+          is_unique: false
+          material:
+            albedo_color:
+              x: 1.0
+              y: 1.0
+              z: 1.0
+            alpha_scissor_threshold: 0.5
+            ambient_occlusion: 
+            ao_strength_value: 1.0
+            blend_mode: Opaque
+            cast_shadows: true
+            diffuse: 
+            displacement: 
+            displacement_scale_value: 0.01
+            double_sided: false
+            emission_strength: 1.0
+            emissive: 
+            metallic: 
+            metallic_value: 0.0
+            name: 
+            normal: 
+            normal_strength: 1.0
+            property_type: Material
+            roughness: 
+            roughness_value: 1.0
+            uv_offset:
+              x: 0.0
+              y: 0.0
+            uv_scale:
+              x: 1.0
+              y: 1.0
+          mesh:
+            mesh:
+              bounds_center:
+                x: 0.0182241
+                y: -9.97306e-08
+                z: -4.3123e-10
+              bounds_radius: 1.00017
+              index_count: 1632
+              property_type: Mesh
+              source_path: Capsule
+              vertex_count: 306
+            mesh_type: Capsule
+            property_type: PropertyHolder
+          name: MeshNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          visible: true
+      -
+        children: []
+        node_type: RayCastNode3d
+        properties:
+          enabled: true
+          exclude_parent_body: true
+          name: RayCastNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 1.0
+            y: 1.0
+            z: 1.0
+          script: 
+          target_position:
+            x: 0.0
+            y: -1.0
+            z: 0.0
+          visible: true
+    node_type: RigidBody3d
+    properties:
+      angular_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      body_type: Kinematic
+      gravity_scale: 1.0
+      linear_velocity:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      lock_rotation: false
+      mass: 1.0
+      name: Player
+      position:
+        x: 0.0
+        y: 2.17181
+        z: 0.0
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: Root://player.lua
+      sync_to_physics: true
+      visible: true
+  -
+    children:
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: 1.19209e-07
+                y: -1.19209e-07
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: -0.0
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              script: 
+              shape_size:
+                x: 2.5
+                y: 2.5
+                z: 0.5
+              shape_type: Box
+              visible: true
+        node_type: AreaNode3d
+        properties:
+          enabled: true
+          name: AreaNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 0.0
+            y: -0.0
+            z: 0.0
+          scale:
+            x: 0.724638
+            y: 0.724638
+            z: 0.724638
+          script: 
+          visible: true
+    node_type: PortalNode3d
+    properties:
+      is_linked: true
+      is_unique: false
+      linked_portal_name: PortalNode3d
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          source_path: Quad
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: portal1
+      position:
+        x: -0.68108
+        y: 2.86799
+        z: -5.24671
+      process_enabled: true
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 5.0
+        y: 5.0
+        z: 1.0
+      script: 
+      visible: true
+  -
+    children:
+      -
+        children:
+          -
+            children: []
+            node_type: CollisionShape3d
+            properties:
+              name: CollisionShape3d
+              position:
+                x: 0.0
+                y: -1.19209e-07
+                z: 0.0
+              process_enabled: true
+              rotation:
+                x: 0.0
+                y: 6.67011e-09
+                z: 0.0
+              scale:
+                x: 1.0
+                y: 1.0
+                z: 1.0
+              script: 
+              shape_size:
+                x: 2.5
+                y: 2.5
+                z: 0.5
+              shape_type: Box
+              visible: true
+        node_type: AreaNode3d
+        properties:
+          enabled: true
+          name: AreaNode3d
+          position:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          process_enabled: true
+          rotation:
+            x: 180.0
+            y: 0.0280122
+            z: 180.0
+          scale:
+            x: 0.999943
+            y: 1.0
+            z: 0.999943
+          script: 
+          visible: true
+    node_type: PortalNode3d
+    properties:
+      is_linked: true
+      is_unique: false
+      linked_portal_name: portal1
+      material:
+        albedo_color:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        alpha_scissor_threshold: 0.5
+        ambient_occlusion: 
+        ao_strength_value: 1.0
+        blend_mode: Opaque
+        cast_shadows: true
+        diffuse: 
+        displacement: 
+        displacement_scale_value: 0.01
+        double_sided: false
+        emission_strength: 1.0
+        emissive: 
+        metallic: 
+        metallic_value: 0.0
+        name: 
+        normal: 
+        normal_strength: 1.0
+        property_type: Material
+        roughness: 
+        roughness_value: 1.0
+        uv_offset:
+          x: 0.0
+          y: 0.0
+        uv_scale:
+          x: 1.0
+          y: 1.0
+      mesh:
+        mesh:
+          bounds_center:
+            x: 0.0
+            y: 0.0
+            z: 0.0
+          bounds_radius: 0.707107
+          index_count: 6
+          property_type: Mesh
+          source_path: Quad
+          vertex_count: 4
+        mesh_type: Quad
+        property_type: PropertyHolder
+      name: PortalNode3d
+      position:
+        x: 0.0
+        y: 3.0
+        z: 4.95846
+      process_enabled: true
+      rotation:
+        x: 180.0
+        y: -0.0280199
+        z: 180.0
+      scale:
+        x: 5.00101
+        y: 5.0
+        z: 1.00031
+      script: 
+      visible: true
+  -
+    children: []
+    node_type: PointLightNode3d
+    properties:
+      color:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      intensity: 1.0
+      name: PointLightNode3d
+      position:
+        x: 1.24475
+        y: 1.30211
+        z: 0.0
+      process_enabled: true
+      radius: 8.0
+      rotation:
+        x: 0.0
+        y: -0.0
+        z: 0.0
+      scale:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      script: 
+      visible: true
+node_type: Node3d
+properties:
+  name: Node3d
+  position:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  process_enabled: true
+  rotation:
+    x: 0.0
+    y: -0.0
+    z: 0.0
+  scale:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  script: 
+  visible: true

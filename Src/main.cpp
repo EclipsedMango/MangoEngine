@@ -2,7 +2,6 @@
 #include "Core/ResourceManager.h"
 #include "Core/Editor/Editor.h"
 #include "Nodes/Lights/DirectionalLightNode3d.h"
-#include "Renderer/Meshes/GltfLoader.h"
 
 int main() {
     auto scene = std::make_unique<Node3d>();

@@ -74,10 +74,10 @@ void CascadedShadowMap::Update(const CameraNode3d& camera) {
             maxZ = std::max(maxZ, trf.z);
         }
 
-        minX -= m_offscreenCasterPadding;
-        maxX += m_offscreenCasterPadding;
-        minY -= m_offscreenCasterPadding;
-        maxY += m_offscreenCasterPadding;
+        // minX -= m_offscreenCasterPadding;
+        // maxX += m_offscreenCasterPadding;
+        // minY -= m_offscreenCasterPadding;
+        // maxY += m_offscreenCasterPadding;
 
         float worldWidth = maxX - minX;
         float worldHeight = maxY - minY;

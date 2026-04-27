@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.1)
+cmake_minimum_required(VERSION 3.31)
 project(MangoRendering)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -199,6 +199,13 @@ add_executable(MangoRendering Src/main.cpp
         Src/Core/SignalBus.h
         Src/Core/Editor/UI/FileDialogs.cpp
         Src/Core/Editor/UI/FileDialogs.h
+        Src/Core/ScriptManagerInit.cpp
+        Src/Core/ScriptManagerScript.cpp
+        Src/Core/ScriptManagerCalls.cpp
+        Src/Core/ScriptManagerInitMath.cpp
+        Src/Core/ScriptManagerInitNode.cpp
+        Src/Core/ScriptManagerInitNodes.cpp
+        Src/Core/ScriptManagerInitModules.cpp
 )
 
 set_property(TARGET MangoRendering PROPERTY CXX_SCAN_FOR_MODULES OFF)
@@ -213,7 +220,19 @@ target_include_directories(MangoRendering PRIVATE
         ${tracy_SOURCE_DIR}/public
 )
 
-target_link_libraries(MangoRendering PRIVATE SDL3::SDL3 glad_gl imgui ${CMAKE_DL_LIBS} fkYAML::fkYAML lua::lua sol2::sol2 Jolt TracyClient)
+target_precompile_headers(MangoRendering PRIVATE
+        <glm/glm.hpp>
+        <glm/gtc/matrix_transform.hpp>
+        <SDL3/SDL.h>
+        <vector>
+        <string>
+        <memory>
+        <unordered_map>
+        <sol/sol.hpp>
+)
+
+target_link_options(MangoRendering PRIVATE -static-libgcc -static-libstdc++ -static)
+        target_link_libraries(MangoRendering PRIVATE SDL3::SDL3 glad_gl imgui ${CMAKE_DL_LIBS} fkYAML::fkYAML lua::lua sol2::sol2 Jolt TracyClient)
 target_compile_definitions(MangoRendering PRIVATE SOL_LUA_VERSION=504)
 
 option(MANGO_DEV_ASSET_PATHS "Load Root/ and EngineAssets/ from source tree during development" ON)

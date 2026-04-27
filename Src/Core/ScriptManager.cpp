@@ -1,538 +1,77 @@
 
 #include "ScriptManager.h"
-
-#include "LuaIncludes.hpp"
-#include <sol/sol.hpp>
-#include <iostream>
-#include <ranges>
-#include <unordered_set>
-#include <utility>
-#include <variant>
-#include <tracy/Tracy.hpp>
-
-#include "Input.h"
-#include "ResourceManager.h"
-#include "Nodes/AreaNode3d.h"
-#include "Nodes/CameraNode3d.h"
 #include "Nodes/Node3d.h"
-#include "Nodes/RayCastNode3d.h"
-#include "Nodes/RigidBody3d.h"
+#include "ScriptManagerInternal.h"
 
-struct ScriptManager::Impl {
-    struct ScriptInstance {
-        sol::table table;
-        sol::protected_function init;
-        sol::protected_function ready;
-        sol::protected_function process;
-        sol::protected_function physicsProcess;
-        bool initialized = false;
-    };
+#include <glm/glm.hpp>
+#include <iostream>
+#include <variant>
 
-    sol::state lua;
-    std::unordered_map<Node3d*, ScriptInstance> scripts;
-    std::unordered_map<std::string, std::filesystem::file_time_type> scriptModTimes;
-    bool runtimeEnabled = true;
-    std::function<void()> quitHandler;
-};
-
-static sol::object SignalArgToLua(const SignalArg& arg, const sol::state_view& lua) {
-    if (std::holds_alternative<int>(arg)) {
-        return sol::make_object(lua, std::get<int>(arg));
-    }
-
-    if (std::holds_alternative<float>(arg)) {
-        return sol::make_object(lua, std::get<float>(arg));
-    }
-
-    if (std::holds_alternative<bool>(arg)) {
-        return sol::make_object(lua, std::get<bool>(arg));
-    }
-
-    if (std::holds_alternative<std::string>(arg)) {
-        return sol::make_object(lua, std::get<std::string>(arg));
-    }
-
-    if (std::holds_alternative<glm::vec2>(arg)) {
-        return sol::make_object(lua, std::get<glm::vec2>(arg));
-    }
-
-    if (std::holds_alternative<glm::vec3>(arg)) {
-        return sol::make_object(lua, std::get<glm::vec3>(arg));
-    }
-
-    if (std::holds_alternative<Node3d*>(arg)) {
-        Node3d* node = std::get<Node3d*>(arg);
-        if (node) {
-            return sol::make_object(lua, node);
-        }
-
-        return sol::lua_nil;
-    }
-
-    return sol::lua_nil;
-}
-
-ScriptManager::ScriptManager() : m_impl(std::make_unique<Impl>()) {}
-ScriptManager::~ScriptManager() = default;
-
-static void ReportProtectedFunctionError(const sol::protected_function_result& result, const std::string& context) {
-    if (result.valid()) {
-        return;
-    }
-
+void ReportProtectedFunctionError(const sol::protected_function_result& result, const std::string& context) {
+    if (result.valid()) return;
     const sol::error err = result;
     std::cerr << "[Lua Error] " << context << ":\n" << err.what() << std::endl;
 }
 
-static sol::object PropertyValueToLua(const PropertyValue& val, const sol::state_view &lua) {
-    if (std::holds_alternative<int>(val)) { return sol::make_object(lua, std::get<int>(val)); }
-    if (std::holds_alternative<float>(val)) { return sol::make_object(lua, std::get<float>(val)); }
-    if (std::holds_alternative<bool>(val)) { return sol::make_object(lua, std::get<bool>(val)); }
-    if (std::holds_alternative<std::string>(val)) { return sol::make_object(lua, std::get<std::string>(val)); }
-    if (std::holds_alternative<glm::vec2>(val)) { return sol::make_object(lua, std::get<glm::vec2>(val)); }
-    if (std::holds_alternative<glm::vec3>(val)) { return sol::make_object(lua, std::get<glm::vec3>(val)); }
+sol::object SignalArgToLua(const SignalArg& arg, const sol::state_view& lua) {
+    if (std::holds_alternative<int>(arg))
+        return sol::make_object(lua, std::get<int>(arg));
+    if (std::holds_alternative<float>(arg))
+        return sol::make_object(lua, std::get<float>(arg));
+    if (std::holds_alternative<bool>(arg))
+        return sol::make_object(lua, std::get<bool>(arg));
+    if (std::holds_alternative<std::string>(arg))
+        return sol::make_object(lua, std::get<std::string>(arg));
+    if (std::holds_alternative<glm::vec2>(arg))
+        return sol::make_object(lua, std::get<glm::vec2>(arg));
+    if (std::holds_alternative<glm::vec3>(arg))
+        return sol::make_object(lua, std::get<glm::vec3>(arg));
+    if (std::holds_alternative<Node3d*>(arg)) {
+        Node3d* node = std::get<Node3d*>(arg);
+        return node ? sol::make_object(lua, node) : sol::lua_nil;
+    }
+    return sol::lua_nil;
+}
+
+sol::object PropertyValueToLua(const PropertyValue& val, const sol::state_view& lua) {
+    if (std::holds_alternative<int>(val)) return sol::make_object(lua, std::get<int>(val));
+    if (std::holds_alternative<float>(val)) return sol::make_object(lua, std::get<float>(val));
+    if (std::holds_alternative<bool>(val)) return sol::make_object(lua, std::get<bool>(val));
+    if (std::holds_alternative<std::string>(val)) return sol::make_object(lua, std::get<std::string>(val));
+    if (std::holds_alternative<glm::vec2>(val)) return sol::make_object(lua, std::get<glm::vec2>(val));
+    if (std::holds_alternative<glm::vec3>(val)) return sol::make_object(lua, std::get<glm::vec3>(val));
     if (std::holds_alternative<std::shared_ptr<PropertyHolder>>(val)) {
         auto ptr = std::get<std::shared_ptr<PropertyHolder>>(val);
-        if (ptr) return sol::make_object(lua, ptr);
-        return sol::lua_nil;
+        return ptr ? sol::make_object(lua, ptr) : sol::lua_nil;
     }
-
     return sol::make_object(lua, sol::lua_nil);
 }
 
-static PropertyValue LuaToPropertyValue(const sol::object& luaVal) {
+PropertyValue LuaToPropertyValue(const sol::object& luaVal) {
     if (luaVal.is<bool>()) return luaVal.as<bool>();
     if (luaVal.is<std::string>()) return luaVal.as<std::string>();
     if (luaVal.is<glm::vec2>()) return luaVal.as<glm::vec2>();
     if (luaVal.is<glm::vec3>()) return luaVal.as<glm::vec3>();
-    if (luaVal.is<std::shared_ptr<PropertyHolder>>()) return luaVal.as<std::shared_ptr<PropertyHolder>>();
+    if (luaVal.is<std::shared_ptr<PropertyHolder>>())
+        return luaVal.as<std::shared_ptr<PropertyHolder>>();
 
     if (luaVal.is<double>()) {
-        const double val = luaVal.as<double>();
-        if (std::floor(val) == val && val >= std::numeric_limits<int>::min() && val <= std::numeric_limits<int>::max()) {
-            return static_cast<float>(val);
-        }
-        return static_cast<float>(val);
+        const double v = luaVal.as<double>();
+        return static_cast<float>(v);
     }
 
     throw std::runtime_error("Unsupported Lua type passed to PropertyValue");
 }
 
-
-void ScriptManager::Init() {
-    auto& lua = m_impl->lua;
-
-    lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::math, sol::lib::string, sol::lib::table);
-    lua.set_panic([](lua_State* L) -> int {
-        const char* msg = lua_tostring(L, -1);
-        std::cerr << "[Lua Panic Error] " << (msg ? msg : "Unknown Error") << std::endl;
-        return 0;
-    });
-
-    lua.new_usertype<glm::vec2>("vec2",
-        sol::constructors<glm::vec2(), glm::vec2(float), glm::vec2(float, float)>(),
-        "x", &glm::vec2::x,
-        "y", &glm::vec2::y,
-        sol::meta_function::addition, [](const glm::vec2& a, const glm::vec2& b) { return a + b; },
-        sol::meta_function::subtraction, [](const glm::vec2& a, const glm::vec2& b) { return a - b; },
-        sol::meta_function::multiplication, [](const glm::vec2& a, const float scalar) { return a * scalar; },
-        sol::meta_function::division, [](const glm::vec2& a, const float scalar) { return a / scalar; }
-    );
-
-    lua.new_usertype<glm::vec3>("vec3",
-        sol::constructors<glm::vec3(), glm::vec3(float), glm::vec3(float, float, float)>(),
-        "x", &glm::vec3::x,
-        "y", &glm::vec3::y,
-        "z", &glm::vec3::z,
-        sol::meta_function::addition, [](const glm::vec3& a, const glm::vec3& b) { return a + b; },
-        sol::meta_function::subtraction, [](const glm::vec3& a, const glm::vec3& b) { return a - b; },
-        sol::meta_function::multiplication, [](const glm::vec3& a, const float scalar) { return a * scalar; },
-        sol::meta_function::division, [](const glm::vec3& a, const float scalar) { return a / scalar; }
-    );
-
-    lua.new_usertype<PropertyHolder>("PropertyHolder",
-        "Get", [](const PropertyHolder* holder, const std::string& propName, const sol::this_state s) -> sol::object {
-            const sol::state_view lua2(s);
-            try {
-                const PropertyValue val = holder->GetProperty(propName);
-                return PropertyValueToLua(val, lua2);
-            } catch(const std::exception& e) {
-                std::cerr << "[Lua Warning] Failed to get nested property '" << propName << "': " << e.what() << "\n";
-                return sol::make_object(lua2, sol::lua_nil);
-            }
-        },
-        "Set", [](PropertyHolder* holder, const std::string& propName, const sol::object& luaVal) {
-            try {
-                const PropertyValue val = LuaToPropertyValue(luaVal);
-                holder->Set(propName, val);
-            } catch(const std::exception& e) {
-                std::cerr << "[Lua Warning] Failed to set nested property '" << propName << "': " << e.what() << "\n";
-            }
-        }
-    );
-
-    lua.new_usertype<Node3d>("Node3d",
-        sol::base_classes, sol::bases<PropertyHolder>(),
-        "GetName", &Node3d::GetName,
-        "SetName", &Node3d::SetName,
-        "GetPosition", &Node3d::GetPosition,
-        "GetWorldPosition", &Node3d::GetWorldPosition,
-        "SetPosition", &Node3d::SetPosition,
-        "GetRotationEuler", &Node3d::GetRotationEuler,
-        "SetRotationEuler", &Node3d::SetRotationEuler,
-        "GetScale", &Node3d::GetScale,
-        "SetScale", &Node3d::SetScale,
-        "IsVisible", &Node3d::IsVisible,
-        "SetVisible", &Node3d::SetVisible,
-        "GetParent", &Node3d::GetParent,
-        "GetNodeType", &Node3d::GetNodeType,
-        "GetChildCount", &Node3d::GetChildCount,
-        "GetChild", [](const Node3d* node, const int index) -> Node3d* {
-            if (!node || index < 1) {
-                return nullptr;
-            }
-
-            return node->GetChild(static_cast<size_t>(index - 1));
-        },
-
-        "FindChild", [](const Node3d* node, const std::string& name, const sol::optional<bool> recursive) -> Node3d* {
-            if (!node) {
-                return nullptr;
-            }
-
-            return node->FindChild(name, recursive.value_or(true));
-        },
-
-        "FindChildByType", [](const Node3d* node, const std::string& nodeType, const sol::optional<bool> recursive) -> Node3d* {
-            if (!node) {
-                return nullptr;
-            }
-
-            return node->FindChildByType(nodeType, recursive.value_or(true));
-        },
-
-        "AsCamera", [](Node3d* node) -> CameraNode3d* {
-            return dynamic_cast<CameraNode3d*>(node);
-        },
-        "AsRigidBody", [](Node3d* node) -> RigidBody3d* {
-            return dynamic_cast<RigidBody3d*>(node);
-        },
-        "AsRayCast", [](Node3d* node) -> RayCastNode3d* {
-            return dynamic_cast<RayCastNode3d*>(node);
-        },
-        "AsArea", [](Node3d* node) -> AreaNode3d* {
-            return dynamic_cast<AreaNode3d*>(node);
-        },
-
-        "Connect", [](Node3d* source, const std::string& signal, Node3d* target, const std::string& method) {
-            if (!source || !target) {
-                return;
-            }
-
-            source->Connect(signal, target, method);
-        },
-
-        "ConnectOneShot", [](Node3d* source, const std::string& signal, Node3d* target, const std::string& method) {
-            if (!source || !target) {
-                return;
-            }
-
-            source->Connect(signal, target, method, true);
-        },
-
-        "Disconnect", [](Node3d* source, const std::string& signal, Node3d* target, const std::string& method) {
-            if (!source || !target) {
-                return;
-            }
-
-            source->Disconnect(signal, target, method);
-        },
-
-        "EmitSignal", [](Node3d* source, const std::string& signal, sol::variadic_args va) {
-            if (!source) {
-                return;
-            }
-
-            std::vector<SignalArg> args;
-
-            for (const sol::object& obj : va) {
-                if (obj.is<bool>()) {
-                    args.emplace_back(obj.as<bool>());
-                } else if (obj.is<int>()) {
-                    args.emplace_back(obj.as<int>());
-                } else if (obj.is<double>()) {
-                    args.emplace_back(static_cast<float>(obj.as<double>()));
-                } else if (obj.is<std::string>()) {
-                    args.emplace_back(obj.as<std::string>());
-                } else if (obj.is<glm::vec2>()) {
-                    args.emplace_back(obj.as<glm::vec2>());
-                } else if (obj.is<glm::vec3>()) {
-                    args.emplace_back(obj.as<glm::vec3>());
-                } else if (obj.is<Node3d*>()) {
-                    args.emplace_back(obj.as<Node3d*>());
-                } else {
-                    std::cerr << "[Lua Signal Warning] Unsupported argument type for signal '"
-                              << signal << "'.\n";
-                }
-            }
-
-            source->EmitSignal(signal, args);
-        },
-
-        "QueueSignal", [](Node3d* source, const std::string& signal, sol::variadic_args va) {
-            if (!source) {
-                return;
-            }
-
-            std::vector<SignalArg> args;
-
-            for (const sol::object& obj : va) {
-                if (obj.is<bool>()) {
-                    args.emplace_back(obj.as<bool>());
-                } else if (obj.is<int>()) {
-                    args.emplace_back(obj.as<int>());
-                } else if (obj.is<double>()) {
-                    args.emplace_back(static_cast<float>(obj.as<double>()));
-                } else if (obj.is<std::string>()) {
-                    args.emplace_back(obj.as<std::string>());
-                } else if (obj.is<glm::vec2>()) {
-                    args.emplace_back(obj.as<glm::vec2>());
-                } else if (obj.is<glm::vec3>()) {
-                    args.emplace_back(obj.as<glm::vec3>());
-                } else if (obj.is<Node3d*>()) {
-                    args.emplace_back(obj.as<Node3d*>());
-                } else {
-                    std::cerr << "[Lua Signal Warning] Unsupported argument type for signal '" << signal << "'.\n";
-                }
-            }
-
-            source->QueueSignal(signal, args);
-        }
-    );
-
-    lua.new_usertype<CameraNode3d>("CameraNode3d",
-        sol::base_classes, sol::bases<Node3d, PropertyHolder>(),
-        "Rotate", &CameraNode3d::Rotate,
-        "GetFront", &CameraNode3d::GetFront,
-        "GetRight", &CameraNode3d::GetRight,
-        "GetUp", &CameraNode3d::GetUp
-    );
-
-    lua.new_usertype<RigidBody3d>("RigidBody3d",
-        sol::base_classes, sol::bases<Node3d, PropertyHolder>(),
-
-        "GetLinearVelocity", &RigidBody3d::GetLinearVelocity,
-        "SetLinearVelocity", &RigidBody3d::SetLinearVelocity,
-
-        "GetAngularVelocity", &RigidBody3d::GetAngularVelocity,
-        "SetAngularVelocity", &RigidBody3d::SetAngularVelocity
-    );
-
-    lua.new_usertype<RayCastNode3d>("RayCastNode3d",
-        sol::base_classes, sol::bases<Node3d, PropertyHolder>(),
-
-        "SetEnabled", &RayCastNode3d::SetEnabled,
-        "IsEnabled", &RayCastNode3d::IsEnabled,
-
-        "SetTargetPosition", &RayCastNode3d::SetTargetPosition,
-        "GetTargetPosition", &RayCastNode3d::GetTargetPosition,
-
-        "SetExcludeParentBody", &RayCastNode3d::SetExcludeParentBody,
-        "GetExcludeParentBody", &RayCastNode3d::GetExcludeParentBody,
-
-        "ForceUpdate", &RayCastNode3d::ForceUpdate,
-
-        "IsColliding", &RayCastNode3d::IsColliding,
-        "GetCollisionPoint", &RayCastNode3d::GetCollisionPoint,
-        "GetCollisionNormal", &RayCastNode3d::GetCollisionNormal,
-        "GetCollisionFraction", &RayCastNode3d::GetCollisionFraction,
-
-        "GetCollider", &RayCastNode3d::GetCollider
-    );
-
-    lua.new_usertype<AreaNode3d>("AreaNode3d",
-        sol::base_classes, sol::bases<Node3d, PropertyHolder>(),
-
-        "SetEnabled", &AreaNode3d::SetEnabled,
-        "IsEnabled", &AreaNode3d::IsEnabled,
-
-        "HasPhysicsBody", &AreaNode3d::HasPhysicsBody,
-
-        "HasOverlappingBodies", &AreaNode3d::HasOverlappingBodies,
-        "GetOverlappingBodyCount", &AreaNode3d::GetOverlappingBodyCount,
-
-        "GetOverlappingBody", [](const AreaNode3d* area, const int index) -> Node3d* {
-            if (!area || index < 1) {
-                return nullptr;
-            }
-
-            return area->GetOverlappingBody(static_cast<size_t>(index - 1));
-        },
-
-        "IsBodyOverlapping", &AreaNode3d::IsBodyOverlapping
-    );
-
-    sol::table inputModule = lua.create_named_table("Input");
-    inputModule.set_function("IsKeyPressed", &Input::IsKeyJustPressed);
-    inputModule.set_function("IsKeyHeld", &Input::IsKeyHeld);
-    inputModule.set_function("IsMouseButtonPressed", &Input::IsMouseButtonJustPressed);
-    inputModule.set_function("GetMouseDelta", &Input::GetMouseDelta);
-    inputModule.set_function("SetMouseDeltaEnabled", &Input::SetMouseDeltaEnabled);
-    inputModule.set_function("SetMouseCaptureEnabled", &Input::SetMouseCaptureEnabled);
-    inputModule.set_function("IsMouseCaptureEnabled", &Input::IsMouseCaptureEnabled);
-
-    sol::table keys = lua.create_table();
-    keys["W"] = SDL_SCANCODE_W;
-    keys["A"] = SDL_SCANCODE_A;
-    keys["S"] = SDL_SCANCODE_S;
-    keys["D"] = SDL_SCANCODE_D;
-    keys["Q"] = SDL_SCANCODE_Q;
-    keys["E"] = SDL_SCANCODE_E;
-    keys["SPACE"] = SDL_SCANCODE_SPACE;
-    keys["LCTRL"] = SDL_SCANCODE_LCTRL;
-    keys["LSHIFT"] = SDL_SCANCODE_LSHIFT;
-    keys["ESCAPE"] = SDL_SCANCODE_ESCAPE;
-    keys["TAB"] = SDL_SCANCODE_TAB;
-
-    inputModule["Key"] = keys;
-
-    sol::table appModule = lua.create_named_table("App");
-    appModule.set_function("Quit", [this] {
-        RequestQuit();
-    });
-}
-
-void ScriptManager::SetScript(Node3d *node, const std::string &path) const {
-    ZoneScoped;
-    ClearScript(node);
-
-    if (!node || path.empty()) {
-        return;
-    }
-
-    auto& lua = m_impl->lua;
-
-    const std::string resolvedPath = ResourceManager::Get().ResolveAssetPath(path);
-    if (resolvedPath.empty()) {
-        std::cerr << "[Script Error] Failed to resolve script asset: " << path << std::endl;
-        return;
-    }
-
-    try {
-        m_impl->scriptModTimes[resolvedPath] = std::filesystem::last_write_time(resolvedPath);
-    } catch (const std::filesystem::filesystem_error& e) {
-        std::cerr << "[Script Warning] Failed to cache script mod time for " << resolvedPath << ": " << e.what() << "\n";
-    }
-
-    std::cout << "[Script] Loading from disk: " << resolvedPath << std::endl;
-    sol::load_result loaded = lua.load_file(resolvedPath);
-    if (!loaded.valid()) {
-        const sol::error err = loaded;
-        std::cerr << "[Script Error] Failed to load " << path << " (" << resolvedPath << "):\n" << err.what() << std::endl;
-        return;
-    }
-
-    const sol::protected_function_result execResult = loaded();
-    if (!execResult.valid()) {
-        ReportProtectedFunctionError(execResult, "Failed to execute script file " + path + " (" + resolvedPath + ")");
-        return;
-    }
-
-    const sol::object returned = execResult.get<sol::object>();
-    if (!returned.is<sol::table>()) {
-        std::cerr << "[Script Error] Script " << path << " must return a table." << std::endl;
-        return;
-    }
-
-    sol::table scriptClass = returned.as<sol::table>();
-
-    Impl::ScriptInstance instance;
-    instance.table = lua.create_table();
-
-    sol::table metatable = lua.create_table();
-    metatable["__index"] = scriptClass;
-    instance.table[sol::metatable_key] = metatable;
-
-    instance.table["node"] = node;
-    instance.table["script_path"] = resolvedPath;
-    instance.table["script_name"] = path;
-
-    instance.init = scriptClass["_init"];
-    instance.ready = scriptClass["_ready"];
-    instance.process = scriptClass["_process"];
-    instance.physicsProcess = scriptClass["_physics_process"];
-
-    m_impl->scripts[node] = std::move(instance);
-}
-
-void ScriptManager::ClearScript(Node3d *node) const {
-    if (!node) {
-        return;
-    }
-
-    m_impl->scripts.erase(node);
-}
-
-void ScriptManager::HotReloadScript(Node3d *node) const {
-    const auto it = m_impl->scripts.find(node);
-    if (it == m_impl->scripts.end()) return;
-
-    const std::string scriptName = it->second.table.get<std::string>("script_name");
-    SetScript(node, scriptName);
-}
-
-void ScriptManager::PollHotReload() const {
-    std::unordered_set<std::string> changedPaths;
-
-    for (auto &instance: m_impl->scripts | std::views::values) {
-        const std::string path = instance.table["script_path"];
-        if (path.empty()) {
-            continue;
-        }
-
-        try {
-            const auto currentTime = std::filesystem::last_write_time(path);
-
-            auto [it, inserted] = m_impl->scriptModTimes.try_emplace(path, currentTime);
-
-            if (!inserted && currentTime != it->second) {
-                it->second = currentTime;
-                changedPaths.insert(path);
-            }
-        } catch (const std::filesystem::filesystem_error& e) {
-            std::cerr << "[HotReload] Failed to stat file: " << path << " - " << e.what() << "\n";
-        }
-    }
-
-    if (changedPaths.empty()) {
-        return;
-    }
-
-    std::vector<Node3d*> nodesToReload;
-
-    for (auto& [node, instance] : m_impl->scripts) {
-        const std::string path = instance.table["script_path"];
-        if (changedPaths.contains(path)) {
-            nodesToReload.push_back(node);
-        }
-    }
-
-    for (Node3d* node : nodesToReload) {
-        const auto it = m_impl->scripts.find(node);
-        if (it == m_impl->scripts.end()) {
-            continue;
-        }
-
-        const std::string path = it->second.table["script_path"];
-        std::cout << "[HotReload] Reloading: " << path << std::endl;
-
-        HotReloadScript(node);
-        CallReady(node);
-    }
-}
+ScriptManager::ScriptManager() : m_impl(std::make_unique<Impl>()) {}
+ScriptManager::~ScriptManager() = default;
 
 void ScriptManager::SetRuntimeEnabled(const bool enabled) const {
     m_impl->runtimeEnabled = enabled;
+}
+
+bool ScriptManager::IsRuntimeEnabled() const {
+    return m_impl->runtimeEnabled;
 }
 
 void ScriptManager::SetQuitHandler(std::function<void()> handler) const {
@@ -544,106 +83,5 @@ void ScriptManager::RequestQuit() const {
         std::cerr << "[Script Warning] Quit requested, but no quit handler is registered.\n";
         return;
     }
-
     m_impl->quitHandler();
-}
-
-bool ScriptManager::IsRuntimeEnabled() const {
-    return m_impl->runtimeEnabled;
-}
-
-void ScriptManager::CallReady(const Node3d *node) const {
-    ZoneScoped;
-    if (!m_impl->runtimeEnabled) {
-        return;
-    }
-
-    const auto it = m_impl->scripts.find(const_cast<Node3d*>(node));
-    if (it == m_impl->scripts.end()) {
-        return;
-    }
-
-    if (!it->second.initialized && it->second.init.valid()) {
-        const auto initResult = it->second.init(it->second.table);
-        ReportProtectedFunctionError(initResult, "_init");
-        if (!initResult.valid()) {
-            return;
-        }
-
-        it->second.initialized = true;
-    }
-
-    if (!it->second.ready.valid()) {
-        return;
-    }
-
-    const auto result = it->second.ready(it->second.table);
-    ReportProtectedFunctionError(result, "_ready");
-}
-
-void ScriptManager::CallProcess(Node3d *node, float deltaTime) const {
-    ZoneScoped;
-    if (!m_impl->runtimeEnabled) {
-        return;
-    }
-
-    const auto it = m_impl->scripts.find(node);
-    if (it == m_impl->scripts.end() || !it->second.process.valid()) {
-        return;
-    }
-
-    const auto result = it->second.process(it->second.table, deltaTime);
-    ReportProtectedFunctionError(result, "_process");
-}
-
-void ScriptManager::CallPhysicsProcess(Node3d *node, float deltaTime) const {
-    ZoneScoped;
-    if (!m_impl->runtimeEnabled) {
-        return;
-    }
-
-    const auto it = m_impl->scripts.find(node);
-    if (it == m_impl->scripts.end() || !it->second.physicsProcess.valid()) {
-        return;
-    }
-
-    const auto result = it->second.physicsProcess(it->second.table, deltaTime);
-    ReportProtectedFunctionError(result, "_physics_process");
-}
-
-void ScriptManager::CallSignalMethod(Node3d *target, const std::string &methodName, const std::vector<SignalArg> &args) const {
-    ZoneScoped;
-
-    if (!m_impl->runtimeEnabled || !target || methodName.empty()) {
-        return;
-    }
-
-    const auto it = m_impl->scripts.find(target);
-    if (it == m_impl->scripts.end()) {
-        return;
-    }
-
-    const sol::object methodObject = it->second.table[methodName];
-    if (!methodObject.valid() || methodObject == sol::lua_nil) {
-        return;
-    }
-
-    if (!methodObject.is<sol::protected_function>()) {
-        std::cerr << "[Signal Warning] Method '" << methodName << "' exists but is not callable on node '" << target->GetName() << "'.\n";
-        return;
-    }
-
-    sol::protected_function method = methodObject.as<sol::protected_function>();
-
-    std::vector<sol::object> luaArgs;
-    luaArgs.reserve(args.size());
-
-    const sol::state_view luaView(m_impl->lua);
-
-    for (const SignalArg& arg : args) {
-        luaArgs.push_back(SignalArgToLua(arg, luaView));
-    }
-
-    const auto result = method(it->second.table, sol::as_args(luaArgs));
-    ReportProtectedFunctionError(result, "signal method " + methodName);
 }
